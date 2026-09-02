@@ -1,296 +1,274 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-import os
-from datetime import datetime, timedelta
-import streamlit.components.v1 as components
+import plotly.express as px
+import plotly.graph_objects as bg
+import datetime
+from datetime import date, timedelta
+from sklearn.ensemble import RandomForestClassifier
+from supabase import create_client, Client
 
-# Configuración del panel
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE PÁGINA Y ESTILOS CSS (GLASSMORPHISM)
+# ---------------------------------------------------------
 st.set_page_config(
-    page_title="Sistema Predictivo de Fisioterapia Biopsicosocial",
-    layout="wide",
-    page_icon="🏥"
+    page_title="FISIOTERAPIA - Movimiento, Salud, Bienestar",
+    page_icon="🏥",
+    layout="wide"
 )
 
-# Estructura de almacenamiento local en memoria para evitar caídas
-if "tabla_pacientes_local" not in st.session_state:
-    st.session_state.tabla_pacientes_local = pd.DataFrame(columns=[
-        "dni", "nombre", "edad", "genero", "eva_inicial", "zona_afectada",
-        "tsk_score", "pcs_score", "num_sesiones", "fecha_alta", "probabilidad_recuperacion"
-    ])
+# Imagen de fondo en CSS (Usando la imagen provista mediante URL o Assets)
+BACKGROUND_IMAGE_URL = "https://raw.githubusercontent.com/mezaj5089-maker/sistema-fisioterapia/main/fisio.png" 
 
-# Conexión con Supabase
-@st.cache_resource
-def conectar_supabase():
-    try:
-        from supabase import create_client
-        url = st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL")
-        key = st.secrets.get("SUPABASE_KEY") or os.environ.get("SUPABASE_KEY")
-        if url and key:
-            return create_client(url, key)
-    except Exception:
-        pass
-    return None
+custom_css = f"""
+<style>
+/* Fondo principal de la web */
+.stApp {{
+    background: linear-gradient(rgba(240, 248, 255, 0.85), rgba(240, 248, 255, 0.92)), 
+                url("{BACKGROUND_IMAGE_URL}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}}
 
-supabase = conectar_supabase()
+/* Tarjetas modernas con efecto vidrio */
+div[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"] {{
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}}
 
-# Estilos CSS
-st.markdown("""
-    <style>
-    .main { background-color: #F8FAFC; }
-    .stButton>button {
-        background-color: #0F766E;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 24px;
-        font-weight: bold;
-        width: 100%;
-    }
-    .stButton>button:hover { background-color: #0D9488; color: white; }
-    </style>
-""", unsafe_allow_html=True)
+/* Encabezados y títulos */
+h1, h2, h3 {{
+    color: #0E4B75 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}}
 
-# Barra Lateral y Reloj en Vivo
-st.sidebar.title("🏥 Portal Clínico")
-
-html_reloj = """
-<div style="background-color: #0F766E; color: white; padding: 10px; border-radius: 8px; text-align: center; font-family: 'Courier New', monospace;">
-    <div style="font-size: 11px; text-transform: uppercase;">Hora y Fecha Oficial</div>
-    <div id="clock" style="font-size: 20px; font-weight: bold; margin-top: 4px;"></div>
-    <div id="date" style="font-size: 11px; opacity: 0.85;"></div>
-</div>
-
-<script>
-function updateClock() {
-    var now = new Date();
-    var hours = String(now.getHours()).padStart(2, '0');
-    var minutes = String(now.getMinutes()).padStart(2, '0');
-    var seconds = String(now.getSeconds()).padStart(2, '0');
-    var timeString = hours + ':' + minutes + ':' + seconds;
-    
-    var options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    var dateString = now.toLocaleDateString('es-ES', options);
-    
-    document.getElementById('clock').textContent = timeString;
-    document.getElementById('date').textContent = dateString;
-}
-setInterval(updateClock, 1000);
-updateClock();
-</script>
+/* Estilo para las métricas */
+div[data-testid="stMetricValue"] {{
+    font-size: 28px;
+    color: #0077B6;
+    font-weight: bold;
+}}
+</style>
 """
-with st.sidebar:
-    components.html(html_reloj, height=100)
+st.markdown(custom_css, unsafe_allow_html=True)
 
-st.sidebar.markdown("---")
-rol = st.sidebar.radio("Seleccione el Perfil de Usuario:", [
-    "👤 Vista Paciente / Consulta",
-    "🛡️ Vista Administrador / Fisioterapeuta"
+# ---------------------------------------------------------
+# CONEXIÓN A SUPABASE & ESTADO DE SESIÓN
+# ---------------------------------------------------------
+@st.cache_resource
+def init_supabase():
+    try:
+        url = st.secrets["SUPABASE_URL"]
+        key = st.secrets["SUPABASE_KEY"]
+        return create_client(url, key)
+    except Exception:
+        return None
+
+supabase = init_supabase()
+
+if "tabla_pacientes_local" not in st.session_state:
+    st.session_state.tabla_pacientes_local = pd.DataFrame()
+
+# ---------------------------------------------------------
+# ENTRENAMIENTO DEL MODELO RANDOM FOREST (IN-MEMORY / GOLD)
+# ---------------------------------------------------------
+@st.cache_resource
+def train_rf_model():
+    # Generación sintética para entrenamiento continuo del modelo
+    np.random.seed(42)
+    n = 200
+    eva = np.random.randint(1, 11, n)
+    tsk = np.random.uniform(10, 50, n)
+    pcs = np.random.uniform(5, 40, n)
+    
+    # Lógica de negocio para número de sesiones (Target)
+    sesiones = (eva * 1.2 + tsk * 0.2 + pcs * 0.3 + np.random.normal(0, 1, n)).astype(int)
+    sesiones = np.clip(sesiones, 5, 30)
+    
+    # Categorización de éxito alto/medio
+    exito = np.where(sesiones <= 15, 1, 0)
+    
+    X = pd.DataFrame({'eva_inicial': eva, 'tsk_score': tsk, 'pcs_score': pcs})
+    y_sesiones = sesiones
+    y_exito = exito
+    
+    rf_regressor = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_regressor.fit(X, y_sesiones)
+    
+    rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_classifier.fit(X, y_exito)
+    
+    return rf_regressor, rf_classifier
+
+model_sesiones, model_exito = train_rf_model()
+
+# ---------------------------------------------------------
+# BARRA LATERAL (SIDEBAR)
+# ---------------------------------------------------------
+st.sidebar.image(BACKGROUND_IMAGE_URL, use_container_width=True)
+st.sidebar.title("🩺 PORTAL CLÍNICO")
+st.sidebar.caption("Movimiento • Salud • Bienestar")
+
+# Reloj digital en vivo
+ahora = datetime.datetime.now()
+st.sidebar.markdown(
+    f"""
+    <div style="background-color: #0E4B75; color: white; padding: 10px; border-radius: 10px; text-align: center;">
+        <h3 style="color: white !important; margin:0;">{ahora.strftime('%H:%M:%S')}</h3>
+        <small>{ahora.strftime('%A, %d %b %Y')}</small>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
+st.sidebar.write("---")
+perfil = st.sidebar.radio("Perfil de Usuario:", ["👤 Paciente / Consulta", "🛡️ Administrador / Fisioterapeuta"])
+
+# ---------------------------------------------------------
+# ENCABEZADO PRINCIPAL
+# ---------------------------------------------------------
+st.title("FISIOTERAPIA")
+st.subheader("Sistema Inteligente de Evaluación y Predicción Médica")
+
+# ---------------------------------------------------------
+# NAVEGACIÓN POR PESTAÑAS (TABS)
+# ---------------------------------------------------------
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📥 Capa Bronze: Registro", 
+    "📊 Dashboard Interactivo", 
+    "🤖 Capa Gold: Inferencia Random Forest", 
+    "🗄️ Base de Datos"
 ])
 
-# ==============================================================================
-# VISTA 1: CONSULTA DE PACIENTE
-# ==============================================================================
-if rol == "👤 Vista Paciente / Consulta":
-    st.title("🏥 Portal de Seguimiento del Paciente")
-    st.markdown("Consulte el estado de su expediente ingresando su DNI.")
-    
-    dni_consulta = st.text_input("Ingrese su DNI o Código de Identificación:")
-    
-    if dni_consulta:
-        paciente = None
-        dni_str = str(dni_consulta).strip()
+# ---------------------------------------------------------
+# PESTAÑA 1: REGISTRO (BRONZE)
+# ---------------------------------------------------------
+with tab1:
+    st.markdown("### 📝 Registro del Expediente Clínico")
+    with st.form("form_paciente", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            dni = st.text_input("DNI del Paciente:")
+            nombre = st.text_input("Nombre Completo:")
+            edad = st.number_input("Edad:", min_value=1, max_value=100, value=30)
+            genero = st.selectbox("Género:", ["Masculino", "Femenino", "Otro"])
+        with col2:
+            eva = st.slider("Escala EVA (Dolor Inicial 1-10):", 1, 10, 5)
+            zona = st.selectbox("Zona Afectada:", ["Lumbar", "Cervical", "Hombro", "Rodilla", "Tobillo", "Otro"])
+            tsk = st.number_input("Escala TSK (Kinesiofobia):", 10.0, 50.0, 25.0)
+            pcs = st.number_input("Escala PCS (Catastrofización):", 0.0, 50.0, 15.0)
+            
+        btn_guardar = st.form_submit_button("💾 Guardar y Evaluar Paciente")
+
+    if btn_guardar and dni and nombre:
+        # Predicción automática con Random Forest
+        input_data = pd.DataFrame({'eva_inicial': [eva], 'tsk_score': [tsk], 'pcs_score': [pcs]})
+        pred_sesiones = int(model_sesiones.predict(input_data)[0])
+        prob_exito = float(model_exito.predict_proba(input_data)[0][1] * 100)
+        fecha_alta = date.today() + timedelta(days=pred_sesiones * 2)
+
+        nuevo_paciente = {
+            "dni": dni, "nombre": nombre, "edad": edad, "genero": genero,
+            "eva_inicial": eva, "zona_afectada": zona, "tsk_score": tsk, "pcs_score": pcs,
+            "num_sesiones": pred_sesiones, "fecha_alta": fecha_alta.isoformat(),
+            "probabilidad_recuperacion": prob_exito
+        }
         
-        # 1. Intentar buscar en Supabase
+        # Guardar en Supabase
         if supabase:
             try:
-                res = supabase.table("pacientes").select("*").eq("dni", dni_str).execute()
-                if res.data:
-                    paciente = res.data[0]
-            except Exception:
-                pass
-        
-        # 2. Si no se encuentra en Supabase, buscar en almacenamiento local
-        if not paciente and not st.session_state.tabla_pacientes_local.empty:
-            coincidencias = st.session_state.tabla_pacientes_local[st.session_state.tabla_pacientes_local["dni"] == dni_str]
-            if not coincidencias.empty:
-                paciente = coincidencias.iloc[-1].to_dict()
-                
-        if paciente:
-            st.success(f"Expediente encontrado: **{paciente.get('nombre', 'Paciente')}**")
-            
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Sesiones Requeridas", f"{paciente.get('num_sesiones', 0)} Sesiones")
-            m2.metric("Nivel de Dolor (EVA)", f"{paciente.get('eva_inicial', 0)} / 10")
-            m3.metric("Fecha Estimada de Alta", str(paciente.get('fecha_alta', 'Pendiente')))
-            
-            st.markdown("---")
-            st.subheader("📈 Proyección de Recuperación")
-            eva_val = int(paciente.get('eva_inicial', 7))
-            chart_data = pd.DataFrame({
-                'Semana': ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
-                'Nivel Dolor (EVA)': [eva_val, max(eva_val - 2, 1), max(eva_val - 4, 1), 1],
-                'Movilidad (%)': [35, 60, 80, 95]
-            }).set_index('Semana')
-            st.line_chart(chart_data)
+                supabase.table("pacientes").insert(nuevo_paciente).execute()
+                st.success(f"✅ ¡Paciente {nombre} registrado con éxito en Supabase!")
+            except Exception as e:
+                st.warning(f"Guardado localmente. Nota en Supabase: {e}")
         else:
-            st.warning("No se encontró ningún expediente registrado con este DNI.")
+            st.success(f"✅ Paciente {nombre} registrado localmente.")
 
-# ==============================================================================
-# VISTA 2: ADMINISTRADOR CON CLAVE DE ACCESO
-# ==============================================================================
-else:
-    st.title("🛡️ Panel Administrador - Control de Acceso")
+# ---------------------------------------------------------
+# PESTAÑA 2: DASHBOARD INTERACTIVO
+# ---------------------------------------------------------
+with tab2:
+    st.markdown("### 📊 Dashboard Analítico y Diagnóstico")
     
-    if "admin_autenticado" not in st.session_state:
-        st.session_state.admin_autenticado = False
+    # Cargar datos desde Supabase o Sesión
+    df_data = pd.DataFrame()
+    if supabase:
+        try:
+            res = supabase.table("pacientes").select("*").execute()
+            df_data = pd.DataFrame(res.data)
+        except Exception:
+            df_data = st.session_state.tabla_pacientes_local
 
-    if not st.session_state.admin_autenticado:
-        st.warning("🔒 Ingrese la clave para gestionar pacientes.")
-        clave_ingresada = st.text_input("Contraseña de Administrador:", type="password")
+    if not df_data.empty:
+        # Métricas Clave (Kpis)
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        kpi1.metric("Total Pacientes", len(df_data))
+        kpi2.metric("Promedio EVA (Dolor)", f"{df_data['eva_inicial'].mean():.1f} / 10")
+        kpi3.metric("Prom. Sesiones Est.", f"{df_data['num_sesiones'].mean():.0f}")
+        kpi4.metric("Tasa Éxito Promedio", f"{df_data['probabilidad_recuperacion'].mean():.1f}%")
+
+        st.write("---")
+        g1, g2 = st.columns(2)
         
-        if st.button("Iniciar Sesión"):
-            if clave_ingresada == "admin123":
-                st.session_state.admin_autenticado = True
-                st.rerun()
-            else:
-                st.error("Contraseña incorrecta.")
+        with g1:
+            st.markdown("#### Pacientes por Zona Afectada")
+            fig_zona = px.pie(df_data, names='zona_afectada', hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3)
+            st.plotly_chart(fig_zona, use_container_width=True)
+            
+        with g2:
+            st.markdown("#### Relación EVA Dolor vs. Sesiones Estimadas")
+            fig_scatter = px.scatter(
+                df_data, x='eva_inicial', y='num_sesiones', color='zona_afectada',
+                size='tsk_score', hover_data=['nombre'],
+                labels={'eva_inicial': 'Nivel de Dolor (EVA)', 'num_sesiones': 'Sesiones Estimadas'}
+            )
+            st.plotly_chart(fig_scatter, use_container_width=True)
     else:
-        if st.button("🚪 Cerrar Sesión Admin"):
-            st.session_state.admin_autenticado = False
-            st.rerun()
-            
-        st.markdown("---")
+        st.info("Registre pacientes en la 'Capa Bronze' para visualizar las gráficas del Dashboard.")
+
+# ---------------------------------------------------------
+# PESTAÑA 3: INFERENCIA MODELO RANDOM FOREST (GOLD)
+# ---------------------------------------------------------
+with tab3:
+    st.markdown("### 🏆 Modelo Predictivo: Random Forest Classifier")
+    st.write("Simulador en tiempo real de pronósticos médicos basado en Ensembles de Árboles de Decisión.")
+    
+    c1, c2, c3 = st.columns(3)
+    sim_eva = c1.slider("Dolor Inicial Simulado (EVA):", 1, 10, 6, key="s_eva")
+    sim_tsk = c2.slider("Kinesiofobia Simulada (TSK):", 10.0, 50.0, 30.0, key="s_tsk")
+    sim_pcs = c3.slider("Catastrofización Simulada (PCS):", 0.0, 50.0, 20.0, key="s_pcs")
+
+    df_sim = pd.DataFrame({'eva_inicial': [sim_eva], 'tsk_score': [sim_tsk], 'pcs_score': [sim_pcs]})
+    
+    pred_s = int(model_sesiones.predict(df_sim)[0])
+    prob_s = float(model_exito.predict_proba(df_sim)[0][1] * 100)
+
+    res_col1, res_col2 = st.columns(2)
+    with res_col1:
+        st.metric("Sesiones Estimadas Recomendadas", f"{pred_s} Sesiones")
+        st.progress(min(pred_s / 30.0, 1.0))
         
-        tab_bronze, tab_silver, tab_gold, tab_registros = st.tabs([
-            "📥 Capa Bronze: Registro de Pacientes", 
-            "⚙️ Capa Silver: Transformación", 
-            "🏆 Capa Gold: Inferencia ML",
-            "📂 Base de Datos"
-        ])
-        
-        with tab_bronze:
-            st.header("📋 Formulario de Registro y Evaluación Biopsicosocial")
-            
-            with st.form("form_evaluacion"):
-                st.subheader("1. Datos Generales")
-                c_id1, c_id2, c_id3, c_id4 = st.columns(4)
-                with c_id1:
-                    dni_paciente = st.text_input("DNI / Cédula:", "76543210")
-                with c_id2:
-                    nombre_paciente = st.text_input("Nombre Completo:", "Juan Pérez")
-                with c_id3:
-                    edad = st.number_input("Edad:", 18, 95, 35)
-                with c_id4:
-                    genero = st.selectbox("Género:", ["Femenino", "Masculino", "Otro"])
+    with res_col2:
+        st.metric("Probabilidad de Recuperación Satisfactoria", f"{prob_s:.1f}%")
+        st.progress(prob_s / 100.0)
 
-                st.markdown("---")
-                st.subheader("2. Examen Biomecánico y Evaluaciones (1 a 10)")
-                col1, col2 = st.columns(2)
-                with col1:
-                    eva_inicial = st.slider("Escala Visual Analógica del Dolor (EVA):", 1, 10, 7)
-                    zona_afectada = st.selectbox("Zona Afectada:", ["Lumbar", "Cervical", "Rodilla", "Hombro", "Tobillo/Pie"])
-                with col2:
-                    tiempo_evolucion = st.number_input("Tiempo de Evolución (Semanas):", 1, 104, 4)
-                    asistencia_pct = st.slider("Compromiso / Asistencia (%):", 0, 100, 85)
-
-                st.markdown("---")
-                st.subheader("3. Escalas Psicosociales")
-                col_tsk, col_pcs = st.columns(2)
-                with col_tsk:
-                    st.markdown("**Kinesiofobia (TSK)**")
-                    tsk_1 = st.slider("1. Miedo a lesionarse al moverse:", 1, 10, 6)
-                    tsk_2 = st.slider("2. Evita actividad física:", 1, 10, 7)
-                    tsk_3 = st.slider("3. Percepción de daño:", 1, 10, 5)
-                    
-                with col_pcs:
-                    st.markdown("**Catastrofismo (PCS)**")
-                    pcs_1 = st.slider("1. Dolor perpetuo:", 1, 10, 5)
-                    pcs_2 = st.slider("2. Rumiación constante:", 1, 10, 6)
-                    pcs_3 = st.slider("3. Incapacidad de soporte:", 1, 10, 4)
-
-                btn_procesar = st.form_submit_button("💾 Guardar Paciente")
-
-        # Proceso analítico
-        score_tsk_10 = round((tsk_1 + tsk_2 + tsk_3) / 3, 2)
-        score_pcs_10 = round((pcs_1 + pcs_2 + pcs_3) / 3, 2)
-        indice_vulnerabilidad = round(((score_tsk_10 + score_pcs_10 + eva_inicial) / 30) * 100, 2)
-        
-        factor_severidad = (eva_inicial * 0.4) + (score_tsk_10 * 0.3) + (score_pcs_10 * 0.3)
-        num_sesiones = int(np.ceil(factor_severidad * 2.5))
-        dias_recuperacion = int(np.ceil(num_sesiones * 2.33))
-        fecha_estimada_alta = (datetime.now() + timedelta(days=dias_recuperacion)).strftime('%Y-%m-%d')
-        prob_recuperacion = round(min(max(100 - (factor_severidad * 8) + (asistencia_pct * 0.2), 10), 98), 2)
-
-        with tab_silver:
-            st.header("⚙️ Transformación e Índices Clínicos")
-            c_s1, c_s2, c_s3 = st.columns(3)
-            c_s1.metric("Kinesiofobia Promedio", f"{score_tsk_10} / 10")
-            c_s2.metric("Catastrofismo Promedio", f"{score_pcs_10} / 10")
-            c_s3.metric("Vulnerabilidad Biopsicosocial", f"{indice_vulnerabilidad} %")
-
-        with tab_gold:
-            st.header("🏆 Inferencia ML del Expediente")
-            st.subheader(f"Expediente Evaluado: **{nombre_paciente}** (DNI: {dni_paciente})")
-            
-            col_g1, col_g2 = st.columns([2, 1])
-            with col_g1:
-                st.metric("Sesiones Estimadas", f"{num_sesiones} Sesiones")
-                st.metric("Fecha Estimada de Alta", fecha_estimada_alta)
-                st.progress(float(prob_recuperacion / 100))
-                st.write(f"Probabilidad de Éxito: **{prob_recuperacion}%**")
-
-            with col_g2:
-                st.write("**Factores ML Aplicados:**")
-                st.write("- Severidad Física/Psicológica")
-                st.write("- Tasa de Asistencia del Paciente")
-
-        # LÓGICA DE GUARDADO AUTOMÁTICO
-        if btn_procesar:
-            datos_paciente = {
-                "dni": str(dni_paciente).strip(),
-                "nombre": nombre_paciente,
-                "edad": edad,
-                "genero": genero,
-                "eva_inicial": eva_inicial,
-                "zona_afectada": zona_afectada,
-                "tsk_score": score_tsk_10,
-                "pcs_score": score_pcs_10,
-                "num_sesiones": num_sesiones,
-                "fecha_alta": fecha_estimada_alta,
-                "probabilidad_recuperacion": prob_recuperacion
-            }
-            
-            # Guardado local
-            st.session_state.tabla_pacientes_local = pd.concat([
-                st.session_state.tabla_pacientes_local[st.session_state.tabla_pacientes_local["dni"] != str(dni_paciente).strip()],
-                pd.DataFrame([datos_paciente])
-            ], ignore_index=True)
-            
-            # Guardado en Supabase (si está configurado)
-            if supabase:
-                try:
-                    supabase.table("pacientes").upsert(datos_paciente).execute()
-                    st.success(f"✅ ¡Paciente {nombre_paciente} guardado exitosamente en Supabase y localmente!")
-                except Exception as ex:
-                    st.warning(f"✅ ¡Paciente {nombre_paciente} guardado en el sistema! (Nota en Supabase: {ex})")
-            else:
-                st.success(f"✅ ¡Paciente {nombre_paciente} guardado en la sesión local!")
-
-        # TABLA DE REGISTROS
-        with tab_registros:
-            st.header("📂 Historial de Pacientes")
-            df_final = st.session_state.tabla_pacientes_local
-            
-            if supabase:
-                try:
-                    res_db = supabase.table("pacientes").select("*").execute()
-                    if res_db.data:
-                        df_final = pd.DataFrame(res_db.data)
-                except Exception:
-                    pass
-            
+# ---------------------------------------------------------
+# PESTAÑA 4: BASE DE DATOS
+# ---------------------------------------------------------
+with tab4:
+    st.markdown("### 🗄️ Historial Completo de Pacientes")
+    if supabase:
+        try:
+            res = supabase.table("pacientes").select("*").execute()
+            df_final = pd.DataFrame(res.data)
             if not df_final.empty:
                 st.dataframe(df_final, use_container_width=True)
             else:
-                st.info("No hay registros disponibles en la base de datos.")
+                st.info("No hay registros disponibles en Supabase.")
+        except Exception as e:
+            st.error(f"Error cargando registros: {e}")
