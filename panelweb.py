@@ -5,6 +5,7 @@ import joblib
 import os
 import datetime
 from datetime import date, timedelta
+import zoneinfo
 import plotly.express as px
 from supabase import create_client, Client
 
@@ -18,14 +19,13 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS (FONDO SEGURO Y COLORES SUAVES/LLAMATIVOS)
+# ESTILOS CSS (DISEÑO MANTENIDO INTACTO)
 # ---------------------------------------------------------
 URL_FONDO = "https://raw.githubusercontent.com/mezaj5089-maker/sistema-fisioterapia-prediccion/main/fisio.png"
 
 st.markdown(
     f"""
     <style>
-    /* Fondo limpio sin romper Streamlit */
     .stApp {{
         background: linear-gradient(rgba(240, 244, 248, 0.85), rgba(240, 244, 248, 0.90)), 
                     url("{URL_FONDO}");
@@ -34,14 +34,12 @@ st.markdown(
         background-position: center;
     }}
 
-    /* Títulos */
     h1, h2, h3 {{
         color: #0F4C81 !important;
         font-family: 'Segoe UI', Roboto, sans-serif;
         font-weight: 700;
     }}
 
-    /* Reloj Digital Esmeralda Activo */
     .reloj-container {{
         background-color: #007A60;
         color: white;
@@ -49,7 +47,7 @@ st.markdown(
         border-radius: 12px;
         text-align: center;
         box-shadow: 0 4px 10px rgba(0, 122, 96, 0.3);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }}
     .reloj-container h2 {{
         color: #FFFFFF !important;
@@ -62,7 +60,6 @@ st.markdown(
         font-weight: 600;
     }}
 
-    /* Botones principales */
     .stButton>button {{
         background-color: #0F4C81;
         color: white;
@@ -82,7 +79,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# CONEXIÓN A SUPABASE Y MODELO ML
+# CONEXIÓN A SUPABASE Y MODELO RANDOM FOREST ML
 # ---------------------------------------------------------
 @st.cache_resource
 def init_supabase():
@@ -96,12 +93,12 @@ def init_supabase():
 supabase = init_supabase()
 
 @st.cache_resource
-def load_ml_model():
+def load_rf_model():
     if os.path.exists("modelo_fisioterapia.pkl"):
         return joblib.load("modelo_fisioterapia.pkl")
     return None
 
-model = load_ml_model()
+rf_model = load_rf_model()
 
 if "tabla_pacientes_local" not in st.session_state:
     st.session_state.tabla_pacientes_local = pd.DataFrame()
@@ -110,28 +107,47 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL (RELOJ + NAVEGACIÓN)
+# BARRA LATERAL: RELOJ EN ESPAÑOL (24H PERÚ) + CALENDARIO
 # ---------------------------------------------------------
 st.sidebar.title("🏥 Portal Clínico")
 
-# Reloj Digital
-ahora = datetime.datetime.now()
+# Cálculo de zona horaria Perú
+tz_peru = zoneinfo.ZoneInfo("America/Lima")
+ahora_peru = datetime.datetime.now(tz_peru)
+
+# Mapeo de días y meses en español
+dias_esp = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+meses_esp = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+nombre_dia = dias_esp[ahora_peru.weekday()]
+nombre_mes = meses_esp[ahora_peru.month - 1]
+fecha_espanol = f"{nombre_dia}, {ahora_peru.day} {nombre_mes} {ahora_peru.year}"
+
+# Contenedor de Reloj Digital
 st.sidebar.markdown(
     f"""
     <div class="reloj-container">
-        <small>HORA Y FECHA OFICIAL</small>
-        <h2>{ahora.strftime('%H:%M:%S')}</h2>
-        <small>{ahora.strftime('%a, %d %b %Y')}</small>
+        <small>HORA Y FECHA OFICIAL (PERÚ)</small>
+        <h2>{ahora_peru.strftime('%H:%M:%S')}</h2>
+        <small>{fecha_espanol}</small>
     </div>
     """, 
     unsafe_allow_html=True
+)
+
+# Calendario automático interactivo
+st.sidebar.subheader("📅 Calendario de Consultas")
+fecha_seleccionada = st.sidebar.date_input(
+    "Seleccione fecha:", 
+    value=ahora_peru.date(),
+    format="DD/MM/YYYY"
 )
 
 st.sidebar.write("---")
 st.sidebar.write("Seleccione el Perfil de Usuario:")
 perfil = st.sidebar.radio("", ["👤 Vista Paciente / Consulta", "🛡️ Vista Administrador / Fisioterapeuta"])
 
-# Login / Cerrar Sesión
+# Cierre e inicio de sesión
 if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
     if st.session_state.admin_logged_in:
         if st.sidebar.button("🔒 Cerrar Sesión"):
@@ -145,7 +161,7 @@ if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
             st.rerun()
 
 # ---------------------------------------------------------
-# TITULO PRINCIPAL
+# TÍTULO PRINCIPAL
 # ---------------------------------------------------------
 st.title("🩺 FISIOTERAPIA PREDICTIVA")
 st.caption("Sistema Inteligente de Evaluación, Diagnóstico y Predicción Clínica con ML")
@@ -203,7 +219,7 @@ else:
             "📁 Base de Datos / Dashboard"
         ])
         
-        # TAB 1: REGISTRO CON DETALLES DE DOLENCIA (IMAGEN 2)
+        # TAB 1: REGISTRO CON EVALUACIÓN PSICOFÍSICA
         with tab1:
             st.header("📋 Registro de Pacientes (Capa Bronze)")
             with st.form("form_bronze"):
@@ -239,24 +255,24 @@ else:
                 guardar = st.form_submit_button("💾 Guardar Paciente")
                 
                 if guardar and dni and nombre:
-                    # ML Inferencia
-                    if model is not None:
+                    # Inferencia con Modelo Random Forest
+                    if rf_model is not None:
                         try:
                             features = np.array([[eva, tsk_total, pcs_total]])
-                            pred_sesiones = int(model.predict(features)[0])
+                            pred_sesiones = int(rf_model.predict(features)[0])
                         except Exception:
                             pred_sesiones = int(eva * 1.5 + 4)
                     else:
                         pred_sesiones = int(eva * 1.5 + 4)
 
                     prob_exito = round(max(30.0, 100.0 - (eva * 3.5 + tsk_total * 0.4 + pcs_total * 0.4)), 1)
-                    fecha_alta = date.today() + timedelta(days=pred_sesiones * 2)
+                    fecha_alta_calculada = ahora_peru.date() + timedelta(days=pred_sesiones * 2)
 
                     nuevo_reg = {
                         "dni": dni, "nombre": nombre, "edad": edad, "genero": genero,
                         "eva_inicial": eva, "zona_afectada": zona, 
                         "tsk_score": tsk_total, "pcs_score": pcs_total,
-                        "num_sesiones": pred_sesiones, "fecha_alta": fecha_alta.isoformat(),
+                        "num_sesiones": pred_sesiones, "fecha_alta": fecha_alta_calculada.isoformat(),
                         "probabilidad_recuperacion": prob_exito
                     }
 
@@ -277,28 +293,28 @@ else:
         # TAB 2: CAPA SILVER
         with tab2:
             st.header("⚙️ Capa Silver: Transformación")
-            st.write("Limpieza y estructuración de datos para el modelo ML.")
+            st.write("Estructuración y limpieza de variables clínicas.")
             if not st.session_state.tabla_pacientes_local.empty:
                 st.dataframe(st.session_state.tabla_pacientes_local, use_container_width=True)
             else:
                 st.info("No hay registros cargados en la sesión.")
 
-        # TAB 3: CAPA GOLD
+        # TAB 3: CAPA GOLD (INFERENCIA RANDOM FOREST)
         with tab3:
-            st.header("🏆 Capa Gold: Inferencia ML")
+            st.header("🏆 Capa Gold: Inferencia ML (Random Forest)")
             if not st.session_state.tabla_pacientes_local.empty:
                 ultimo = st.session_state.tabla_pacientes_local.iloc[-1]
                 st.subheader(f"Expediente Evaluado: {ultimo['nombre']} (DNI: {ultimo['dni']})")
                 
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.metric("Sesiones Estimadas", f"{ultimo['num_sesiones']} Sesiones")
-                    st.metric("Fecha Estimada de Alta", str(ultimo['fecha_alta']))
+                    st.metric("Total de Sesiones Estimadas", f"{ultimo['num_sesiones']} Sesiones")
+                    st.metric("Fecha Estimada de Alta Médica", str(ultimo['fecha_alta']))
                 with c2:
-                    st.metric("Probabilidad de Éxito", f"{ultimo['probabilidad_recuperacion']}%")
+                    st.metric("Probabilidad de Éxito del Tratamiento", f"{ultimo['probabilidad_recuperacion']}%")
                     st.progress(float(ultimo['probabilidad_recuperacion']) / 100.0)
             else:
-                st.info("Registra un paciente en la Capa Bronze para generar su inferencia.")
+                st.info("Registra un paciente en la Capa Bronze para generar su estimación con Random Forest.")
 
         # TAB 4: BASE DE DATOS Y DASHBOARD
         with tab4:
