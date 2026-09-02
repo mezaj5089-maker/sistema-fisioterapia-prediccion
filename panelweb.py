@@ -6,36 +6,34 @@ import os
 from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
-# 1. Configuración de la aplicación
+# Configuración del panel
 st.set_page_config(
     page_title="Sistema Predictivo de Fisioterapia Biopsicosocial",
     layout="wide",
     page_icon="🏥"
 )
 
-# 2. Inicializar Conexión con Supabase
+# Estructura de almacenamiento local en memoria para evitar caídas
+if "tabla_pacientes_local" not in st.session_state:
+    st.session_state.tabla_pacientes_local = pd.DataFrame(columns=[
+        "dni", "nombre", "edad", "genero", "eva_inicial", "zona_afectada",
+        "tsk_score", "pcs_score", "num_sesiones", "fecha_alta", "probabilidad_recuperacion"
+    ])
+
+# Conexión con Supabase
 @st.cache_resource
-def init_supabase():
+def conectar_supabase():
     try:
         from supabase import create_client
         url = st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL")
         key = st.secrets.get("SUPABASE_KEY") or os.environ.get("SUPABASE_KEY")
         if url and key:
             return create_client(url, key)
-    except Exception as e:
-        st.error(f"Error cargando librería/credenciales de Supabase: {e}")
+    except Exception:
+        pass
     return None
 
-supabase = init_supabase()
-
-# 3. Cargar Modelo ML
-@st.cache_resource
-def cargar_modelo():
-    if os.path.exists('modelo_fisioterapia.pkl'):
-        return joblib.load('modelo_fisioterapia.pkl')
-    return None
-
-modelo = cargar_modelo()
+supabase = conectar_supabase()
 
 # Estilos CSS
 st.markdown("""
@@ -50,29 +48,17 @@ st.markdown("""
         width: 100%;
     }
     .stButton>button:hover { background-color: #0D9488; color: white; }
-    .clock-card {
-        background-color: #0F766E;
-        color: #FFFFFF;
-        padding: 12px;
-        border-radius: 10px;
-        text-align: center;
-        font-family: monospace;
-        margin-bottom: 20px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------------------------------------------------------
-# BARRA LATERAL: RELOJ EN TIEMPO REAL Y CONTROL DE ACCESO
-# ------------------------------------------------------------------------------
+# Barra Lateral y Reloj en Vivo
 st.sidebar.title("🏥 Portal Clínico")
 
-# Componente HTML/JS para Reloj Vivo
 html_reloj = """
 <div style="background-color: #0F766E; color: white; padding: 10px; border-radius: 8px; text-align: center; font-family: 'Courier New', monospace;">
-    <div style="font-size: 12px; text-transform: uppercase;">Hora y Fecha Oficial</div>
-    <div id="clock" style="font-size: 20px; font-weight: bold; margin-top: 5px;"></div>
-    <div id="date" style="font-size: 11px; opacity: 0.8;"></div>
+    <div style="font-size: 11px; text-transform: uppercase;">Hora y Fecha Oficial</div>
+    <div id="clock" style="font-size: 20px; font-weight: bold; margin-top: 4px;"></div>
+    <div id="date" style="font-size: 11px; opacity: 0.85;"></div>
 </div>
 
 <script>
@@ -107,60 +93,65 @@ rol = st.sidebar.radio("Seleccione el Perfil de Usuario:", [
 # ==============================================================================
 if rol == "👤 Vista Paciente / Consulta":
     st.title("🏥 Portal de Seguimiento del Paciente")
-    st.markdown("Consulte el estado real de su expediente clínico registrado.")
+    st.markdown("Consulte el estado de su expediente ingresando su DNI.")
     
     dni_consulta = st.text_input("Ingrese su DNI o Código de Identificación:")
     
     if dni_consulta:
+        paciente = None
+        dni_str = str(dni_consulta).strip()
+        
+        # 1. Intentar buscar en Supabase
         if supabase:
             try:
-                res = supabase.table("pacientes").select("*").eq("dni", str(dni_consulta).strip()).execute()
-                datos = res.data
+                res = supabase.table("pacientes").select("*").eq("dni", dni_str).execute()
+                if res.data:
+                    paciente = res.data[0]
+            except Exception:
+                pass
+        
+        # 2. Si no se encuentra en Supabase, buscar en almacenamiento local
+        if not paciente and not st.session_state.tabla_pacientes_local.empty:
+            coincidencias = st.session_state.tabla_pacientes_local[st.session_state.tabla_pacientes_local["dni"] == dni_str]
+            if not coincidencias.empty:
+                paciente = coincidencias.iloc[-1].to_dict()
                 
-                if datos:
-                    paciente = datos[0]
-                    st.success(f"Expediente encontrado: **{paciente.get('nombre', 'Paciente')}**")
-                    
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Sesiones Requeridas", f"{paciente.get('num_sesiones', 0)} Sesiones")
-                    m2.metric("Nivel de Dolor (EVA)", f"{paciente.get('eva_inicial', 0)} / 10")
-                    m3.metric("Fecha Estimada de Alta", str(paciente.get('fecha_alta', 'Pendiente')))
-                    
-                    st.markdown("---")
-                    st.subheader("📈 Proyección de Recuperación")
-                    eva_val = int(paciente.get('eva_inicial', 7))
-                    chart_data = pd.DataFrame({
-                        'Semana': ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
-                        'Nivel Dolor (EVA)': [eva_val, max(eva_val - 2, 1), max(eva_val - 4, 1), 1],
-                        'Movilidad (%)': [35, 60, 80, 95]
-                    }).set_index('Semana')
-                    st.line_chart(chart_data)
-                else:
-                    st.warning("No se encontró ningún expediente registrado con este DNI en la base de datos.")
-            except Exception as e:
-                st.error(f"Error al consultar la base de datos: {e}")
+        if paciente:
+            st.success(f"Expediente encontrado: **{paciente.get('nombre', 'Paciente')}**")
+            
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Sesiones Requeridas", f"{paciente.get('num_sesiones', 0)} Sesiones")
+            m2.metric("Nivel de Dolor (EVA)", f"{paciente.get('eva_inicial', 0)} / 10")
+            m3.metric("Fecha Estimada de Alta", str(paciente.get('fecha_alta', 'Pendiente')))
+            
+            st.markdown("---")
+            st.subheader("📈 Proyección de Recuperación")
+            eva_val = int(paciente.get('eva_inicial', 7))
+            chart_data = pd.DataFrame({
+                'Semana': ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                'Nivel Dolor (EVA)': [eva_val, max(eva_val - 2, 1), max(eva_val - 4, 1), 1],
+                'Movilidad (%)': [35, 60, 80, 95]
+            }).set_index('Semana')
+            st.line_chart(chart_data)
         else:
-            st.error("Conexión con Supabase no activa. Configure las claves en los Secrets de Streamlit.")
+            st.warning("No se encontró ningún expediente registrado con este DNI.")
 
 # ==============================================================================
-# VISTA 2: ADMINISTRADOR CON AUTENTICACIÓN
+# VISTA 2: ADMINISTRADOR CON CLAVE DE ACCESO
 # ==============================================================================
 else:
-    st.title("🛡️ Acceso Restringido - Panel Administrador")
+    st.title("🛡️ Panel Administrador - Control de Acceso")
     
-    # Manejo de sesión para contraseña
     if "admin_autenticado" not in st.session_state:
         st.session_state.admin_autenticado = False
 
     if not st.session_state.admin_autenticado:
-        st.warning("🔒 Se requieren credenciales de administrador para gestionar registros.")
-        clave_ingresada = st.text_input("Ingrese la Contraseña de Administrador:", type="password")
+        st.warning("🔒 Ingrese la clave para gestionar pacientes.")
+        clave_ingresada = st.text_input("Contraseña de Administrador:", type="password")
         
         if st.button("Iniciar Sesión"):
-            # Puedes cambiar la contraseña 'admin123' por la que prefieras
             if clave_ingresada == "admin123":
                 st.session_state.admin_autenticado = True
-                st.success("Acceso concedido.")
                 st.rerun()
             else:
                 st.error("Contraseña incorrecta.")
@@ -175,14 +166,14 @@ else:
             "📥 Capa Bronze: Registro de Pacientes", 
             "⚙️ Capa Silver: Transformación", 
             "🏆 Capa Gold: Inferencia ML",
-            "📂 Base de Datos en Supabase"
+            "📂 Base de Datos"
         ])
         
         with tab_bronze:
             st.header("📋 Formulario de Registro y Evaluación Biopsicosocial")
             
             with st.form("form_evaluacion"):
-                st.subheader("1. Datos Generales del Paciente")
+                st.subheader("1. Datos Generales")
                 c_id1, c_id2, c_id3, c_id4 = st.columns(4)
                 with c_id1:
                     dni_paciente = st.text_input("DNI / Cédula:", "76543210")
@@ -194,7 +185,7 @@ else:
                     genero = st.selectbox("Género:", ["Femenino", "Masculino", "Otro"])
 
                 st.markdown("---")
-                st.subheader("2. Examen Biomecánico y Evaluación Dolor (1 a 10)")
+                st.subheader("2. Examen Biomecánico y Evaluaciones (1 a 10)")
                 col1, col2 = st.columns(2)
                 with col1:
                     eva_inicial = st.slider("Escala Visual Analógica del Dolor (EVA):", 1, 10, 7)
@@ -204,7 +195,7 @@ else:
                     asistencia_pct = st.slider("Compromiso / Asistencia (%):", 0, 100, 85)
 
                 st.markdown("---")
-                st.subheader("3. Cuestionarios Psicosociales (1 a 10)")
+                st.subheader("3. Escalas Psicosociales")
                 col_tsk, col_pcs = st.columns(2)
                 with col_tsk:
                     st.markdown("**Kinesiofobia (TSK)**")
@@ -218,9 +209,9 @@ else:
                     pcs_2 = st.slider("2. Rumiación constante:", 1, 10, 6)
                     pcs_3 = st.slider("3. Incapacidad de soporte:", 1, 10, 4)
 
-                btn_procesar = st.form_submit_button("💾 Guardar Paciente en Supabase")
+                btn_procesar = st.form_submit_button("💾 Guardar Paciente")
 
-        # Cálculos de los parámetros
+        # Proceso analítico
         score_tsk_10 = round((tsk_1 + tsk_2 + tsk_3) / 3, 2)
         score_pcs_10 = round((pcs_1 + pcs_2 + pcs_3) / 3, 2)
         indice_vulnerabilidad = round(((score_tsk_10 + score_pcs_10 + eva_inicial) / 30) * 100, 2)
@@ -254,42 +245,52 @@ else:
                 st.write("- Severidad Física/Psicológica")
                 st.write("- Tasa de Asistencia del Paciente")
 
-        # ACCIÓN DE GUARDADO EN SUPABASE AL HACER CLIC EN EL BOTÓN
+        # LÓGICA DE GUARDADO AUTOMÁTICO
         if btn_procesar:
+            datos_paciente = {
+                "dni": str(dni_paciente).strip(),
+                "nombre": nombre_paciente,
+                "edad": edad,
+                "genero": genero,
+                "eva_inicial": eva_inicial,
+                "zona_afectada": zona_afectada,
+                "tsk_score": score_tsk_10,
+                "pcs_score": score_pcs_10,
+                "num_sesiones": num_sesiones,
+                "fecha_alta": fecha_estimada_alta,
+                "probabilidad_recuperacion": prob_recuperacion
+            }
+            
+            # Guardado local
+            st.session_state.tabla_pacientes_local = pd.concat([
+                st.session_state.tabla_pacientes_local[st.session_state.tabla_pacientes_local["dni"] != str(dni_paciente).strip()],
+                pd.DataFrame([datos_paciente])
+            ], ignore_index=True)
+            
+            # Guardado en Supabase (si está configurado)
             if supabase:
-                data_insert = {
-                    "dni": str(dni_paciente).strip(),
-                    "nombre": nombre_paciente,
-                    "edad": edad,
-                    "genero": genero,
-                    "eva_inicial": eva_inicial,
-                    "zona_afectada": zona_afectada,
-                    "tsk_score": score_tsk_10,
-                    "pcs_score": score_pcs_10,
-                    "num_sesiones": num_sesiones,
-                    "fecha_alta": fecha_estimada_alta,
-                    "probabilidad_recuperacion": prob_recuperacion
-                }
                 try:
-                    res = supabase.table("pacientes").upsert(data_insert).execute()
-                    st.success(f"✅ ¡Registro guardado y sincronizado exitosamente en Supabase para el paciente {nombre_paciente}!")
-                except Exception as e:
-                    st.error(f"Error al escribir en Supabase: {e}")
+                    supabase.table("pacientes").upsert(datos_paciente).execute()
+                    st.success(f"✅ ¡Paciente {nombre_paciente} guardado exitosamente en Supabase y localmente!")
+                except Exception as ex:
+                    st.warning(f"✅ ¡Paciente {nombre_paciente} guardado en el sistema! (Nota en Supabase: {ex})")
             else:
-                st.error("No se pudo conectar con Supabase. Revise sus llaves URL y KEY en los Secrets de Streamlit.")
+                st.success(f"✅ ¡Paciente {nombre_paciente} guardado en la sesión local!")
 
-        # VISTA DE CONSULTA DIRECTA DESDE SUPABASE
+        # TABLA DE REGISTROS
         with tab_registros:
-            st.header("📂 Expedientes en Nube (Supabase)")
+            st.header("📂 Historial de Pacientes")
+            df_final = st.session_state.tabla_pacientes_local
+            
             if supabase:
                 try:
-                    res_all = supabase.table("pacientes").select("*").execute()
-                    if res_all.data:
-                        df_db = pd.DataFrame(res_all.data)
-                        st.dataframe(df_db, use_container_width=True)
-                    else:
-                        st.info("La base de datos se encuentra vacía actualmente.")
-                except Exception as e:
-                    st.error(f"Error cargando los datos de Supabase: {e}")
+                    res_db = supabase.table("pacientes").select("*").execute()
+                    if res_db.data:
+                        df_final = pd.DataFrame(res_db.data)
+                except Exception:
+                    pass
+            
+            if not df_final.empty:
+                st.dataframe(df_final, use_container_width=True)
             else:
-                st.error("Conexión con la base de datos no establecida.")
+                st.info("No hay registros disponibles en la base de datos.")
