@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
@@ -38,26 +39,6 @@ st.markdown(
         color: #0F4C81 !important;
         font-family: 'Segoe UI', Roboto, sans-serif;
         font-weight: 700;
-    }}
-
-    .reloj-container {{
-        background-color: #007A60;
-        color: white;
-        padding: 14px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 4px 10px rgba(0, 122, 96, 0.3);
-        margin-bottom: 15px;
-    }}
-    .reloj-container h2 {{
-        color: #FFFFFF !important;
-        margin: 4px 0 0 0;
-        font-size: 28px;
-        letter-spacing: 1.5px;
-    }}
-    .reloj-container small {{
-        color: #D1FAE5;
-        font-weight: 600;
     }}
 
     .stButton>button {{
@@ -107,33 +88,154 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL: RELOJ EN ESPAÑOL (24H PERÚ) + CALENDARIO
+# BARRA LATERAL: RELOJ EN VIVO (JS/HTML) + CALENDARIO
 # ---------------------------------------------------------
 st.sidebar.title("🏥 Portal Clínico")
 
-# Cálculo de zona horaria Perú
+# Componente HTML / JavaScript para Reloj Digital en Tiempo Real
+reloj_digital_js = """
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Roboto:wght@500;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .reloj-card {
+            background: #0d1117;
+            border: 2px solid #00f2fe;
+            border-radius: 14px;
+            padding: 12px 10px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+            color: #ffffff;
+        }
+
+        .reloj-header {
+            font-size: 10px;
+            font-weight: 700;
+            color: #00f2fe;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .reloj-display {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            font-family: 'Orbitron', monospace;
+            background: #050811;
+            padding: 8px 4px;
+            border-radius: 8px;
+            border: 1px solid #1f293d;
+        }
+
+        .tiempo-principal {
+            font-size: 26px;
+            font-weight: 800;
+            color: #00ff87;
+            text-shadow: 0 0 8px rgba(0, 255, 135, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .segundos {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ff007f;
+            text-shadow: 0 0 6px rgba(255, 0, 127, 0.6);
+            margin-left: 4px;
+        }
+
+        .fecha-sub {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            letter-spacing: 0.5px;
+        }
+
+        .dia-semana {
+            color: #ffb703;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+    <div class="reloj-card">
+        <div class="reloj-header">HORA Y FECHA OFICIAL (PERÚ)</div>
+        <div class="reloj-display">
+            <span id="hora-min" class="tiempo-principal">00:00</span>
+            <span id="seg" class="segundos">:00</span>
+        </div>
+        <div class="fecha-sub">
+            <span id="dia-nombre" class="dia-semana">Lunes</span>, 
+            <span id="fecha-completa">01 Jan 2026</span>
+        </div>
+    </div>
+
+    <script>
+        function actualizarReloj() {
+            // Configurar zona horaria de Perú (America/Lima)
+            const opcionesFecha = { 
+                timeZone: 'America/Lima',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+
+            const ahora = new Date();
+            const formateador = new Intl.DateTimeFormat('es-PE', opcionesFecha);
+            const partes = formateador.formatToParts(ahora);
+
+            let hora = '', minuto = '', segundo = '', diaNombre = '', diaNum = '', mes = '', anio = '';
+
+            partes.forEach(p => {
+                if (p.type === 'hour') hora = p.value;
+                if (p.type === 'minute') minuto = p.value;
+                if (p.type === 'second') segundo = p.value;
+                if (p.type === 'weekday') diaNombre = p.value;
+                if (p.type === 'day') diaNum = p.value;
+                if (p.type === 'month') mes = p.value;
+                if (p.type === 'year') anio = p.value;
+            });
+
+            // Capitalizar la primera letra del día y mes
+            diaNombre = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
+            mes = mes.charAt(0).toUpperCase() + mes.slice(1);
+
+            document.getElementById('hora-min').textContent = `${hora}:${minuto}`;
+            document.getElementById('seg').textContent = `:${segundo}`;
+            document.getElementById('dia-nombre').textContent = diaNombre;
+            document.getElementById('fecha-completa').textContent = `${diaNum} ${mes} ${anio}`;
+        }
+
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+    </script>
+</body>
+</html>
+"""
+
+# Renderizar Reloj Digital Interactivo en la Barra Lateral
+with st.sidebar:
+    components.html(reloj_digital_js, height=140)
+
+# Cálculo de la fecha base para el calendario
 tz_peru = zoneinfo.ZoneInfo("America/Lima")
 ahora_peru = datetime.datetime.now(tz_peru)
-
-# Mapeo de días y meses en español
-dias_esp = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-meses_esp = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-
-nombre_dia = dias_esp[ahora_peru.weekday()]
-nombre_mes = meses_esp[ahora_peru.month - 1]
-fecha_espanol = f"{nombre_dia}, {ahora_peru.day} {nombre_mes} {ahora_peru.year}"
-
-# Contenedor de Reloj Digital
-st.sidebar.markdown(
-    f"""
-    <div class="reloj-container">
-        <small>HORA Y FECHA OFICIAL (PERÚ)</small>
-        <h2>{ahora_peru.strftime('%H:%M:%S')}</h2>
-        <small>{fecha_espanol}</small>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
 
 # Calendario automático interactivo
 st.sidebar.subheader("📅 Calendario de Consultas")
