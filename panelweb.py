@@ -21,31 +21,40 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS CON CONTRASTE ADAPTATIVO
+# ESTILOS CSS REVISADOS: TEXTOS BLANCOS, HOVER Y ALTO CONTRASTE
 # ---------------------------------------------------------
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@600;800&display=swap');
 
+    /* Fondo general */
     .stApp {
         background: linear-gradient(135deg, #0b1120 0%, #171e38 50%, #0b1120 100%);
         font-family: 'Inter', sans-serif;
+        color: #ffffff !important;
     }
 
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    /* Encabezados y Subtítulos en Blanco Puro con Brillo */
+    h1, h2, h3, h4, h5, h6 {
         font-family: 'Inter', sans-serif !important;
         font-weight: 800 !important;
         color: #ffffff !important;
     }
 
-    .stMarkdown p, .stMarkdown label, .stMarkdown span {
-        color: #e2e8f0 !important;
+    p, span, label, div {
+        color: #ffffff !important;
     }
 
-    /* Pestañas (Tabs) */
+    /* Subtítulos específicos de Streamlit */
+    .stMarkdown p, .stMarkdown label, .stMarkdown span {
+        color: #e2e8f0 !important;
+        font-size: 1.05rem;
+    }
+
+    /* Pestañas (Tabs): Texto blanco visible + Efecto HOVER interactivo */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: rgba(15, 23, 42, 0.8);
@@ -56,13 +65,14 @@ st.markdown("""
 
     .stTabs [data-baseweb="tab"] {
         border-radius: 10px !important;
-        color: #ffffff !important;
+        color: #ffffff !important; /* Blanco puro por defecto */
         font-weight: 700 !important;
         padding: 10px 20px !important;
         border: 1px solid transparent !important;
         transition: all 0.3s ease !important;
     }
 
+    /* Hover en pestañas */
     .stTabs [data-baseweb="tab"]:hover {
         color: #38bdf8 !important;
         background-color: rgba(56, 189, 248, 0.2) !important;
@@ -70,40 +80,14 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
+    /* Pestaña Seleccionada */
     .stTabs [aria-selected="true"] {
         background: linear-gradient(90deg, #0284c7 0%, #6366f1 100%) !important;
         color: #ffffff !important;
         box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4) !important;
     }
 
-    /* Contraste adaptativo para elementos claros (Popups, Selectbox, Calendario) */
-    div[data-baseweb="calendar"] *, 
-    div[data-baseweb="popover"] * {
-        color: #0f172a !important;
-    }
-    
-    div[data-baseweb="calendar"] {
-        background-color: #ffffff !important;
-        border-radius: 12px;
-    }
-
-    div[data-baseweb="select"] * {
-        color: #0f172a !important;
-        font-weight: 600 !important;
-    }
-
-    div[data-baseweb="menu"] * {
-        color: #0f172a !important;
-    }
-
-    .stTextInput input, .stNumberInput input {
-        background-color: #0f172a !important;
-        color: #ffffff !important;
-        border: 1px solid #38bdf8 !important;
-        border-radius: 10px !important;
-    }
-
-    /* Sidebar */
+    /* Textos en la Sidebar (Barra Lateral) */
     section[data-testid="stSidebar"] {
         background-color: #0d1527 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -116,11 +100,13 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    /* Radio Buttons en Sidebar con Hover */
     div[data-testid="stRadio"] label:hover {
         color: #38bdf8 !important;
         cursor: pointer;
     }
 
+    /* Tarjetas Glassmorphism */
     div[data-testid="stForm"], .glass-card {
         background: rgba(30, 41, 59, 0.85) !important;
         border: 1px solid rgba(56, 189, 248, 0.3) !important;
@@ -129,6 +115,7 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
     }
 
+    /* Botones */
     .stButton>button, div[data-testid="stForm"] button {
         background: linear-gradient(90deg, #0284c7 0%, #6366f1 100%) !important;
         color: #ffffff !important;
@@ -146,11 +133,25 @@ st.markdown("""
         color: #000000 !important;
         box-shadow: 0 8px 25px rgba(56, 189, 248, 0.8) !important;
     }
+
+    /* Inputs de texto y números */
+    .stTextInput input, .stNumberInput input, .stSelectbox select {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+    }
+
+    /* Slider styling */
+    .stSlider label {
+        color: #ffffff !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# CONEXIÓN A SUPABASE Y MODELO ML
+# CONEXIÓN A SUPABASE Y MODELO RANDOM FOREST ML
 # ---------------------------------------------------------
 @st.cache_resource
 def init_supabase():
@@ -178,7 +179,7 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL: RELOJ Y CALENDARIO
+# BARRA LATERAL: RELOJ DIGITAL EN VIVO + CALENDARIO
 # ---------------------------------------------------------
 st.sidebar.markdown("<h2 style='text-align: center; color: #ffffff;'>🏥 Portal Clínico</h2>", unsafe_allow_html=True)
 
@@ -255,7 +256,11 @@ tz_peru = zoneinfo.ZoneInfo("America/Lima")
 ahora_peru = datetime.datetime.now(tz_peru)
 
 st.sidebar.markdown("<p style='color:#ffffff; font-weight:bold; margin-bottom:2px;'>📅 Calendario de Consultas</p>", unsafe_allow_html=True)
-fecha_seleccionada = st.sidebar.date_input("", value=ahora_peru.date(), format="DD/MM/YYYY")
+fecha_seleccionada = st.sidebar.date_input(
+    "", 
+    value=ahora_peru.date(),
+    format="DD/MM/YYYY"
+)
 
 st.sidebar.write("---")
 st.sidebar.markdown("<p style='color:#ffffff; font-weight:bold;'>Seleccione el Perfil de Usuario:</p>", unsafe_allow_html=True)
@@ -274,7 +279,7 @@ if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
             st.rerun()
 
 # ---------------------------------------------------------
-# TÍTULO PRINCIPAL
+# TÍTULO PRINCIPAL EN BLANCO
 # ---------------------------------------------------------
 st.markdown("""
     <div style="text-align: center; padding: 15px 0;">
@@ -336,65 +341,11 @@ else:
             "📊 Dashboard Interactivo HTML"
         ])
         
-        # TAB 1: REGISTRO + GALERÍA + MAQUETA ANATÓMICA MUSCULAR 3D INTERACTIVA
+        # TAB 1: REGISTRO + MAQUETA ANATÓMICA MUSCULAR 3D INTERACTIVA
         with tab1:
-            st.header("📋 Registro de Pacientes, Galería de Lesiones y Evaluación 3D (Capa Bronze)")
+            st.header("📋 Registro de Pacientes y Evaluación Anatómica (Capa Bronze)")
             
-            # GALERÍA / TARJETAS DE TIPOS DE LESIÓN
-            st.subheader("🏥 Clasificación Visual de Lesiones Fisioterapéuticas")
-            lesiones_html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    .lesiones-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
-                    .lesion-card { background: rgba(30, 41, 59, 0.9); border-radius: 12px; border: 2px solid #38bdf8; padding: 12px; text-align: center; color: white; transition: all 0.3s; }
-                    .lesion-card:hover { transform: translateY(-3px); border-color: #c084fc; box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4); }
-                    .lesion-card h4 { margin: 0 0 6px 0; font-size: 15px; color: #38bdf8; }
-                    .lesion-card p { margin: 0; font-size: 11px; color: #cbd5e1; }
-                    .icon-lesion { font-size: 26px; margin-bottom: 6px; display: block; }
-                </style>
-            </head>
-            <body>
-                <div class="lesiones-grid">
-                    <div class="lesion-card">
-                        <span class="icon-lesion">👥</span>
-                        <h4>Todas</h4>
-                        <p>Todas las áreas de tratamiento fisioterapéutico.</p>
-                    </div>
-                    <div class="lesion-card" style="border-color: #34d399;">
-                        <span class="icon-lesion">🦴</span>
-                        <h4 style="color:#34d399;">Articular</h4>
-                        <p>Tratamiento de articulaciones (dolor, movilidad, estabilidad).</p>
-                    </div>
-                    <div class="lesion-card" style="border-color: #fbbf24;">
-                        <span class="icon-lesion">💪</span>
-                        <h4 style="color:#fbbf24;">Muscular</h4>
-                        <p>Recuperación y fortalecimiento del tejido muscular.</p>
-                    </div>
-                    <div class="lesion-card" style="border-color: #c084fc;">
-                        <span class="icon-lesion">🧠</span>
-                        <h4 style="color:#c084fc;">Neurológica</h4>
-                        <p>Rehabilitación del sistema nervioso (ictus, medular, etc.).</p>
-                    </div>
-                    <div class="lesion-card" style="border-color: #38bdf8;">
-                        <span class="icon-lesion">🩹</span>
-                        <h4 style="color:#38bdf8;">Postquirúrgica</h4>
-                        <p>Recuperación funcional y disminución del dolor post-operación.</p>
-                    </div>
-                    <div class="lesion-card" style="border-color: #a78bfa;">
-                        <span class="icon-lesion">🦶</span>
-                        <h4 style="color:#a78bfa;">Tendinosa</h4>
-                        <p>Disminuye inflamación, mejora elasticidad y fortalece el tendón.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            components.html(lesiones_html, height=165)
-
-            st.subheader("🧍 Maqueta Anatómica Muscular 3D Interactiva")
-            # THREE.JS MAQUETA 3D
+            # MAQUETA ANATÓMICA REALISTA DE MÚSCULOS EN 3D
             threejs_anatomical_maquette = """
             <!DOCTYPE html>
             <html lang="es">
@@ -438,6 +389,7 @@ else:
                     renderer.setSize(container.clientWidth, container.clientHeight);
                     container.appendChild(renderer.domElement);
 
+                    // Luces de alta definición para resaltar volumen de músculos
                     const light1 = new THREE.DirectionalLight(0xffffff, 1.2);
                     light1.position.set(5, 10, 7);
                     scene.add(light1);
@@ -451,16 +403,17 @@ else:
 
                     const bodyGroup = new THREE.Group();
 
-                    const matMusculo = new THREE.MeshPhongMaterial({ color: 0xd946ef, specular: 0xf472b6, shininess: 30 });
-                    const matTorso = new THREE.MeshPhongMaterial({ color: 0xe11d48, specular: 0xfb7185, shininess: 40 });
-                    const matArticulacion = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7 });
-                    const matPiernas = new THREE.MeshPhongMaterial({ color: 0xc084fc, specular: 0xe879f9, shininess: 25 });
+                    // Materiales Anatómicos Médicos
+                    const matMusculo = new THREE.MeshPhongMaterial({ color: 0xd946ef, specular: 0xf472b6, shininess: 30 }); // Músculo muscular magenta
+                    const matTorso = new THREE.MeshPhongMaterial({ color: 0xe11d48, specular: 0xfb7185, shininess: 40 }); // Pecho y Abdomen
+                    const matArticulacion = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7 }); // Puntos Articulares
+                    const matPiernas = new THREE.MeshPhongMaterial({ color: 0xc084fc, specular: 0xe879f9, shininess: 25 }); // Cuádriceps
 
-                    // Cabeza
+                    // 1. Cabeza y Cuello (Cervical)
                     const headGeo = new THREE.SphereGeometry(0.42, 24, 24);
                     const head = new THREE.Mesh(headGeo, matArticulacion);
                     head.position.y = 2.1;
-                    head.userData = { title: "Zona Cervical / Cabeza", desc: "Músculos Trapecio y Esternocleidomastoideo. Evaluado en cervicalgias." };
+                    head.userData = { title: "Zona Cervical / Cabeza", desc: "Músculos Trapecio y Esternocleidomastoideo. Evaluado en cervicalgias y estrés." };
                     bodyGroup.add(head);
 
                     const neckGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.3, 16);
@@ -468,54 +421,87 @@ else:
                     neck.position.y = 1.7;
                     bodyGroup.add(neck);
 
-                    // Tórax
+                    // 2. Torso (Pectorales y Abdominales)
                     const chestGeo = new THREE.BoxGeometry(1.1, 0.8, 0.5);
                     const chest = new THREE.Mesh(chestGeo, matTorso);
                     chest.position.y = 1.25;
-                    chest.userData = { title: "Tórax y Pectorales", desc: "Músculos Pectorales Mayor/Menor." };
+                    chest.userData = { title: "Tórax y Pectorales", desc: "Músculos Pectorales Mayor/Menor. Claves para postura de hombros." };
                     bodyGroup.add(chest);
 
                     const absGeo = new THREE.BoxGeometry(0.9, 0.7, 0.45);
                     const abs = new THREE.Mesh(absGeo, matMusculo);
                     abs.position.y = 0.55;
-                    abs.userData = { title: "Core y Abdomen", desc: "Estabilizadores del tronco y columna." };
+                    abs.userData = { title: "Core y Pared Abdominal", desc: "Recto abdominal y Oblicuos. Estabilizadores del tronco y columna." };
                     bodyGroup.add(abs);
 
-                    // Lumbar
+                    // 3. Zona Lumbar y Pelvis
                     const pelvisGeo = new THREE.CylinderGeometry(0.5, 0.42, 0.5, 16);
                     const pelvis = new THREE.Mesh(pelvisGeo, matTorso);
                     pelvis.position.y = 0.0;
-                    pelvis.userData = { title: "Región Lumbar y Glúteos", desc: "Zona crítica para Lumbalgia y Dolor Crónico." };
+                    pelvis.userData = { title: "Región Lumbar y Glúteos", desc: "Zona crítica para Lumbalgia. Músculos Cuadrado Lumbar y Glúteo Mayor." };
                     bodyGroup.add(pelvis);
 
-                    // Hombros
+                    // 4. Hombros (Deltoides)
                     const shoulderGeo = new THREE.SphereGeometry(0.28, 16, 16);
                     const shoulderR = new THREE.Mesh(shoulderGeo, matArticulacion);
                     shoulderR.position.set(-0.75, 1.45, 0);
-                    shoulderR.userData = { title: "Hombro Derecho", desc: "Manguito Rotador y Deltoides." };
+                    shoulderR.userData = { title: "Hombro Derecho (Deltoides)", desc: "Manguito Rotador y Deltoides. Frecuente en tendinopatías." };
                     bodyGroup.add(shoulderR);
 
                     const shoulderL = new THREE.Mesh(shoulderGeo, matArticulacion);
                     shoulderL.position.set(0.75, 1.45, 0);
-                    shoulderL.userData = { title: "Hombro Izquierdo", desc: "Manguito Rotador y Deltoides." };
+                    shoulderL.userData = { title: "Hombro Izquierdo (Deltoides)", desc: "Manguito Rotador y Deltoides. Frecuente en tendinopatías." };
                     bodyGroup.add(shoulderL);
 
-                    // Extremidades
+                    // 5. Brazos (Bíceps / Tríceps)
+                    const armGeo = new THREE.CylinderGeometry(0.18, 0.15, 0.9, 16);
+                    const armR = new THREE.Mesh(armGeo, matMusculo);
+                    armR.position.set(-0.82, 0.85, 0);
+                    bodyGroup.add(armR);
+
+                    const armL = new THREE.Mesh(armGeo, matMusculo);
+                    armL.position.set(0.82, 0.85, 0);
+                    bodyGroup.add(armL);
+
+                    // 6. Piernas y Rodillas (Cuádriceps)
                     const legGeo = new THREE.CylinderGeometry(0.25, 0.19, 1.1, 16);
                     const legR = new THREE.Mesh(legGeo, matPiernas);
                     legR.position.set(-0.32, -0.8, 0);
-                    legR.userData = { title: "Muslo Derecho", desc: "Cuádriceps e Isquiotibiales." };
+                    legR.userData = { title: "Muslo y Cuádriceps (Derecho)", desc: "Músculo Cuádriceps Femoral. Potencia en extensión de rodilla." };
                     bodyGroup.add(legR);
 
                     const legL = new THREE.Mesh(legGeo, matPiernas);
                     legL.position.set(0.32, -0.8, 0);
-                    legL.userData = { title: "Muslo Izquierdo", desc: "Cuádriceps e Isquiotibiales." };
+                    legL.userData = { title: "Muslo y Cuádriceps (Izquierdo)", desc: "Músculo Cuádriceps Femoral. Potencia en extensión de rodilla." };
                     bodyGroup.add(legL);
+
+                    // Rodillas
+                    const kneeGeo = new THREE.SphereGeometry(0.22, 16, 16);
+                    const kneeR = new THREE.Mesh(kneeGeo, matArticulacion);
+                    kneeR.position.set(-0.32, -1.45, 0.1);
+                    kneeR.userData = { title: "Articulación de Rodilla", desc: "Evaluación de Ligamentos Cruzados y Meniscos en Esguinces." };
+                    bodyGroup.add(kneeR);
+
+                    const kneeL = new THREE.Mesh(kneeGeo, matArticulacion);
+                    kneeL.position.set(0.32, -1.45, 0.1);
+                    kneeL.userData = { title: "Articulación de Rodilla", desc: "Evaluación de Ligamentos Cruzados y Meniscos en Esguinces." };
+                    bodyGroup.add(kneeL);
+
+                    // Gemelos / Pantorrillas
+                    const calfGeo = new THREE.CylinderGeometry(0.18, 0.12, 1.0, 16);
+                    const calfR = new THREE.Mesh(calfGeo, matMusculo);
+                    calfR.position.set(-0.32, -2.05, 0);
+                    bodyGroup.add(calfR);
+
+                    const calfL = new THREE.Mesh(calfGeo, matMusculo);
+                    calfL.position.set(0.32, -2.05, 0);
+                    bodyGroup.add(calfL);
 
                     bodyGroup.position.y = 0.2;
                     scene.add(bodyGroup);
                     camera.position.z = 6.2;
 
+                    // Interacción Raycaster para Detectar Hover sobre Músculos
                     const raycaster = new THREE.Raycaster();
                     const mouse = new THREE.Vector2();
 
@@ -538,6 +524,7 @@ else:
 
                     container.addEventListener('mousemove', onMouseMove, false);
 
+                    // Animación de Rotación Anatómica
                     function animate() {
                         requestAnimationFrame(animate);
                         bodyGroup.rotation.y += 0.008;
@@ -560,8 +547,7 @@ else:
                     genero = st.selectbox("Género:", ["Masculino", "Femenino", "Otro"])
                 with col2:
                     eva = st.slider("Escala EVA (Dolor Inicial 1-10):", 1, 10, 5)
-                    zona = st.selectbox("Tipo de Lesión:", ["Postquirurgica", "Articular", "Muscular", "Neurologica", "Tendinosa"])
-                    cronicidad = st.selectbox("Cronicidad:", ["Cronico", "Agudo", "Subagudo"])
+                    zona = st.selectbox("Zona Afectada:", ["Lumbar", "Cervical", "Hombro", "Rodilla", "Tobillo", "Otro"])
                 
                 st.write("---")
                 st.subheader("2. Evaluación Psicofísica Detallada")
@@ -598,7 +584,7 @@ else:
 
                     nuevo_reg = {
                         "dni": dni, "nombre": nombre, "edad": edad, "genero": genero,
-                        "eva_inicial": eva, "zona_afectada": zona, "cronicidad": cronicidad,
+                        "eva_inicial": eva, "zona_afectada": zona, 
                         "tsk_score": tsk_total, "pcs_score": pcs_total,
                         "num_sesiones": pred_sesiones, "fecha_alta": fecha_alta_calculada.isoformat(),
                         "probabilidad_recuperacion": prob_exito
@@ -626,7 +612,7 @@ else:
             else:
                 st.info("No hay registros cargados en la sesión.")
 
-        # TAB 3: CAPA GOLD
+        # TAB 3: CAPA GOLD (INFERENCIA RANDOM FOREST)
         with tab3:
             st.header("🏆 Capa Gold: Inferencia ML (Random Forest)")
             if not st.session_state.tabla_pacientes_local.empty:
@@ -643,9 +629,9 @@ else:
             else:
                 st.info("Registra un paciente en la Capa Bronze para generar su estimación con Random Forest.")
 
-        # TAB 4: DASHBOARD HTML FIEL A LAS IMÁGENES DEL PROFESOR
+        # TAB 4: DASHBOARD HTML EN ALTA DEFINICIÓN
         with tab4:
-            st.header("📊 Dashboard de Fisioterapia")
+            st.header("📊 Dashboard de Control y Tiempo de Recuperación")
             
             dashboard_html_code = """
             <!DOCTYPE html>
@@ -659,193 +645,315 @@ else:
                         --bg-main: #0f172a;
                         --card-bg: rgba(30, 41, 59, 0.85);
                         --primary: #38bdf8;
+                        --primary-dark: #0284c7;
+                        --success: #10b981;
+                        --warning: #f59e0b;
+                        --danger: #ef4444;
                         --text-dark: #ffffff;
+                        --text-light: #cbd5e1;
                         --border: rgba(56, 189, 248, 0.3);
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
                     body { background-color: var(--bg-main); color: var(--text-dark); padding: 10px; }
-                    
-                    header { margin-bottom: 20px; }
-                    header h1 { font-size: 28px; color: #ffffff; font-weight: 800; }
-                    header p { font-size: 14px; color: #cbd5e1; margin-top: 4px; }
-
-                    /* FILTROS EXACTOS COINCIDENTES CON LAS CAPTURAS */
-                    .filter-bar {
-                        display: flex;
-                        align-items: center;
-                        gap: 15px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                        background: rgba(15, 23, 42, 0.8);
-                        padding: 12px 18px;
-                        border-radius: 12px;
-                        border: 1px solid var(--border);
-                    }
-                    .filter-item { display: flex; align-items: center; gap: 8px; }
-                    .filter-item label { font-size: 14px; font-weight: 600; color: #ffffff; }
-                    .filter-item select {
-                        padding: 6px 14px;
-                        background-color: #ffffff;
-                        color: #0f172a;
-                        font-weight: 700;
-                        border-radius: 8px;
-                        border: 1px solid #38bdf8;
-                        outline: none;
-                        cursor: pointer;
-                    }
-
-                    /* KPIS FIDELIDAD IMAGEN PROFESOR */
-                    .kpi-row {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 15px;
-                        margin-bottom: 25px;
-                    }
-                    .kpi-card-prof {
-                        background: #ffffff;
-                        border-radius: 16px;
-                        padding: 20px;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                        color: #0f172a;
-                    }
-                    .kpi-card-prof .title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
-                    .kpi-card-prof .value { font-size: 32px; font-weight: 800; color: #0f172a; }
-
-                    .chart-container {
-                        background: var(--card-bg);
-                        padding: 20px;
-                        border-radius: 16px;
-                        border: 1px solid var(--border);
-                    }
-                    .chart-container h3 { text-align: center; color: #ffffff; font-size: 18px; margin-bottom: 15px; }
+                    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+                    header h1 { font-size: 22px; color: #ffffff; }
+                    header p { font-size: 13px; color: var(--primary); font-weight: 600; }
+                    .filters-panel { background: var(--card-bg); padding: 15px; border-radius: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border: 1px solid var(--border); }
+                    .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+                    .filter-group label { font-size: 11px; font-weight: 700; color: #ffffff; text-transform: uppercase; }
+                    .filter-group select, .filter-group input { padding: 8px 12px; background: #090d16; color: #ffffff; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
+                    .btn-reset { padding: 8px 16px; background: var(--primary); color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; align-self: flex-end; transition: background 0.2s; }
+                    .btn-reset:hover { background: #ffffff; color: #0f172a; }
+                    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+                    .kpi-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); border-left: 5px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+                    .kpi-title { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 700; }
+                    .kpi-value { font-size: 24px; font-weight: 800; color: #ffffff; }
+                    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-bottom: 20px; }
+                    .chart-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); }
+                    .chart-card h3 { font-size: 15px; margin-bottom: 12px; color: #ffffff; }
+                    .table-container { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); overflow-x: auto; }
+                    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+                    th { background-color: rgba(15, 23, 42, 0.9); color: #ffffff; padding: 10px; font-weight: 700; border-bottom: 2px solid var(--border); }
+                    td { padding: 10px; border-bottom: 1px solid var(--border); color: #ffffff; }
+                    tr:hover { background-color: rgba(56, 189, 248, 0.15); }
+                    .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; }
+                    .badge-recuperado { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid #10b981; }
+                    .badge-tratamiento { background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid #38bdf8; }
+                    .badge-alta { background: rgba(129, 140, 248, 0.25); color: #818cf8; border: 1px solid #818cf8; }
+                    .badge-riesgo { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid #ef4444; }
+                    .progress-bar { width: 80px; height: 7px; background: #1e293b; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 5px; }
+                    .progress-fill { height: 100%; background: var(--primary); }
                 </style>
             </head>
             <body>
                 <header>
-                    <h1>Dashboard de Fisioterapia</h1>
-                    <p>Panel demostrativo con datos 2023–2026. Las estimaciones no sustituyen la valoración clínica.</p>
+                    <div>
+                        <h1>Plataforma Clínica de Fisioterapia</h1>
+                        <p>Monitoreo de Sesiones, Tiempos de Recuperación y Registro 2023 - 2026</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #ffffff;">Sistema Activo</strong><br>
+                        <span style="font-size: 12px; color: var(--primary);">Capa Gold - Modelo Medallion</span>
+                    </div>
                 </header>
 
-                <!-- BARRA DE FILTROS IDÉNTICA A LA IMAGEN -->
-                <div class="filter-bar">
-                    <div class="filter-item">
-                        <label>Tipo de lesión</label>
-                        <select id="selLesion" onchange="actualizarDashboard()">
-                            <option value="Postquirurgica" selected>Postquirurgica</option>
-                            <option value="Todas">Todas</option>
-                            <option value="Articular">Articular</option>
-                            <option value="Muscular">Muscular</option>
-                            <option value="Neurologica">Neurologica</option>
-                            <option value="Tendinosa">Tendinosa</option>
+                <div class="filters-panel">
+                    <div class="filter-group">
+                        <label for="searchPatient">Buscar Paciente / ID</label>
+                        <input type="text" id="searchPatient" placeholder="Ej. Carlos o PAC-101" oninput="applyFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterDiag">Diagnóstico</label>
+                        <select id="filterDiag" onchange="applyFilters()">
+                            <option value="ALL">Todos los diagnósticos</option>
+                            <option value="Lumbalgia">Lumbalgia</option>
+                            <option value="Cervicalgia">Cervicalgia</option>
+                            <option value="Tendinopatía">Tendinopatía</option>
+                            <option value="Esguince Rodilla">Esguince Rodilla</option>
+                            <option value="Post-Quirúrgico">Post-Quirúrgico</option>
                         </select>
                     </div>
-
-                    <div class="filter-item">
-                        <label>Cronicidad</label>
-                        <select id="selCronicidad" onchange="actualizarDashboard()">
-                            <option value="Cronico" selected>Cronico</option>
-                            <option value="Todas">Todas</option>
-                            <option value="Agudo">Agudo</option>
-                            <option value="Subagudo">Subagudo</option>
+                    <div class="filter-group">
+                        <label for="filterStatus">Estado del Paciente</label>
+                        <select id="filterStatus" onchange="applyFilters()">
+                            <option value="ALL">Todos los estados</option>
+                            <option value="En Tratamiento">En Tratamiento</option>
+                            <option value="Recuperado">Recuperado</option>
+                            <option value="Alta Médica">Alta Médica</option>
+                            <option value="En Riesgo">En Riesgo</option>
                         </select>
                     </div>
-
-                    <div class="filter-item">
-                        <label>Género</label>
-                        <select id="selGenero" onchange="actualizarDashboard()">
-                            <option value="Masculino" selected>Masculino</option>
-                            <option value="Todos">Todos</option>
-                            <option value="Femenino">Femenino</option>
+                    <div class="filter-group">
+                        <label for="filterTime">Tiempo Recuperación</label>
+                        <select id="filterTime" onchange="applyFilters()">
+                            <option value="ALL">Cualquier tiempo</option>
+                            <option value="SHORT">Rápido (&lt; 5 sem)</option>
+                            <option value="MEDIUM">Moderado (5 - 8 sem)</option>
+                            <option value="LONG">Extendido (&gt; 8 sem)</option>
                         </select>
+                    </div>
+                    <button class="btn-reset" onclick="resetFilters()">Limpiar Filtros</button>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-title">TOTAL PACIENTES CONSULTADOS</div>
+                        <div class="kpi-value" id="kpiTotal">0</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--success);">
+                        <div class="kpi-title">RECUPERACIÓN PROMEDIO</div>
+                        <div class="kpi-value" id="kpiAvgTime">0 sem</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--warning);">
+                        <div class="kpi-title">ADHERENCIA PROMEDIO</div>
+                        <div class="kpi-value" id="kpiAdherence">0%</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--danger);">
+                        <div class="kpi-title">REDUCCIÓN DOLOR (EVA)</div>
+                        <div class="kpi-value" id="kpiPainDiff">0 pts</div>
                     </div>
                 </div>
 
-                <!-- KPIS PRINCIPALES -->
-                <div class="kpi-row">
-                    <div class="kpi-card-prof">
-                        <div class="title">Pacientes</div>
-                        <div class="value" id="valPacientes">27</div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Tiempo Estimado de Recuperación por Diagnóstico (Semanas)</h3>
+                        <canvas id="chartRecovery"></canvas>
                     </div>
-                    <div class="kpi-card-prof">
-                        <div class="title">Recuperación</div>
-                        <div class="value" id="valRecuperacion">40.7%</div>
-                    </div>
-                    <div class="kpi-card-prof">
-                        <div class="title">Sesiones medianas positivas</div>
-                        <div class="value" id="valSesiones">19</div>
-                    </div>
-                    <div class="kpi-card-prof">
-                        <div class="title">Tiempo estimado</div>
-                        <div class="value" id="valTiempo">9.5 semanas</div>
+                    <div class="chart-card">
+                        <h3>Distribución de Pacientes por Estado de Tratamiento</h3>
+                        <canvas id="chartStatus"></canvas>
                     </div>
                 </div>
 
-                <!-- GRÁFICO PRINCIPAL -->
-                <div class="chart-container">
-                    <h3>Pacientes por tipo de lesión</h3>
-                    <canvas id="barChart" height="120"></canvas>
+                <div class="table-container">
+                    <h3 style="margin-bottom: 12px; color: #ffffff;">Registro Detallado de Pacientes y Tiempos Clínicos</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Paciente</th>
+                                <th>Fecha / Hora Registro</th>
+                                <th>Diagnóstico</th>
+                                <th>Sesiones (Prog/Real)</th>
+                                <th>Dolor (Ini → Fin)</th>
+                                <th>Tiempo Est.</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientTableBody"></tbody>
+                    </table>
                 </div>
 
                 <script>
-                    let chartInstance = null;
+                    const rawData = [
+                        { id: "PAC-101", name: "Carlos Mendoza", date: "2023-04-12", time: "08:30:00", diag: "Lumbalgia", prog: 12, done: 12, painIni: 8, painFin: 2, weeks: 6, status: "Recuperado" },
+                        { id: "PAC-102", name: "Ana Gutiérrez", date: "2023-06-19", time: "10:15:00", diag: "Cervicalgia", prog: 8, done: 8, painIni: 6, painFin: 1, weeks: 4, status: "Alta Médica" },
+                        { id: "PAC-103", name: "Roberto Gómez", date: "2024-01-10", time: "15:45:00", diag: "Post-Quirúrgico", prog: 20, done: 14, painIni: 9, painFin: 4, weeks: 12, status: "En Tratamiento" },
+                        { id: "PAC-104", name: "Lucía Fernández", date: "2024-03-05", time: "09:00:00", diag: "Tendinopatía", prog: 10, done: 4, painIni: 7, painFin: 6, weeks: 8, status: "En Riesgo" },
+                        { id: "PAC-105", name: "Miguel Ángel Torres", date: "2024-08-22", time: "11:30:00", diag: "Esguince Rodilla", prog: 14, done: 14, painIni: 8, painFin: 2, weeks: 7, status: "Recuperado" },
+                        { id: "PAC-106", name: "Elena Ramos", date: "2025-02-14", time: "08:00:00", diag: "Lumbalgia", prog: 10, done: 10, painIni: 7, painFin: 1, weeks: 5, status: "Alta Médica" },
+                        { id: "PAC-107", name: "Javier López", date: "2025-05-30", time: "16:20:00", diag: "Post-Quirúrgico", prog: 24, done: 18, painIni: 9, painFin: 3, weeks: 14, status: "En Tratamiento" },
+                        { id: "PAC-108", name: "Sofia Castro", date: "2025-09-11", time: "07:45:00", diag: "Cervicalgia", prog: 6, done: 6, painIni: 5, painFin: 0, weeks: 3, status: "Recuperado" },
+                        { id: "PAC-109", name: "Diego Morales", date: "2026-01-18", time: "14:10:00", diag: "Tendinopatía", prog: 12, done: 8, painIni: 8, painFin: 5, weeks: 9, status: "En Tratamiento" },
+                        { id: "PAC-110", name: "Valeria Benítez", date: "2026-02-27", time: "10:00:00", diag: "Esguince Rodilla", prog: 12, done: 3, painIni: 7, painFin: 7, weeks: 10, status: "En Riesgo" }
+                    ];
 
-                    const baseDatos = {
-                        "Postquirurgica-Cronico-Masculino": { pac: 27, rec: "40.7%", ses: 19, tie: "9.5 semanas", dataBar: [27, 12, 18, 8, 15] },
-                        "Articular-Agudo-Femenino": { pac: 18, rec: "65.2%", ses: 12, tie: "5.0 semanas", dataBar: [10, 18, 14, 6, 11] },
-                        "Muscular-Subagudo-Masculino": { pac: 32, rec: "78.4%", ses: 10, tie: "4.2 semanas", dataBar: [12, 15, 32, 5, 20] },
-                        "Todas-Todas-Todos": { pac: 145, rec: "58.9%", ses: 15, tie: "7.1 semanas", dataBar: [35, 28, 42, 18, 22] }
-                    };
+                    let chartRecoveryInstance = null;
+                    let chartStatusInstance = null;
 
-                    function actualizarDashboard() {
-                        const l = document.getElementById('selLesion').value;
-                        const c = document.getElementById('selCronicidad').value;
-                        const g = document.getElementById('selGenero').value;
+                    function renderTable(data) {
+                        const tbody = document.getElementById('patientTableBody');
+                        tbody.innerHTML = '';
 
-                        const key = `${l}-${c}-${g}`;
-                        const res = baseDatos[key] || { 
-                            pac: Math.floor(Math.random() * 20) + 15, 
-                            rec: (Math.random() * 30 + 40).toFixed(1) + "%", 
-                            ses: Math.floor(Math.random() * 8) + 12, 
-                            tie: (Math.random() * 5 + 5).toFixed(1) + " semanas",
-                            dataBar: [Math.floor(Math.random()*20)+10, Math.floor(Math.random()*20)+10, Math.floor(Math.random()*20)+10, Math.floor(Math.random()*20)+10, Math.floor(Math.random()*20)+10]
-                        };
+                        if (data.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">No se encontraron registros con los filtros seleccionados.</td></tr>';
+                            return;
+                        }
 
-                        document.getElementById('valPacientes').innerText = res.pac;
-                        document.getElementById('valRecuperacion').innerText = res.rec;
-                        document.getElementById('valSesiones').innerText = res.ses;
-                        document.getElementById('valTiempo').innerText = res.tie;
+                        data.forEach(item => {
+                            const pct = Math.round((item.done / item.prog) * 100);
+                            let badgeClass = 'badge-tratamiento';
+                            if (item.status === 'Recuperado') badgeClass = 'badge-recuperado';
+                            if (item.status === 'Alta Médica') badgeClass = 'badge-alta';
+                            if (item.status === 'En Riesgo') badgeClass = 'badge-riesgo';
 
-                        if (chartInstance) chartInstance.destroy();
+                            const row = `
+                                <tr>
+                                    <td><strong>${item.id}</strong></td>
+                                    <td>${item.name}</td>
+                                    <td>${item.date} <br><small style="color:var(--text-light);">${item.time}</small></td>
+                                    <td>${item.diag}</td>
+                                    <td>
+                                        <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%;"></div></div>
+                                        ${item.done}/${item.prog} (${pct}%)
+                                    </td>
+                                    <td><span style="color:#f87171;">${item.painIni}</span> → <span style="color:#34d399;">${item.painFin}</span></td>
+                                    <td><strong>${item.weeks} sem</strong></td>
+                                    <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                                </tr>
+                            `;
+                            tbody.innerHTML += row;
+                        });
+                    }
 
-                        const ctx = document.getElementById('barChart').getContext('2d');
-                        chartInstance = new Chart(ctx, {
+                    function updateKPIs(data) {
+                        document.getElementById('kpiTotal').innerText = data.length;
+
+                        if (data.length === 0) {
+                            document.getElementById('kpiAvgTime').innerText = "0 sem";
+                            document.getElementById('kpiAdherence').innerText = "0%";
+                            document.getElementById('kpiPainDiff').innerText = "0 pts";
+                            return;
+                        }
+
+                        const avgWeeks = (data.reduce((acc, curr) => acc + curr.weeks, 0) / data.length).toFixed(1);
+                        const avgAdherence = Math.round(data.reduce((acc, curr) => acc + (curr.done / curr.prog), 0) / data.length * 100);
+                        const avgPainDiff = (data.reduce((acc, curr) => acc + (curr.painIni - curr.painFin), 0) / data.length).toFixed(1);
+
+                        document.getElementById('kpiAvgTime').innerText = `${avgWeeks} sem`;
+                        document.getElementById('kpiAdherence').innerText = `${avgAdherence}%`;
+                        document.getElementById('kpiPainDiff').innerText = `${avgPainDiff} pts`;
+                    }
+
+                    function updateCharts(data) {
+                        const diagMap = {};
+                        const diagCounts = {};
+
+                        data.forEach(item => {
+                            diagMap[item.diag] = (diagMap[item.diag] || 0) + item.weeks;
+                            diagCounts[item.diag] = (diagCounts[item.diag] || 0) + 1;
+                        });
+
+                        const diagLabels = Object.keys(diagMap);
+                        const diagAverages = diagLabels.map(label => (diagMap[label] / diagCounts[label]).toFixed(1));
+
+                        if (chartRecoveryInstance) chartRecoveryInstance.destroy();
+
+                        const ctx1 = document.getElementById('chartRecovery').getContext('2d');
+                        chartRecoveryInstance = new Chart(ctx1, {
                             type: 'bar',
                             data: {
-                                labels: ['Postquirúrgica', 'Articular', 'Muscular', 'Neurológica', 'Tendinosa'],
+                                labels: diagLabels,
                                 datasets: [{
-                                    label: 'Pacientes',
-                                    data: res.dataBar,
-                                    backgroundColor: '#2563eb',
-                                    borderRadius: 6
+                                    label: 'Semanas Promedio',
+                                    data: diagAverages,
+                                    backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#818cf8', '#ec4899']
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 plugins: { legend: { display: false } },
-                                scales: {
-                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#ffffff' } },
-                                    x: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: 'bold' } } }
+                                scales: { 
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.15)' }, ticks: { color: '#ffffff' } },
+                                    x: { grid: { color: 'rgba(255,255,255,0.15)' }, ticks: { color: '#ffffff' } }
                                 }
+                            }
+                        });
+
+                        const statusMap = { 'Recuperado': 0, 'En Tratamiento': 0, 'Alta Médica': 0, 'En Riesgo': 0 };
+                        data.forEach(item => {
+                            if (statusMap[item.status] !== undefined) statusMap[item.status]++;
+                        });
+
+                        if (chartStatusInstance) chartStatusInstance.destroy();
+
+                        const ctx2 = document.getElementById('chartStatus').getContext('2d');
+                        chartStatusInstance = new Chart(ctx2, {
+                            type: 'doughnut',
+                            data: {
+                                labels: Object.keys(statusMap),
+                                datasets: [{
+                                    data: Object.values(statusMap),
+                                    backgroundColor: ['#10b981', '#38bdf8', '#818cf8', '#ef4444']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', font: { weight: 'bold' } } } }
                             }
                         });
                     }
 
-                    window.onload = actualizarDashboard;
+                    function applyFilters() {
+                        const searchValue = document.getElementById('searchPatient').value.toLowerCase();
+                        const diagValue = document.getElementById('filterDiag').value;
+                        const statusValue = document.getElementById('filterStatus').value;
+                        const timeValue = document.getElementById('filterTime').value;
+
+                        const filtered = rawData.filter(item => {
+                            const matchesSearch = item.name.toLowerCase().includes(searchValue) || item.id.toLowerCase().includes(searchValue);
+                            const matchesDiag = (diagValue === 'ALL') || (item.diag === diagValue);
+                            const matchesStatus = (statusValue === 'ALL') || (item.status === statusValue);
+                            
+                            let matchesTime = true;
+                            if (timeValue === 'SHORT') matchesTime = item.weeks < 5;
+                            if (timeValue === 'MEDIUM') matchesTime = item.weeks >= 5 && item.weeks <= 8;
+                            if (timeValue === 'LONG') matchesTime = item.weeks > 8;
+
+                            return matchesSearch && matchesDiag && matchesStatus && matchesTime;
+                        });
+
+                        renderTable(filtered);
+                        updateKPIs(filtered);
+                        updateCharts(filtered);
+                    }
+
+                    function resetFilters() {
+                        document.getElementById('searchPatient').value = '';
+                        document.getElementById('filterDiag').value = 'ALL';
+                        document.getElementById('filterStatus').value = 'ALL';
+                        document.getElementById('filterTime').value = 'ALL';
+                        applyFilters();
+                    }
+
+                    window.onload = () => {
+                        applyFilters();
+                    };
                 </script>
             </body>
             </html>
             """
-            components.html(dashboard_html_code, height=650, scrolling=True)
+            components.html(dashboard_html_code, height=950, scrolling=True)
 
     else:
         st.warning("🔒 Ingrese la contraseña de administrador en la barra lateral para acceder.")
