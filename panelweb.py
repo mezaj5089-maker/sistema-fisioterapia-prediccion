@@ -76,7 +76,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4) !important;
     }
 
-    /* Contraste adaptativo para elementos claros */
+    /* Contraste adaptativo para elementos claros (Popups, Selectbox, Calendario) */
     div[data-baseweb="calendar"] *, 
     div[data-baseweb="popover"] * {
         color: #0f172a !important;
@@ -340,7 +340,7 @@ else:
         with tab1:
             st.header("📋 Registro de Pacientes, Galería de Lesiones y Evaluación 3D (Capa Bronze)")
             
-            # GALERÍA / TARJETAS DE TIPOS DE LESIÓN (QUINTA IMAGEN)
+            # GALERÍA / TARJETAS DE TIPOS DE LESIÓN
             st.subheader("🏥 Clasificación Visual de Lesiones Fisioterapéuticas")
             lesiones_html = """
             <!DOCTYPE html>
