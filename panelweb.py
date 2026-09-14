@@ -14,50 +14,127 @@ from supabase import create_client, Client
 # CONFIGURACIÓN DE PÁGINA
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Fisioterapia Predictiva",
-    page_icon="🏥",
-    layout="wide"
+    page_title="Fisioterapia Predictiva 3D | Portal Clínico",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS GENERALES
+# ESTILOS CSS++ AVANZADOS (GLASSMORPHISM & CYBER-CLINICAL)
 # ---------------------------------------------------------
-URL_FONDO = "https://raw.githubusercontent.com/mezaj5089-maker/sistema-fisioterapia-prediccion/main/fisio.png"
-
-st.markdown(
-    f"""
+st.markdown("""
     <style>
-    .stApp {{
-        background: linear-gradient(rgba(240, 244, 248, 0.85), rgba(240, 244, 248, 0.90)), 
-                    url("{URL_FONDO}");
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
-    }}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@600;800&display=swap');
 
-    h1, h2, h3 {{
-        color: #0F4C81 !important;
-        font-family: 'Segoe UI', Roboto, sans-serif;
-        font-weight: 700;
-    }}
+    /* Fondo general con gradiente dinámico futurista */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        font-family: 'Inter', sans-serif;
+        color: #f8fafc;
+    }
 
-    .stButton>button {{
-        background-color: #0F4C81;
-        color: white;
-        font-weight: bold;
-        border-radius: 8px;
-        border: none;
-        padding: 0.5rem 1.2rem;
-        transition: all 0.3s;
-    }}
-    .stButton>button:hover {{
-        background-color: #1B6AAA;
-        color: white;
-    }}
+    /* Ocultar barra superior por defecto de Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+
+    /* Encabezados con degradado */
+    h1, h2, h3 {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 800 !important;
+        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+
+    /* Tarjetas y Formularios con Estilo Glassmorphism */
+    div[data-testid="stForm"], .glass-card {
+        background: rgba(30, 41, 59, 0.65) !important;
+        backdrop-filter: blur(16px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.125) !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    }
+
+    /* Botones Neón e Interactivos */
+    .stButton>button, div[data-testid="stForm"] button {
+        background: linear-gradient(90deg, #0284c7 0%, #6366f1 100%) !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+        border: none !important;
+        padding: 0.6rem 1.8rem !important;
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .stButton>button:hover, div[data-testid="stForm"] button:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6) !important;
+        background: linear-gradient(90deg, #0369a1 0%, #4f46e5 100%) !important;
+    }
+
+    /* Entradas de Texto, Números y Desplegables */
+    .stTextInput input, .stNumberInput input, .stSelectbox select {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        color: #f8fafc !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+    }
+
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
+    }
+
+    /* Sliders Personalizados */
+    .stSlider > div > div > div > div {
+        background-color: #38bdf8 !important;
+    }
+
+    /* Valores de Métricas */
+    div[data-testid="stMetricValue"] {
+        font-family: 'Orbitron', monospace !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Pestañas Personalizadas */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 12px;
+        background-color: rgba(15, 23, 42, 0.5);
+        padding: 8px;
+        border-radius: 16px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 12px !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        border: none !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2)) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.5) !important;
+    }
+
+    /* Barra Lateral */
+    section[data-testid="stSidebar"] {
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # CONEXIÓN A SUPABASE Y MODELO RANDOM FOREST ML
@@ -88,9 +165,9 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL: RELOJ DIGITAL EN VIVOR (JS/HTML) + CALENDARIO
+# BARRA LATERAL: RELOJ DIGITAL EN VIVO (JS/HTML) + CALENDARIO
 # ---------------------------------------------------------
-st.sidebar.title("🏥 Portal Clínico")
+st.sidebar.markdown("<h2 style='text-align: center;'>🏥 Portal Clínico</h2>", unsafe_allow_html=True)
 
 reloj_digital_js = """
 <!DOCTYPE html>
@@ -107,19 +184,19 @@ reloj_digital_js = """
         }
 
         .reloj-card {
-            background: #0d1117;
-            border: 2px solid #00f2fe;
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+            border: 1px solid #38bdf8;
             border-radius: 14px;
             padding: 12px 10px;
             text-align: center;
-            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
             color: #ffffff;
         }
 
         .reloj-header {
             font-size: 10px;
             font-weight: 700;
-            color: #00f2fe;
+            color: #38bdf8;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             margin-bottom: 6px;
@@ -139,16 +216,16 @@ reloj_digital_js = """
         .tiempo-principal {
             font-size: 26px;
             font-weight: 800;
-            color: #00ff87;
-            text-shadow: 0 0 8px rgba(0, 255, 135, 0.6);
+            color: #38bdf8;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
             letter-spacing: 1px;
         }
 
         .segundos {
             font-size: 16px;
             font-weight: 600;
-            color: #ff007f;
-            text-shadow: 0 0 6px rgba(255, 0, 127, 0.6);
+            color: #c084fc;
+            text-shadow: 0 0 6px rgba(192, 132, 252, 0.6);
             margin-left: 4px;
         }
 
@@ -258,8 +335,12 @@ if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
 # ---------------------------------------------------------
 # TÍTULO PRINCIPAL
 # ---------------------------------------------------------
-st.title("🩺 FISIOTERAPIA PREDICTIVA")
-st.caption("Sistema Inteligente de Evaluación, Diagnóstico y Predicción Clínica con ML")
+st.markdown("""
+    <div style="text-align: center; padding: 15px 0;">
+        <h1 style="font-size: 2.8rem; margin-bottom: 0px;">🩺 FISIOTERAPIA PREDICTIVA 3D</h1>
+        <p style="color: #94a3b8; font-size: 1.1rem;">Sistema Inteligente de Evaluación, Diagnóstico, Modelado Anatómico y Predicción Clínica con ML</p>
+    </div>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # VISTA 1: PACIENTE / CONSULTA
@@ -308,15 +389,94 @@ if perfil == "👤 Vista Paciente / Consulta":
 else:
     if st.session_state.admin_logged_in:
         tab1, tab2, tab3, tab4 = st.tabs([
-            "📥 Capa Bronze: Registro", 
+            "📥 Capa Bronze: Registro & 3D", 
             "⚙️ Capa Silver: Transformación", 
             "🏆 Capa Gold: Inferencia ML", 
             "📊 Dashboard Interactivo HTML"
         ])
         
-        # TAB 1: REGISTRO
+        # TAB 1: REGISTRO + MODELADO ANATÓMICO THREE.JS
         with tab1:
-            st.header("📋 Registro de Pacientes (Capa Bronze)")
+            st.header("📋 Registro de Pacientes y Evaluación Anatómica (Capa Bronze)")
+            
+            # VISOR ANATÓMICO INTERACTIVO EN 3D (THREE.JS)
+            threejs_viewer_code = """
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+                <style>
+                    body { margin: 0; background: #090d16; color: white; font-family: sans-serif; overflow: hidden; }
+                    #canvas-container { width: 100%; height: 280px; border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.4); position: relative; }
+                    #info-box { position: absolute; top: 10px; left: 10px; background: rgba(15,23,42,0.85); padding: 6px 12px; border-radius: 8px; font-size: 11px; border: 1px solid #38bdf8; }
+                </style>
+            </head>
+            <body>
+                <div id="canvas-container">
+                    <div id="info-box">🧍 Modelo Anatómico 3D Interactivo - Evaluación Física</div>
+                </div>
+                <script>
+                    const container = document.getElementById('canvas-container');
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+                    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                    container.appendChild(renderer.domElement);
+
+                    const light1 = new THREE.DirectionalLight(0x38bdf8, 1);
+                    light1.position.set(5, 5, 5).normalize();
+                    scene.add(light1);
+                    const light2 = new THREE.AmbientLight(0x818cf8, 0.6);
+                    scene.add(light2);
+
+                    const bodyGroup = new THREE.Group();
+                    const matBody = new THREE.MeshPhongMaterial({ color: 0x1e293b, wireframe: true });
+                    const matJoint = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7 });
+
+                    // Torso
+                    const torsoGeo = new THREE.CylinderGeometry(0.8, 0.6, 2.2, 16);
+                    const torso = new THREE.Mesh(torsoGeo, matBody);
+                    bodyGroup.add(torso);
+
+                    // Cabeza
+                    const headGeo = new THREE.SphereGeometry(0.5, 16, 16);
+                    const head = new THREE.Mesh(headGeo, matJoint);
+                    head.position.y = 1.6;
+                    bodyGroup.add(head);
+
+                    // Marcador Lumbar Neón
+                    const lumbarGeo = new THREE.SphereGeometry(0.35, 16, 16);
+                    const lumbarMat = new THREE.MeshPhongMaterial({ color: 0xf43f5e, emissive: 0xe11d48 });
+                    const lumbar = new THREE.Mesh(lumbarGeo, lumbarMat);
+                    lumbar.position.set(0, -0.4, 0.5);
+                    bodyGroup.add(lumbar);
+
+                    // Marcador Rodillas Neón
+                    const kneeGeo = new THREE.SphereGeometry(0.25, 16, 16);
+                    const kneeMat = new THREE.MeshPhongMaterial({ color: 0x10b981, emissive: 0x059669 });
+                    const kneeR = new THREE.Mesh(kneeGeo, kneeMat);
+                    kneeR.position.set(-0.4, -1.8, 0.2);
+                    bodyGroup.add(kneeR);
+                    const kneeL = new THREE.Mesh(kneeGeo, kneeMat);
+                    kneeL.position.set(0.4, -1.8, 0.2);
+                    bodyGroup.add(kneeL);
+
+                    scene.add(bodyGroup);
+                    camera.position.z = 6;
+
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        bodyGroup.rotation.y += 0.01;
+                        renderer.render(scene, camera);
+                    }
+                    animate();
+                </script>
+            </body>
+            </html>
+            """
+            components.html(threejs_viewer_code, height=290)
+
             with st.form("form_bronze"):
                 st.subheader("1. Datos Personales y Clínicos Básicos")
                 col1, col2 = st.columns(2)
@@ -413,7 +573,6 @@ else:
         with tab4:
             st.header("📊 Dashboard de Control y Tiempo de Recuperación")
             
-            # Código HTML/JS Completo Integrado
             dashboard_html_code = """
             <!DOCTYPE html>
             <html lang="es">
@@ -423,46 +582,46 @@ else:
                 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                 <style>
                     :root {
-                        --bg-main: #f4f7fa;
-                        --card-bg: #ffffff;
-                        --primary: #2563eb;
-                        --primary-dark: #1d4ed8;
+                        --bg-main: #0f172a;
+                        --card-bg: rgba(30, 41, 59, 0.75);
+                        --primary: #38bdf8;
+                        --primary-dark: #0284c7;
                         --success: #10b981;
                         --warning: #f59e0b;
                         --danger: #ef4444;
-                        --text-dark: #1e293b;
-                        --text-light: #64748b;
-                        --border: #e2e8f0;
+                        --text-dark: #f8fafc;
+                        --text-light: #94a3b8;
+                        --border: rgba(255, 255, 255, 0.1);
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
                     body { background-color: var(--bg-main); color: var(--text-dark); padding: 10px; }
-                    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-                    header h1 { font-size: 22px; color: var(--primary-dark); }
+                    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+                    header h1 { font-size: 22px; color: var(--primary); }
                     header p { font-size: 13px; color: var(--text-light); }
-                    .filters-panel { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                    .filters-panel { background: var(--card-bg); padding: 15px; border-radius: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border: 1px solid var(--border); }
                     .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
                     .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
-                    .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
-                    .btn-reset { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; align-self: flex-end; transition: background 0.2s; }
-                    .btn-reset:hover { background: var(--primary-dark); }
+                    .filter-group select, .filter-group input { padding: 8px 12px; background: #090d16; color: #ffffff; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
+                    .btn-reset { padding: 8px 16px; background: var(--primary); color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; align-self: flex-end; transition: background 0.2s; }
+                    .btn-reset:hover { background: var(--primary-dark); color: white; }
                     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-                    .kpi-card { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+                    .kpi-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); border-left: 5px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
                     .kpi-title { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
                     .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
                     .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-bottom: 20px; }
-                    .chart-card { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                    .chart-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); }
                     .chart-card h3 { font-size: 15px; margin-bottom: 12px; color: var(--text-dark); }
-                    .table-container { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+                    .table-container { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); overflow-x: auto; }
                     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-                    th { background-color: #f8fafc; color: var(--text-light); padding: 10px; font-weight: 600; border-bottom: 2px solid var(--border); }
+                    th { background-color: rgba(15, 23, 42, 0.8); color: var(--text-light); padding: 10px; font-weight: 600; border-bottom: 2px solid var(--border); }
                     td { padding: 10px; border-bottom: 1px solid var(--border); }
-                    tr:hover { background-color: #f1f5f9; }
+                    tr:hover { background-color: rgba(56, 189, 248, 0.05); }
                     .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-                    .badge-recuperado { background: #d1fae5; color: #065f46; }
-                    .badge-tratamiento { background: #dbeafe; color: #1e40af; }
-                    .badge-alta { background: #e0e7ff; color: #3730a3; }
-                    .badge-riesgo { background: #fee2e2; color: #991b1b; }
-                    .progress-bar { width: 80px; height: 7px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 5px; }
+                    .badge-recuperado { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+                    .badge-tratamiento { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+                    .badge-alta { background: rgba(129, 140, 248, 0.2); color: #818cf8; }
+                    .badge-riesgo { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+                    .progress-bar { width: 80px; height: 7px; background: #1e293b; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 5px; }
                     .progress-fill { height: 100%; background: var(--primary); }
                 </style>
             </head>
@@ -608,7 +767,7 @@ else:
                                         <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%;"></div></div>
                                         ${item.done}/${item.prog} (${pct}%)
                                     </td>
-                                    <td><span style="color:red;">${item.painIni}</span> → <span style="color:green;">${item.painFin}</span></td>
+                                    <td><span style="color:#f87171;">${item.painIni}</span> → <span style="color:#34d399;">${item.painFin}</span></td>
                                     <td><strong>${item.weeks} sem</strong></td>
                                     <td><span class="badge ${badgeClass}">${item.status}</span></td>
                                 </tr>
@@ -658,13 +817,16 @@ else:
                                 datasets: [{
                                     label: 'Semanas Promedio',
                                     data: diagAverages,
-                                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+                                    backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#818cf8', '#ec4899']
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 plugins: { legend: { display: false } },
-                                scales: { y: { beginAtZero: true, title: { display: true, text: 'Semanas' } } }
+                                scales: { 
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } },
+                                    x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } }
+                                }
                             }
                         });
 
@@ -682,12 +844,12 @@ else:
                                 labels: Object.keys(statusMap),
                                 datasets: [{
                                     data: Object.values(statusMap),
-                                    backgroundColor: ['#10b981', '#2563eb', '#6366f1', '#ef4444']
+                                    backgroundColor: ['#10b981', '#38bdf8', '#818cf8', '#ef4444']
                                 }]
                             },
                             options: {
                                 responsive: true,
-                                plugins: { legend: { position: 'bottom' } }
+                                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
                             }
                         });
                     }
