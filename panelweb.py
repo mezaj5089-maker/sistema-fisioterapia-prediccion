@@ -21,117 +21,131 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS++ AVANZADOS (GLASSMORPHISM & CYBER-CLINICAL)
+# ESTILOS CSS REVISADOS: TEXTOS BLANCOS, HOVER Y ALTO CONTRASTE
 # ---------------------------------------------------------
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@600;800&display=swap');
 
-    /* Fondo general con gradiente dinámico futurista */
+    /* Fondo general */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        background: linear-gradient(135deg, #0b1120 0%, #171e38 50%, #0b1120 100%);
         font-family: 'Inter', sans-serif;
-        color: #f8fafc;
+        color: #ffffff !important;
     }
 
-    /* Ocultar barra superior por defecto de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Encabezados con degradado */
-    h1, h2, h3 {
+    /* Encabezados y Subtítulos en Blanco Puro con Brillo */
+    h1, h2, h3, h4, h5, h6 {
         font-family: 'Inter', sans-serif !important;
         font-weight: 800 !important;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -0.5px;
+        color: #ffffff !important;
     }
 
-    /* Tarjetas y Formularios con Estilo Glassmorphism */
+    p, span, label, div {
+        color: #ffffff !important;
+    }
+
+    /* Subtítulos específicos de Streamlit */
+    .stMarkdown p, .stMarkdown label, .stMarkdown span {
+        color: #e2e8f0 !important;
+        font-size: 1.05rem;
+    }
+
+    /* Pestañas (Tabs): Texto blanco visible + Efecto HOVER interactivo */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: rgba(15, 23, 42, 0.8);
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px !important;
+        color: #ffffff !important; /* Blanco puro por defecto */
+        font-weight: 700 !important;
+        padding: 10px 20px !important;
+        border: 1px solid transparent !important;
+        transition: all 0.3s ease !important;
+    }
+
+    /* Hover en pestañas */
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #38bdf8 !important;
+        background-color: rgba(56, 189, 248, 0.2) !important;
+        border: 1px solid #38bdf8 !important;
+        transform: translateY(-2px);
+    }
+
+    /* Pestaña Seleccionada */
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(90deg, #0284c7 0%, #6366f1 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4) !important;
+    }
+
+    /* Textos en la Sidebar (Barra Lateral) */
+    section[data-testid="stSidebar"] {
+        background-color: #0d1527 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    section[data-testid="stSidebar"] label, 
+    section[data-testid="stSidebar"] p, 
+    section[data-testid="stSidebar"] span {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    /* Radio Buttons en Sidebar con Hover */
+    div[data-testid="stRadio"] label:hover {
+        color: #38bdf8 !important;
+        cursor: pointer;
+    }
+
+    /* Tarjetas Glassmorphism */
     div[data-testid="stForm"], .glass-card {
-        background: rgba(30, 41, 59, 0.65) !important;
-        backdrop-filter: blur(16px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.125) !important;
+        background: rgba(30, 41, 59, 0.85) !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
         border-radius: 20px !important;
         padding: 24px !important;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
     }
 
-    /* Botones Neón e Interactivos */
+    /* Botones */
     .stButton>button, div[data-testid="stForm"] button {
         background: linear-gradient(90deg, #0284c7 0%, #6366f1 100%) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         border-radius: 12px !important;
-        border: none !important;
+        border: 1px solid #38bdf8 !important;
         padding: 0.6rem 1.8rem !important;
         box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        transition: all 0.3s ease !important;
     }
 
     .stButton>button:hover, div[data-testid="stForm"] button:hover {
-        transform: translateY(-2px) scale(1.02) !important;
-        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6) !important;
-        background: linear-gradient(90deg, #0369a1 0%, #4f46e5 100%) !important;
+        transform: translateY(-2px) !important;
+        background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%) !important;
+        color: #000000 !important;
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.8) !important;
     }
 
-    /* Entradas de Texto, Números y Desplegables */
+    /* Inputs de texto y números */
     .stTextInput input, .stNumberInput input, .stSelectbox select {
-        background-color: rgba(15, 23, 42, 0.8) !important;
-        color: #f8fafc !important;
-        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #38bdf8 !important;
         border-radius: 10px !important;
         padding: 10px 14px !important;
     }
 
-    .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
-    }
-
-    /* Sliders Personalizados */
-    .stSlider > div > div > div > div {
-        background-color: #38bdf8 !important;
-    }
-
-    /* Valores de Métricas */
-    div[data-testid="stMetricValue"] {
-        font-family: 'Orbitron', monospace !important;
-        font-weight: 800 !important;
-        color: #38bdf8 !important;
-        text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
-
-    /* Pestañas Personalizadas */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 12px;
-        background-color: rgba(15, 23, 42, 0.5);
-        padding: 8px;
-        border-radius: 16px;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 12px !important;
-        color: #94a3b8 !important;
-        font-weight: 600 !important;
-        padding: 8px 16px !important;
-        border: none !important;
-    }
-
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2)) !important;
-        color: #38bdf8 !important;
-        border: 1px solid rgba(56, 189, 248, 0.5) !important;
-    }
-
-    /* Barra Lateral */
-    section[data-testid="stSidebar"] {
-        background-color: rgba(15, 23, 42, 0.95) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    /* Slider styling */
+    .stSlider label {
+        color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -165,9 +179,9 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL: RELOJ DIGITAL EN VIVO (JS/HTML) + CALENDARIO
+# BARRA LATERAL: RELOJ DIGITAL EN VIVO + CALENDARIO
 # ---------------------------------------------------------
-st.sidebar.markdown("<h2 style='text-align: center;'>🏥 Portal Clínico</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='text-align: center; color: #ffffff;'>🏥 Portal Clínico</h2>", unsafe_allow_html=True)
 
 reloj_digital_js = """
 <!DOCTYPE html>
@@ -175,73 +189,22 @@ reloj_digital_js = """
 <head>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Roboto:wght@500;700&display=swap');
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: transparent;
-            font-family: 'Roboto', sans-serif;
-        }
-
+        body { margin: 0; padding: 0; background-color: transparent; font-family: 'Roboto', sans-serif; }
         .reloj-card {
-            background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
             border: 1px solid #38bdf8;
             border-radius: 14px;
             padding: 12px 10px;
             text-align: center;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
             color: #ffffff;
         }
-
-        .reloj-header {
-            font-size: 10px;
-            font-weight: 700;
-            color: #38bdf8;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .reloj-display {
-            display: flex;
-            justify-content: center;
-            align-items: baseline;
-            font-family: 'Orbitron', monospace;
-            background: #050811;
-            padding: 8px 4px;
-            border-radius: 8px;
-            border: 1px solid #1f293d;
-        }
-
-        .tiempo-principal {
-            font-size: 26px;
-            font-weight: 800;
-            color: #38bdf8;
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
-            letter-spacing: 1px;
-        }
-
-        .segundos {
-            font-size: 16px;
-            font-weight: 600;
-            color: #c084fc;
-            text-shadow: 0 0 6px rgba(192, 132, 252, 0.6);
-            margin-left: 4px;
-        }
-
-        .fecha-sub {
-            margin-top: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #e2e8f0;
-            letter-spacing: 0.5px;
-        }
-
-        .dia-semana {
-            color: #ffb703;
-            font-weight: 700;
-            text-transform: capitalize;
-        }
+        .reloj-header { font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+        .reloj-display { display: flex; justify-content: center; align-items: baseline; font-family: 'Orbitron', monospace; background: #050811; padding: 8px 4px; border-radius: 8px; border: 1px solid #38bdf8; }
+        .tiempo-principal { font-size: 26px; font-weight: 800; color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.8); letter-spacing: 1px; }
+        .segundos { font-size: 16px; font-weight: 600; color: #c084fc; text-shadow: 0 0 6px rgba(192, 132, 252, 0.8); margin-left: 4px; }
+        .fecha-sub { margin-top: 8px; font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; }
+        .dia-semana { color: #ffb703; font-weight: 700; text-transform: capitalize; }
     </style>
 </head>
 <body>
@@ -256,27 +219,13 @@ reloj_digital_js = """
             <span id="fecha-completa">01 Jan 2026</span>
         </div>
     </div>
-
     <script>
         function actualizarReloj() {
-            const opcionesFecha = { 
-                timeZone: 'America/Lima',
-                weekday: 'long',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            };
-
+            const opcionesFecha = { timeZone: 'America/Lima', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             const ahora = new Date();
             const formateador = new Intl.DateTimeFormat('es-PE', opcionesFecha);
             const partes = formateador.formatToParts(ahora);
-
             let hora = '', minuto = '', segundo = '', diaNombre = '', diaNum = '', mes = '', anio = '';
-
             partes.forEach(p => {
                 if (p.type === 'hour') hora = p.value;
                 if (p.type === 'minute') minuto = p.value;
@@ -286,16 +235,13 @@ reloj_digital_js = """
                 if (p.type === 'month') mes = p.value;
                 if (p.type === 'year') anio = p.value;
             });
-
             diaNombre = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
             mes = mes.charAt(0).toUpperCase() + mes.slice(1);
-
             document.getElementById('hora-min').textContent = `${hora}:${minuto}`;
             document.getElementById('seg').textContent = `:${segundo}`;
             document.getElementById('dia-nombre').textContent = diaNombre;
             document.getElementById('fecha-completa').textContent = `${diaNum} ${mes} ${anio}`;
         }
-
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
     </script>
@@ -309,15 +255,15 @@ with st.sidebar:
 tz_peru = zoneinfo.ZoneInfo("America/Lima")
 ahora_peru = datetime.datetime.now(tz_peru)
 
-st.sidebar.subheader("📅 Calendario de Consultas")
+st.sidebar.markdown("<p style='color:#ffffff; font-weight:bold; margin-bottom:2px;'>📅 Calendario de Consultas</p>", unsafe_allow_html=True)
 fecha_seleccionada = st.sidebar.date_input(
-    "Seleccione fecha:", 
+    "", 
     value=ahora_peru.date(),
     format="DD/MM/YYYY"
 )
 
 st.sidebar.write("---")
-st.sidebar.write("Seleccione el Perfil de Usuario:")
+st.sidebar.markdown("<p style='color:#ffffff; font-weight:bold;'>Seleccione el Perfil de Usuario:</p>", unsafe_allow_html=True)
 perfil = st.sidebar.radio("", ["👤 Vista Paciente / Consulta", "🛡️ Vista Administrador / Fisioterapeuta"])
 
 if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
@@ -333,12 +279,12 @@ if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
             st.rerun()
 
 # ---------------------------------------------------------
-# TÍTULO PRINCIPAL
+# TÍTULO PRINCIPAL EN BLANCO
 # ---------------------------------------------------------
 st.markdown("""
     <div style="text-align: center; padding: 15px 0;">
-        <h1 style="font-size: 2.8rem; margin-bottom: 0px;">🩺 FISIOTERAPIA PREDICTIVA 3D</h1>
-        <p style="color: #94a3b8; font-size: 1.1rem;">Sistema Inteligente de Evaluación, Diagnóstico, Modelado Anatómico y Predicción Clínica con ML</p>
+        <h1 style="font-size: 2.8rem; margin-bottom: 0px; color: #ffffff;">🩺 FISIOTERAPIA PREDICTIVA 3D</h1>
+        <p style="color: #38bdf8; font-size: 1.2rem; font-weight: 600;">Sistema Inteligente de Evaluación, Diagnóstico, Modelado Anatómico y Predicción Clínica con ML</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -395,27 +341,46 @@ else:
             "📊 Dashboard Interactivo HTML"
         ])
         
-        # TAB 1: REGISTRO + MODELADO ANATÓMICO THREE.JS
+        # TAB 1: REGISTRO + MAQUETA ANATÓMICA MUSCULAR 3D INTERACTIVA
         with tab1:
             st.header("📋 Registro de Pacientes y Evaluación Anatómica (Capa Bronze)")
             
-            # VISOR ANATÓMICO INTERACTIVO EN 3D (THREE.JS)
-            threejs_viewer_code = """
+            # MAQUETA ANATÓMICA REALISTA DE MÚSCULOS EN 3D
+            threejs_anatomical_maquette = """
             <!DOCTYPE html>
             <html lang="es">
             <head>
                 <meta charset="UTF-8">
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
                 <style>
-                    body { margin: 0; background: #090d16; color: white; font-family: sans-serif; overflow: hidden; }
-                    #canvas-container { width: 100%; height: 280px; border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.4); position: relative; }
-                    #info-box { position: absolute; top: 10px; left: 10px; background: rgba(15,23,42,0.85); padding: 6px 12px; border-radius: 8px; font-size: 11px; border: 1px solid #38bdf8; }
+                    body { margin: 0; background: #050a14; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; }
+                    #canvas-container { width: 100%; height: 380px; border-radius: 16px; border: 2px solid #38bdf8; position: relative; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+                    #info-panel { 
+                        position: absolute; top: 12px; left: 12px; 
+                        background: rgba(15, 23, 42, 0.9); 
+                        padding: 10px 16px; border-radius: 10px; font-size: 13px; 
+                        border: 1px solid #38bdf8; max-width: 320px;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                    }
+                    #info-panel h4 { margin: 0 0 4px 0; color: #38bdf8; font-size: 14px; text-transform: uppercase; }
+                    #info-panel p { margin: 0; color: #f8fafc; font-size: 12px; }
+                    #controls-hint {
+                        position: absolute; bottom: 12px; right: 12px;
+                        background: rgba(15, 23, 42, 0.8);
+                        padding: 6px 12px; border-radius: 8px; font-size: 11px; color: #ffb703;
+                        border: 1px solid rgba(255, 183, 3, 0.4);
+                    }
                 </style>
             </head>
             <body>
                 <div id="canvas-container">
-                    <div id="info-box">🧍 Modelo Anatómico 3D Interactivo - Evaluación Física</div>
+                    <div id="info-panel">
+                        <h4 id="muscle-title">🧍 Maqueta Anatómica Muscular 3D</h4>
+                        <p id="muscle-desc">Pase el cursor sobre la figura para conocer los grupos musculares y zonas de fisioterapia.</p>
+                    </div>
+                    <div id="controls-hint">🔄 Rotación Automática Continua 360°</div>
                 </div>
+
                 <script>
                     const container = document.getElementById('canvas-container');
                     const scene = new THREE.Scene();
@@ -424,50 +389,145 @@ else:
                     renderer.setSize(container.clientWidth, container.clientHeight);
                     container.appendChild(renderer.domElement);
 
-                    const light1 = new THREE.DirectionalLight(0x38bdf8, 1);
-                    light1.position.set(5, 5, 5).normalize();
+                    // Luces de alta definición para resaltar volumen de músculos
+                    const light1 = new THREE.DirectionalLight(0xffffff, 1.2);
+                    light1.position.set(5, 10, 7);
                     scene.add(light1);
-                    const light2 = new THREE.AmbientLight(0x818cf8, 0.6);
+
+                    const light2 = new THREE.DirectionalLight(0x38bdf8, 0.8);
+                    light2.position.set(-5, -5, -5);
                     scene.add(light2);
 
+                    const ambientLight = new THREE.AmbientLight(0x334155, 0.9);
+                    scene.add(ambientLight);
+
                     const bodyGroup = new THREE.Group();
-                    const matBody = new THREE.MeshPhongMaterial({ color: 0x1e293b, wireframe: true });
-                    const matJoint = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7 });
 
-                    // Torso
-                    const torsoGeo = new THREE.CylinderGeometry(0.8, 0.6, 2.2, 16);
-                    const torso = new THREE.Mesh(torsoGeo, matBody);
-                    bodyGroup.add(torso);
+                    // Materiales Anatómicos Médicos
+                    const matMusculo = new THREE.MeshPhongMaterial({ color: 0xd946ef, specular: 0xf472b6, shininess: 30 }); // Músculo muscular magenta
+                    const matTorso = new THREE.MeshPhongMaterial({ color: 0xe11d48, specular: 0xfb7185, shininess: 40 }); // Pecho y Abdomen
+                    const matArticulacion = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7 }); // Puntos Articulares
+                    const matPiernas = new THREE.MeshPhongMaterial({ color: 0xc084fc, specular: 0xe879f9, shininess: 25 }); // Cuádriceps
 
-                    // Cabeza
-                    const headGeo = new THREE.SphereGeometry(0.5, 16, 16);
-                    const head = new THREE.Mesh(headGeo, matJoint);
-                    head.position.y = 1.6;
+                    // 1. Cabeza y Cuello (Cervical)
+                    const headGeo = new THREE.SphereGeometry(0.42, 24, 24);
+                    const head = new THREE.Mesh(headGeo, matArticulacion);
+                    head.position.y = 2.1;
+                    head.userData = { title: "Zona Cervical / Cabeza", desc: "Músculos Trapecio y Esternocleidomastoideo. Evaluado en cervicalgias y estrés." };
                     bodyGroup.add(head);
 
-                    // Marcador Lumbar Neón
-                    const lumbarGeo = new THREE.SphereGeometry(0.35, 16, 16);
-                    const lumbarMat = new THREE.MeshPhongMaterial({ color: 0xf43f5e, emissive: 0xe11d48 });
-                    const lumbar = new THREE.Mesh(lumbarGeo, lumbarMat);
-                    lumbar.position.set(0, -0.4, 0.5);
-                    bodyGroup.add(lumbar);
+                    const neckGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.3, 16);
+                    const neck = new THREE.Mesh(neckGeo, matMusculo);
+                    neck.position.y = 1.7;
+                    bodyGroup.add(neck);
 
-                    // Marcador Rodillas Neón
-                    const kneeGeo = new THREE.SphereGeometry(0.25, 16, 16);
-                    const kneeMat = new THREE.MeshPhongMaterial({ color: 0x10b981, emissive: 0x059669 });
-                    const kneeR = new THREE.Mesh(kneeGeo, kneeMat);
-                    kneeR.position.set(-0.4, -1.8, 0.2);
+                    // 2. Torso (Pectorales y Abdominales)
+                    const chestGeo = new THREE.BoxGeometry(1.1, 0.8, 0.5);
+                    const chest = new THREE.Mesh(chestGeo, matTorso);
+                    chest.position.y = 1.25;
+                    chest.userData = { title: "Tórax y Pectorales", desc: "Músculos Pectorales Mayor/Menor. Claves para postura de hombros." };
+                    bodyGroup.add(chest);
+
+                    const absGeo = new THREE.BoxGeometry(0.9, 0.7, 0.45);
+                    const abs = new THREE.Mesh(absGeo, matMusculo);
+                    abs.position.y = 0.55;
+                    abs.userData = { title: "Core y Pared Abdominal", desc: "Recto abdominal y Oblicuos. Estabilizadores del tronco y columna." };
+                    bodyGroup.add(abs);
+
+                    // 3. Zona Lumbar y Pelvis
+                    const pelvisGeo = new THREE.CylinderGeometry(0.5, 0.42, 0.5, 16);
+                    const pelvis = new THREE.Mesh(pelvisGeo, matTorso);
+                    pelvis.position.y = 0.0;
+                    pelvis.userData = { title: "Región Lumbar y Glúteos", desc: "Zona crítica para Lumbalgia. Músculos Cuadrado Lumbar y Glúteo Mayor." };
+                    bodyGroup.add(pelvis);
+
+                    // 4. Hombros (Deltoides)
+                    const shoulderGeo = new THREE.SphereGeometry(0.28, 16, 16);
+                    const shoulderR = new THREE.Mesh(shoulderGeo, matArticulacion);
+                    shoulderR.position.set(-0.75, 1.45, 0);
+                    shoulderR.userData = { title: "Hombro Derecho (Deltoides)", desc: "Manguito Rotador y Deltoides. Frecuente en tendinopatías." };
+                    bodyGroup.add(shoulderR);
+
+                    const shoulderL = new THREE.Mesh(shoulderGeo, matArticulacion);
+                    shoulderL.position.set(0.75, 1.45, 0);
+                    shoulderL.userData = { title: "Hombro Izquierdo (Deltoides)", desc: "Manguito Rotador y Deltoides. Frecuente en tendinopatías." };
+                    bodyGroup.add(shoulderL);
+
+                    // 5. Brazos (Bíceps / Tríceps)
+                    const armGeo = new THREE.CylinderGeometry(0.18, 0.15, 0.9, 16);
+                    const armR = new THREE.Mesh(armGeo, matMusculo);
+                    armR.position.set(-0.82, 0.85, 0);
+                    bodyGroup.add(armR);
+
+                    const armL = new THREE.Mesh(armGeo, matMusculo);
+                    armL.position.set(0.82, 0.85, 0);
+                    bodyGroup.add(armL);
+
+                    // 6. Piernas y Rodillas (Cuádriceps)
+                    const legGeo = new THREE.CylinderGeometry(0.25, 0.19, 1.1, 16);
+                    const legR = new THREE.Mesh(legGeo, matPiernas);
+                    legR.position.set(-0.32, -0.8, 0);
+                    legR.userData = { title: "Muslo y Cuádriceps (Derecho)", desc: "Músculo Cuádriceps Femoral. Potencia en extensión de rodilla." };
+                    bodyGroup.add(legR);
+
+                    const legL = new THREE.Mesh(legGeo, matPiernas);
+                    legL.position.set(0.32, -0.8, 0);
+                    legL.userData = { title: "Muslo y Cuádriceps (Izquierdo)", desc: "Músculo Cuádriceps Femoral. Potencia en extensión de rodilla." };
+                    bodyGroup.add(legL);
+
+                    // Rodillas
+                    const kneeGeo = new THREE.SphereGeometry(0.22, 16, 16);
+                    const kneeR = new THREE.Mesh(kneeGeo, matArticulacion);
+                    kneeR.position.set(-0.32, -1.45, 0.1);
+                    kneeR.userData = { title: "Articulación de Rodilla", desc: "Evaluación de Ligamentos Cruzados y Meniscos en Esguinces." };
                     bodyGroup.add(kneeR);
-                    const kneeL = new THREE.Mesh(kneeGeo, kneeMat);
-                    kneeL.position.set(0.4, -1.8, 0.2);
+
+                    const kneeL = new THREE.Mesh(kneeGeo, matArticulacion);
+                    kneeL.position.set(0.32, -1.45, 0.1);
+                    kneeL.userData = { title: "Articulación de Rodilla", desc: "Evaluación de Ligamentos Cruzados y Meniscos en Esguinces." };
                     bodyGroup.add(kneeL);
 
-                    scene.add(bodyGroup);
-                    camera.position.z = 6;
+                    // Gemelos / Pantorrillas
+                    const calfGeo = new THREE.CylinderGeometry(0.18, 0.12, 1.0, 16);
+                    const calfR = new THREE.Mesh(calfGeo, matMusculo);
+                    calfR.position.set(-0.32, -2.05, 0);
+                    bodyGroup.add(calfR);
 
+                    const calfL = new THREE.Mesh(calfGeo, matMusculo);
+                    calfL.position.set(0.32, -2.05, 0);
+                    bodyGroup.add(calfL);
+
+                    bodyGroup.position.y = 0.2;
+                    scene.add(bodyGroup);
+                    camera.position.z = 6.2;
+
+                    // Interacción Raycaster para Detectar Hover sobre Músculos
+                    const raycaster = new THREE.Raycaster();
+                    const mouse = new THREE.Vector2();
+
+                    function onMouseMove(event) {
+                        const rect = renderer.domElement.getBoundingClientRect();
+                        mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+                        mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+                        raycaster.setFromCamera(mouse, camera);
+                        const intersects = raycaster.intersectObjects(bodyGroup.children);
+
+                        if (intersects.length > 0) {
+                            const hit = intersects[0].object;
+                            if (hit.userData && hit.userData.title) {
+                                document.getElementById('muscle-title').innerText = hit.userData.title;
+                                document.getElementById('muscle-desc').innerText = hit.userData.desc;
+                            }
+                        }
+                    }
+
+                    container.addEventListener('mousemove', onMouseMove, false);
+
+                    // Animación de Rotación Anatómica
                     function animate() {
                         requestAnimationFrame(animate);
-                        bodyGroup.rotation.y += 0.01;
+                        bodyGroup.rotation.y += 0.008;
                         renderer.render(scene, camera);
                     }
                     animate();
@@ -475,7 +535,7 @@ else:
             </body>
             </html>
             """
-            components.html(threejs_viewer_code, height=290)
+            components.html(threejs_anatomical_maquette, height=400)
 
             with st.form("form_bronze"):
                 st.subheader("1. Datos Personales y Clínicos Básicos")
@@ -569,7 +629,7 @@ else:
             else:
                 st.info("Registra un paciente en la Capa Bronze para generar su estimación con Random Forest.")
 
-        # TAB 4: INTEGRACIÓN COMPLETA DEL DASHBOARD HTML / CHART.JS
+        # TAB 4: DASHBOARD HTML EN ALTA DEFINICIÓN
         with tab4:
             st.header("📊 Dashboard de Control y Tiempo de Recuperación")
             
@@ -583,44 +643,44 @@ else:
                 <style>
                     :root {
                         --bg-main: #0f172a;
-                        --card-bg: rgba(30, 41, 59, 0.75);
+                        --card-bg: rgba(30, 41, 59, 0.85);
                         --primary: #38bdf8;
                         --primary-dark: #0284c7;
                         --success: #10b981;
                         --warning: #f59e0b;
                         --danger: #ef4444;
-                        --text-dark: #f8fafc;
-                        --text-light: #94a3b8;
-                        --border: rgba(255, 255, 255, 0.1);
+                        --text-dark: #ffffff;
+                        --text-light: #cbd5e1;
+                        --border: rgba(56, 189, 248, 0.3);
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
                     body { background-color: var(--bg-main); color: var(--text-dark); padding: 10px; }
                     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-                    header h1 { font-size: 22px; color: var(--primary); }
-                    header p { font-size: 13px; color: var(--text-light); }
+                    header h1 { font-size: 22px; color: #ffffff; }
+                    header p { font-size: 13px; color: var(--primary); font-weight: 600; }
                     .filters-panel { background: var(--card-bg); padding: 15px; border-radius: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border: 1px solid var(--border); }
                     .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
-                    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
+                    .filter-group label { font-size: 11px; font-weight: 700; color: #ffffff; text-transform: uppercase; }
                     .filter-group select, .filter-group input { padding: 8px 12px; background: #090d16; color: #ffffff; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
                     .btn-reset { padding: 8px 16px; background: var(--primary); color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; align-self: flex-end; transition: background 0.2s; }
-                    .btn-reset:hover { background: var(--primary-dark); color: white; }
+                    .btn-reset:hover { background: #ffffff; color: #0f172a; }
                     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
                     .kpi-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); border-left: 5px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-                    .kpi-title { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
-                    .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+                    .kpi-title { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 700; }
+                    .kpi-value { font-size: 24px; font-weight: 800; color: #ffffff; }
                     .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-bottom: 20px; }
                     .chart-card { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); }
-                    .chart-card h3 { font-size: 15px; margin-bottom: 12px; color: var(--text-dark); }
+                    .chart-card h3 { font-size: 15px; margin-bottom: 12px; color: #ffffff; }
                     .table-container { background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); overflow-x: auto; }
                     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-                    th { background-color: rgba(15, 23, 42, 0.8); color: var(--text-light); padding: 10px; font-weight: 600; border-bottom: 2px solid var(--border); }
-                    td { padding: 10px; border-bottom: 1px solid var(--border); }
-                    tr:hover { background-color: rgba(56, 189, 248, 0.05); }
-                    .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-                    .badge-recuperado { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-                    .badge-tratamiento { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-                    .badge-alta { background: rgba(129, 140, 248, 0.2); color: #818cf8; }
-                    .badge-riesgo { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+                    th { background-color: rgba(15, 23, 42, 0.9); color: #ffffff; padding: 10px; font-weight: 700; border-bottom: 2px solid var(--border); }
+                    td { padding: 10px; border-bottom: 1px solid var(--border); color: #ffffff; }
+                    tr:hover { background-color: rgba(56, 189, 248, 0.15); }
+                    .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; }
+                    .badge-recuperado { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid #10b981; }
+                    .badge-tratamiento { background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid #38bdf8; }
+                    .badge-alta { background: rgba(129, 140, 248, 0.25); color: #818cf8; border: 1px solid #818cf8; }
+                    .badge-riesgo { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid #ef4444; }
                     .progress-bar { width: 80px; height: 7px; background: #1e293b; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 5px; }
                     .progress-fill { height: 100%; background: var(--primary); }
                 </style>
@@ -632,8 +692,8 @@ else:
                         <p>Monitoreo de Sesiones, Tiempos de Recuperación y Registro 2023 - 2026</p>
                     </div>
                     <div style="text-align: right;">
-                        <strong>Sistema Activo</strong><br>
-                        <span style="font-size: 12px; color: var(--text-light);">Capa Gold - Modelo Medallion</span>
+                        <strong style="color: #ffffff;">Sistema Activo</strong><br>
+                        <span style="font-size: 12px; color: var(--primary);">Capa Gold - Modelo Medallion</span>
                     </div>
                 </header>
 
@@ -706,7 +766,7 @@ else:
                 </div>
 
                 <div class="table-container">
-                    <h3 style="margin-bottom: 12px;">Registro Detallado de Pacientes y Tiempos Clínicos</h3>
+                    <h3 style="margin-bottom: 12px; color: #ffffff;">Registro Detallado de Pacientes y Tiempos Clínicos</h3>
                     <table>
                         <thead>
                             <tr>
@@ -824,8 +884,8 @@ else:
                                 responsive: true,
                                 plugins: { legend: { display: false } },
                                 scales: { 
-                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } },
-                                    x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } }
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.15)' }, ticks: { color: '#ffffff' } },
+                                    x: { grid: { color: 'rgba(255,255,255,0.15)' }, ticks: { color: '#ffffff' } }
                                 }
                             }
                         });
@@ -849,7 +909,7 @@ else:
                             },
                             options: {
                                 responsive: true,
-                                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+                                plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', font: { weight: 'bold' } } } }
                             }
                         });
                     }
@@ -893,8 +953,6 @@ else:
             </body>
             </html>
             """
-            
-            # Renderizado directo dentro de Streamlit
             components.html(dashboard_html_code, height=950, scrolling=True)
 
     else:
