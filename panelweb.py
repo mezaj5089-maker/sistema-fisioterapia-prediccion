@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS (DISEÑO MANTENIDO INTACTO)
+# ESTILOS CSS GENERALES
 # ---------------------------------------------------------
 URL_FONDO = "https://raw.githubusercontent.com/mezaj5089-maker/sistema-fisioterapia-prediccion/main/fisio.png"
 
@@ -88,11 +88,10 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ---------------------------------------------------------
-# BARRA LATERAL: RELOJ EN VIVO (JS/HTML) + CALENDARIO
+# BARRA LATERAL: RELOJ DIGITAL EN VIVOR (JS/HTML) + CALENDARIO
 # ---------------------------------------------------------
 st.sidebar.title("🏥 Portal Clínico")
 
-# Componente HTML / JavaScript para Reloj Digital en Tiempo Real
 reloj_digital_js = """
 <!DOCTYPE html>
 <html>
@@ -183,7 +182,6 @@ reloj_digital_js = """
 
     <script>
         function actualizarReloj() {
-            // Configurar zona horaria de Perú (America/Lima)
             const opcionesFecha = { 
                 timeZone: 'America/Lima',
                 weekday: 'long',
@@ -212,7 +210,6 @@ reloj_digital_js = """
                 if (p.type === 'year') anio = p.value;
             });
 
-            // Capitalizar la primera letra del día y mes
             diaNombre = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
             mes = mes.charAt(0).toUpperCase() + mes.slice(1);
 
@@ -229,15 +226,12 @@ reloj_digital_js = """
 </html>
 """
 
-# Renderizar Reloj Digital Interactivo en la Barra Lateral
 with st.sidebar:
     components.html(reloj_digital_js, height=140)
 
-# Cálculo de la fecha base para el calendario
 tz_peru = zoneinfo.ZoneInfo("America/Lima")
 ahora_peru = datetime.datetime.now(tz_peru)
 
-# Calendario automático interactivo
 st.sidebar.subheader("📅 Calendario de Consultas")
 fecha_seleccionada = st.sidebar.date_input(
     "Seleccione fecha:", 
@@ -249,7 +243,6 @@ st.sidebar.write("---")
 st.sidebar.write("Seleccione el Perfil de Usuario:")
 perfil = st.sidebar.radio("", ["👤 Vista Paciente / Consulta", "🛡️ Vista Administrador / Fisioterapeuta"])
 
-# Cierre e inicio de sesión
 if perfil == "🛡️ Vista Administrador / Fisioterapeuta":
     if st.session_state.admin_logged_in:
         if st.sidebar.button("🔒 Cerrar Sesión"):
@@ -318,10 +311,10 @@ else:
             "📥 Capa Bronze: Registro", 
             "⚙️ Capa Silver: Transformación", 
             "🏆 Capa Gold: Inferencia ML", 
-            "📁 Base de Datos / Dashboard"
+            "📊 Dashboard Interactivo HTML"
         ])
         
-        # TAB 1: REGISTRO CON EVALUACIÓN PSICOFÍSICA
+        # TAB 1: REGISTRO
         with tab1:
             st.header("📋 Registro de Pacientes (Capa Bronze)")
             with st.form("form_bronze"):
@@ -357,7 +350,6 @@ else:
                 guardar = st.form_submit_button("💾 Guardar Paciente")
                 
                 if guardar and dni and nombre:
-                    # Inferencia con Modelo Random Forest
                     if rf_model is not None:
                         try:
                             features = np.array([[eva, tsk_total, pcs_total]])
@@ -386,16 +378,15 @@ else:
                     if supabase:
                         try:
                             supabase.table("pacientes").insert(nuevo_reg).execute()
-                            st.success(f"✅ ¡Paciente {nombre} guardado exitosamente en Supabase y localmente!")
+                            st.success(f"✅ ¡Paciente {nombre} guardado exitosamente!")
                         except Exception as e:
-                            st.warning(f"✅ Paciente guardado localmente. Nota Supabase: {e}")
+                            st.warning(f"✅ Paciente guardado localmente. (Nota Supabase: {e})")
                     else:
                         st.success(f"✅ Paciente {nombre} guardado localmente.")
 
         # TAB 2: CAPA SILVER
         with tab2:
             st.header("⚙️ Capa Silver: Transformación")
-            st.write("Estructuración y limpieza de variables clínicas.")
             if not st.session_state.tabla_pacientes_local.empty:
                 st.dataframe(st.session_state.tabla_pacientes_local, use_container_width=True)
             else:
@@ -418,32 +409,331 @@ else:
             else:
                 st.info("Registra un paciente en la Capa Bronze para generar su estimación con Random Forest.")
 
-        # TAB 4: BASE DE DATOS Y DASHBOARD
+        # TAB 4: INTEGRACIÓN COMPLETA DEL DASHBOARD HTML / CHART.JS
         with tab4:
-            st.header("📁 Base de Datos / Dashboard")
-            df_final = pd.DataFrame()
-            if supabase:
-                try:
-                    res = supabase.table("pacientes").select("*").execute()
-                    df_final = pd.DataFrame(res.data)
-                except Exception:
-                    df_final = st.session_state.tabla_pacientes_local
-            else:
-                df_final = st.session_state.tabla_pacientes_local
+            st.header("📊 Dashboard de Control y Tiempo de Recuperación")
+            
+            # Código HTML/JS Completo Integrado
+            dashboard_html_code = """
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <style>
+                    :root {
+                        --bg-main: #f4f7fa;
+                        --card-bg: #ffffff;
+                        --primary: #2563eb;
+                        --primary-dark: #1d4ed8;
+                        --success: #10b981;
+                        --warning: #f59e0b;
+                        --danger: #ef4444;
+                        --text-dark: #1e293b;
+                        --text-light: #64748b;
+                        --border: #e2e8f0;
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    body { background-color: var(--bg-main); color: var(--text-dark); padding: 10px; }
+                    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                    header h1 { font-size: 22px; color: var(--primary-dark); }
+                    header p { font-size: 13px; color: var(--text-light); }
+                    .filters-panel { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                    .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+                    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
+                    .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
+                    .btn-reset { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; align-self: flex-end; transition: background 0.2s; }
+                    .btn-reset:hover { background: var(--primary-dark); }
+                    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+                    .kpi-card { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+                    .kpi-title { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
+                    .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+                    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-bottom: 20px; }
+                    .chart-card { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                    .chart-card h3 { font-size: 15px; margin-bottom: 12px; color: var(--text-dark); }
+                    .table-container { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+                    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+                    th { background-color: #f8fafc; color: var(--text-light); padding: 10px; font-weight: 600; border-bottom: 2px solid var(--border); }
+                    td { padding: 10px; border-bottom: 1px solid var(--border); }
+                    tr:hover { background-color: #f1f5f9; }
+                    .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+                    .badge-recuperado { background: #d1fae5; color: #065f46; }
+                    .badge-tratamiento { background: #dbeafe; color: #1e40af; }
+                    .badge-alta { background: #e0e7ff; color: #3730a3; }
+                    .badge-riesgo { background: #fee2e2; color: #991b1b; }
+                    .progress-bar { width: 80px; height: 7px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 5px; }
+                    .progress-fill { height: 100%; background: var(--primary); }
+                </style>
+            </head>
+            <body>
+                <header>
+                    <div>
+                        <h1>Plataforma Clínica de Fisioterapia</h1>
+                        <p>Monitoreo de Sesiones, Tiempos de Recuperación y Registro 2023 - 2026</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Sistema Activo</strong><br>
+                        <span style="font-size: 12px; color: var(--text-light);">Capa Gold - Modelo Medallion</span>
+                    </div>
+                </header>
 
-            if not df_final.empty:
-                st.dataframe(df_final, use_container_width=True)
-                st.write("---")
-                st.subheader("📊 Métricas y Analítica")
-                col_g1, col_g2 = st.columns(2)
-                with col_g1:
-                    fig1 = px.histogram(df_final, x="zona_afectada", title="Pacientes por Zona Afectada", color="zona_afectada")
-                    st.plotly_chart(fig1, use_container_width=True)
-                with col_g2:
-                    fig2 = px.scatter(df_final, x="eva_inicial", y="num_sesiones", color="genero", title="Escala EVA vs Sesiones Estimadas")
-                    st.plotly_chart(fig2, use_container_width=True)
-            else:
-                st.info("No hay registros en la base de datos.")
+                <div class="filters-panel">
+                    <div class="filter-group">
+                        <label for="searchPatient">Buscar Paciente / ID</label>
+                        <input type="text" id="searchPatient" placeholder="Ej. Carlos o PAC-101" oninput="applyFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterDiag">Diagnóstico</label>
+                        <select id="filterDiag" onchange="applyFilters()">
+                            <option value="ALL">Todos los diagnósticos</option>
+                            <option value="Lumbalgia">Lumbalgia</option>
+                            <option value="Cervicalgia">Cervicalgia</option>
+                            <option value="Tendinopatía">Tendinopatía</option>
+                            <option value="Esguince Rodilla">Esguince Rodilla</option>
+                            <option value="Post-Quirúrgico">Post-Quirúrgico</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterStatus">Estado del Paciente</label>
+                        <select id="filterStatus" onchange="applyFilters()">
+                            <option value="ALL">Todos los estados</option>
+                            <option value="En Tratamiento">En Tratamiento</option>
+                            <option value="Recuperado">Recuperado</option>
+                            <option value="Alta Médica">Alta Médica</option>
+                            <option value="En Riesgo">En Riesgo</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterTime">Tiempo Recuperación</label>
+                        <select id="filterTime" onchange="applyFilters()">
+                            <option value="ALL">Cualquier tiempo</option>
+                            <option value="SHORT">Rápido (&lt; 5 sem)</option>
+                            <option value="MEDIUM">Moderado (5 - 8 sem)</option>
+                            <option value="LONG">Extendido (&gt; 8 sem)</option>
+                        </select>
+                    </div>
+                    <button class="btn-reset" onclick="resetFilters()">Limpiar Filtros</button>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-title">TOTAL PACIENTES CONSULTADOS</div>
+                        <div class="kpi-value" id="kpiTotal">0</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--success);">
+                        <div class="kpi-title">RECUPERACIÓN PROMEDIO</div>
+                        <div class="kpi-value" id="kpiAvgTime">0 sem</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--warning);">
+                        <div class="kpi-title">ADHERENCIA PROMEDIO</div>
+                        <div class="kpi-value" id="kpiAdherence">0%</div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: var(--danger);">
+                        <div class="kpi-title">REDUCCIÓN DOLOR (EVA)</div>
+                        <div class="kpi-value" id="kpiPainDiff">0 pts</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Tiempo Estimado de Recuperación por Diagnóstico (Semanas)</h3>
+                        <canvas id="chartRecovery"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Distribución de Pacientes por Estado de Tratamiento</h3>
+                        <canvas id="chartStatus"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <h3 style="margin-bottom: 12px;">Registro Detallado de Pacientes y Tiempos Clínicos</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Paciente</th>
+                                <th>Fecha / Hora Registro</th>
+                                <th>Diagnóstico</th>
+                                <th>Sesiones (Prog/Real)</th>
+                                <th>Dolor (Ini → Fin)</th>
+                                <th>Tiempo Est.</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientTableBody"></tbody>
+                    </table>
+                </div>
+
+                <script>
+                    const rawData = [
+                        { id: "PAC-101", name: "Carlos Mendoza", date: "2023-04-12", time: "08:30:00", diag: "Lumbalgia", prog: 12, done: 12, painIni: 8, painFin: 2, weeks: 6, status: "Recuperado" },
+                        { id: "PAC-102", name: "Ana Gutiérrez", date: "2023-06-19", time: "10:15:00", diag: "Cervicalgia", prog: 8, done: 8, painIni: 6, painFin: 1, weeks: 4, status: "Alta Médica" },
+                        { id: "PAC-103", name: "Roberto Gómez", date: "2024-01-10", time: "15:45:00", diag: "Post-Quirúrgico", prog: 20, done: 14, painIni: 9, painFin: 4, weeks: 12, status: "En Tratamiento" },
+                        { id: "PAC-104", name: "Lucía Fernández", date: "2024-03-05", time: "09:00:00", diag: "Tendinopatía", prog: 10, done: 4, painIni: 7, painFin: 6, weeks: 8, status: "En Riesgo" },
+                        { id: "PAC-105", name: "Miguel Ángel Torres", date: "2024-08-22", time: "11:30:00", diag: "Esguince Rodilla", prog: 14, done: 14, painIni: 8, painFin: 2, weeks: 7, status: "Recuperado" },
+                        { id: "PAC-106", name: "Elena Ramos", date: "2025-02-14", time: "08:00:00", diag: "Lumbalgia", prog: 10, done: 10, painIni: 7, painFin: 1, weeks: 5, status: "Alta Médica" },
+                        { id: "PAC-107", name: "Javier López", date: "2025-05-30", time: "16:20:00", diag: "Post-Quirúrgico", prog: 24, done: 18, painIni: 9, painFin: 3, weeks: 14, status: "En Tratamiento" },
+                        { id: "PAC-108", name: "Sofia Castro", date: "2025-09-11", time: "07:45:00", diag: "Cervicalgia", prog: 6, done: 6, painIni: 5, painFin: 0, weeks: 3, status: "Recuperado" },
+                        { id: "PAC-109", name: "Diego Morales", date: "2026-01-18", time: "14:10:00", diag: "Tendinopatía", prog: 12, done: 8, painIni: 8, painFin: 5, weeks: 9, status: "En Tratamiento" },
+                        { id: "PAC-110", name: "Valeria Benítez", date: "2026-02-27", time: "10:00:00", diag: "Esguince Rodilla", prog: 12, done: 3, painIni: 7, painFin: 7, weeks: 10, status: "En Riesgo" }
+                    ];
+
+                    let chartRecoveryInstance = null;
+                    let chartStatusInstance = null;
+
+                    function renderTable(data) {
+                        const tbody = document.getElementById('patientTableBody');
+                        tbody.innerHTML = '';
+
+                        if (data.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">No se encontraron registros con los filtros seleccionados.</td></tr>';
+                            return;
+                        }
+
+                        data.forEach(item => {
+                            const pct = Math.round((item.done / item.prog) * 100);
+                            let badgeClass = 'badge-tratamiento';
+                            if (item.status === 'Recuperado') badgeClass = 'badge-recuperado';
+                            if (item.status === 'Alta Médica') badgeClass = 'badge-alta';
+                            if (item.status === 'En Riesgo') badgeClass = 'badge-riesgo';
+
+                            const row = `
+                                <tr>
+                                    <td><strong>${item.id}</strong></td>
+                                    <td>${item.name}</td>
+                                    <td>${item.date} <br><small style="color:var(--text-light);">${item.time}</small></td>
+                                    <td>${item.diag}</td>
+                                    <td>
+                                        <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%;"></div></div>
+                                        ${item.done}/${item.prog} (${pct}%)
+                                    </td>
+                                    <td><span style="color:red;">${item.painIni}</span> → <span style="color:green;">${item.painFin}</span></td>
+                                    <td><strong>${item.weeks} sem</strong></td>
+                                    <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                                </tr>
+                            `;
+                            tbody.innerHTML += row;
+                        });
+                    }
+
+                    function updateKPIs(data) {
+                        document.getElementById('kpiTotal').innerText = data.length;
+
+                        if (data.length === 0) {
+                            document.getElementById('kpiAvgTime').innerText = "0 sem";
+                            document.getElementById('kpiAdherence').innerText = "0%";
+                            document.getElementById('kpiPainDiff').innerText = "0 pts";
+                            return;
+                        }
+
+                        const avgWeeks = (data.reduce((acc, curr) => acc + curr.weeks, 0) / data.length).toFixed(1);
+                        const avgAdherence = Math.round(data.reduce((acc, curr) => acc + (curr.done / curr.prog), 0) / data.length * 100);
+                        const avgPainDiff = (data.reduce((acc, curr) => acc + (curr.painIni - curr.painFin), 0) / data.length).toFixed(1);
+
+                        document.getElementById('kpiAvgTime').innerText = `${avgWeeks} sem`;
+                        document.getElementById('kpiAdherence').innerText = `${avgAdherence}%`;
+                        document.getElementById('kpiPainDiff').innerText = `${avgPainDiff} pts`;
+                    }
+
+                    function updateCharts(data) {
+                        const diagMap = {};
+                        const diagCounts = {};
+
+                        data.forEach(item => {
+                            diagMap[item.diag] = (diagMap[item.diag] || 0) + item.weeks;
+                            diagCounts[item.diag] = (diagCounts[item.diag] || 0) + 1;
+                        });
+
+                        const diagLabels = Object.keys(diagMap);
+                        const diagAverages = diagLabels.map(label => (diagMap[label] / diagCounts[label]).toFixed(1));
+
+                        if (chartRecoveryInstance) chartRecoveryInstance.destroy();
+
+                        const ctx1 = document.getElementById('chartRecovery').getContext('2d');
+                        chartRecoveryInstance = new Chart(ctx1, {
+                            type: 'bar',
+                            data: {
+                                labels: diagLabels,
+                                datasets: [{
+                                    label: 'Semanas Promedio',
+                                    data: diagAverages,
+                                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true, title: { display: true, text: 'Semanas' } } }
+                            }
+                        });
+
+                        const statusMap = { 'Recuperado': 0, 'En Tratamiento': 0, 'Alta Médica': 0, 'En Riesgo': 0 };
+                        data.forEach(item => {
+                            if (statusMap[item.status] !== undefined) statusMap[item.status]++;
+                        });
+
+                        if (chartStatusInstance) chartStatusInstance.destroy();
+
+                        const ctx2 = document.getElementById('chartStatus').getContext('2d');
+                        chartStatusInstance = new Chart(ctx2, {
+                            type: 'doughnut',
+                            data: {
+                                labels: Object.keys(statusMap),
+                                datasets: [{
+                                    data: Object.values(statusMap),
+                                    backgroundColor: ['#10b981', '#2563eb', '#6366f1', '#ef4444']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { position: 'bottom' } }
+                            }
+                        });
+                    }
+
+                    function applyFilters() {
+                        const searchValue = document.getElementById('searchPatient').value.toLowerCase();
+                        const diagValue = document.getElementById('filterDiag').value;
+                        const statusValue = document.getElementById('filterStatus').value;
+                        const timeValue = document.getElementById('filterTime').value;
+
+                        const filtered = rawData.filter(item => {
+                            const matchesSearch = item.name.toLowerCase().includes(searchValue) || item.id.toLowerCase().includes(searchValue);
+                            const matchesDiag = (diagValue === 'ALL') || (item.diag === diagValue);
+                            const matchesStatus = (statusValue === 'ALL') || (item.status === statusValue);
+                            
+                            let matchesTime = true;
+                            if (timeValue === 'SHORT') matchesTime = item.weeks < 5;
+                            if (timeValue === 'MEDIUM') matchesTime = item.weeks >= 5 && item.weeks <= 8;
+                            if (timeValue === 'LONG') matchesTime = item.weeks > 8;
+
+                            return matchesSearch && matchesDiag && matchesStatus && matchesTime;
+                        });
+
+                        renderTable(filtered);
+                        updateKPIs(filtered);
+                        updateCharts(filtered);
+                    }
+
+                    function resetFilters() {
+                        document.getElementById('searchPatient').value = '';
+                        document.getElementById('filterDiag').value = 'ALL';
+                        document.getElementById('filterStatus').value = 'ALL';
+                        document.getElementById('filterTime').value = 'ALL';
+                        applyFilters();
+                    }
+
+                    window.onload = () => {
+                        applyFilters();
+                    };
+                </script>
+            </body>
+            </html>
+            """
+            
+            # Renderizado directo dentro de Streamlit
+            components.html(dashboard_html_code, height=950, scrolling=True)
 
     else:
         st.warning("🔒 Ingrese la contraseña de administrador en la barra lateral para acceder.")
