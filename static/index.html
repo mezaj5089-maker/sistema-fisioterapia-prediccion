@@ -97,7 +97,7 @@
             </div>
         </div>
 
-        <!-- CAPA BRONZE -->
+        <!-- CAPA BRONZE (REGISTRO Y VISOR 3D) -->
         <div id="tab-bronze" class="view-panel">
             <div class="grid-2">
                 <div class="card">
@@ -182,11 +182,20 @@
             </div>
         </div>
 
-        <!-- CAPA SILVER -->
+        <!-- CAPA SILVER CON BOTÓN DE DESCARGA EXCEL / CSV -->
         <div id="tab-silver" class="view-panel">
             <div class="card">
-                <h3><i class="fa-solid fa-database"></i> Capa Silver: Registros Depurados & Enriquecidos</h3>
-                <table style="margin-top:20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <h3><i class="fa-solid fa-database" style="color:var(--accent-cyan)"></i> Capa Silver: Registros Depurados & Enriquecidos</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Sincronización en tiempo real desde Supabase.</p>
+                    </div>
+                    <button class="btn-submit" onclick="descargarExcelCSV()" style="width: auto; padding: 10px 20px; margin: 0; background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fa-solid fa-file-excel"></i> Descargar Excel / CSV
+                    </button>
+                </div>
+
+                <table style="margin-top:10px;">
                     <thead>
                         <tr>
                             <th>DNI</th>
@@ -200,13 +209,7 @@
                     </thead>
                     <tbody id="tbl-silver-body">
                         <tr>
-                            <td style="color:var(--accent-cyan)">76543310</td>
-                            <td>Olivia Estupiñan Segarra</td>
-                            <td>65 yrs / Femenino</td>
-                            <td>Hombro</td>
-                            <td>8/10</td>
-                            <td>8 / 15</td>
-                            <td><b>18 ses.</b></td>
+                            <td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -234,7 +237,7 @@
             </div>
         </div>
 
-        <!-- CAPA ANALYTICS CON CONTROLES INTERACTIVOS Y CALENDARIO -->
+        <!-- CAPA ANALYTICS CON FILTROS DINÁMICOS Y CALENDARIO -->
         <div id="tab-analytics" class="view-panel">
             
             <div class="filter-bar">
@@ -251,7 +254,7 @@
             </div>
 
             <div class="grid-4">
-                <div class="card metric-card cyan"><div class="metric-title">Total Pacientes</div><div class="metric-value" id="stat-total-pacientes">7</div><div class="metric-sub">Base de datos activa</div></div>
+                <div class="card metric-card cyan"><div class="metric-title">Total Pacientes</div><div class="metric-value" id="stat-total-pacientes">9</div><div class="metric-sub">Base de datos activa</div></div>
                 <div class="card metric-card purple"><div class="metric-title">Promedio EVA Inicial</div><div class="metric-value">7.0</div><div class="metric-sub">Escala de Dolor</div></div>
                 <div class="card metric-card pink"><div class="metric-title">Sesiones Medias Estimadas</div><div class="metric-value">17</div><div class="metric-sub">Duración clínica promedio</div></div>
                 <div class="card metric-card green"><div class="metric-title">Tasa Éxito Estimada</div><div class="metric-value">83%</div><div class="metric-sub">Terapia efectiva</div></div>
