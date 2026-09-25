@@ -2,7 +2,10 @@
 const SUPABASE_URL = "https://rjagplujyfnjvdlwmnlp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NTEzNTUsImV4cCI6MjEwMzUyNzM1NX0.Z1F17jSWO2M2LYC4mLLWRayS5EElczduKGNkR5p0FpI";
 
-// RELOJ DIGITAL DE PERÚ EN VIVO
+let totalPacientesMemoria = 6;
+let isAdminAuthenticated = false;
+
+// RELOJ DIGITAL EN VIVO DE PERÚ
 function updateClock() {
     const now = new Date();
     const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -20,7 +23,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// CONMUTADOR PACIENTE / ADMIN CON LOGIN
+// CONMUTADOR VISTA PACIENTE / ADMIN CON FORMULARIO
 function setMode(mode) {
     document.getElementById('btn-paciente').classList.remove('active');
     document.getElementById('btn-admin').classList.remove('active');
@@ -31,17 +34,34 @@ function setMode(mode) {
         hidePanels();
         document.getElementById('view-paciente-section').classList.add('active');
     } else {
-        const password = prompt("🔒 Acceso Restringido Admin/Fisio - Ingrese la contraseña:");
-        if (password === "fisio2026" || password === "admin") {
-            document.getElementById('btn-admin').classList.add('active');
+        document.getElementById('btn-admin').classList.add('active');
+        hidePanels();
+        
+        if (!isAdminAuthenticated) {
+            document.getElementById('view-login-admin').classList.add('active');
+            document.getElementById('admin-tabs').style.display = 'none';
+        } else {
             document.getElementById('admin-tabs').style.display = 'flex';
-            hidePanels();
             document.getElementById('tab-bronze').classList.add('active');
             initThreeJS();
-        } else {
-            alert("❌ Contraseña incorrecta.");
-            setMode('paciente');
         }
+    }
+}
+
+function validarLoginAdmin(e) {
+    e.preventDefault();
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+
+    if ((user === "admin" || user === "fisio") && (pass === "fisio2026" || pass === "admin")) {
+        isAdminAuthenticated = true;
+        alert("✅ Sesión administrativa iniciada correctamente.");
+        document.getElementById('admin-tabs').style.display = 'flex';
+        hidePanels();
+        document.getElementById('tab-bronze').classList.add('active');
+        initThreeJS();
+    } else {
+        alert("❌ Credenciales incorrectas. Verifique usuario y contraseña.");
     }
 }
 
@@ -57,11 +77,30 @@ function hidePanels() {
     document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
 }
 
+// ACTUALIZACIÓN DE VISOR ANATÓMICO 3D SEGÚN ZONA
+let currentMesh = null;
+let currentMaterial = null;
+
 function actualizarZona3D(val) {
     document.getElementById('lbl-zona-3d').innerText = val;
+    document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
+
+    if (currentMesh && currentMaterial) {
+        if (val === "Hombro") {
+            currentMaterial.color.setHex(0x38bdf8); // Azul
+        } else if (val === "Lumbar") {
+            currentMaterial.color.setHex(0xc084fc); // Morado
+        } else if (val === "Rodilla") {
+            currentMaterial.color.setHex(0x34d399); // Verde
+        } else if (val === "Cervical") {
+            currentMaterial.color.setHex(0xf59e0b); // Naranja
+        } else if (val === "Tobillo") {
+            currentMaterial.color.setHex(0xec4899); // Rosa
+        }
+    }
 }
 
-// GUARDA PACIENTE EN SUPABASE
+// GUARDA PACIENTE EN SUPABASE Y ACTUALIZA DASHBOARD AL INSTANTE
 async function guardarPacienteSupabase(e) {
     e.preventDefault();
 
@@ -71,7 +110,6 @@ async function guardarPacienteSupabase(e) {
     const generoVal = document.getElementById('inp-genero').value;
     const zonaVal = document.getElementById('inp-zona').value;
     
-    // ENTEROS ESTRICTOS (Resuelve el error 22P02 de Supabase)
     const evaVal = parseInt(document.getElementById('inp-eva').value, 10);
     const tskVal = parseInt(document.getElementById('inp-tsk').value, 10);
     const pcsVal = parseInt(document.getElementById('inp-pcs').value, 10);
@@ -110,8 +148,9 @@ async function guardarPacienteSupabase(e) {
         });
 
         if (response.ok) {
-            alert(`✅ ¡Paciente ${nombreVal} guardado con éxito en Supabase! (${sesionesCalc} sesiones estimadas).`);
+            alert(`✅ ¡Paciente ${nombreVal} registrado exitosamente en Supabase!`);
             
+            // Actualización inmediata de tabla Capa Silver
             const tbody = document.getElementById('tbl-silver-body');
             if(tbody) {
                 const row = `<tr>
@@ -126,10 +165,15 @@ async function guardarPacienteSupabase(e) {
                 tbody.innerHTML = row + tbody.innerHTML;
             }
 
+            // Actualización inmediata Capa Gold
             document.getElementById('gold-paciente').innerText = nombreVal;
             document.getElementById('gold-sub').innerText = `DNI: ${dniVal} | Zona: ${zonaVal}`;
             document.getElementById('gold-sesiones').innerText = `${sesionesCalc} Sesiones`;
             document.getElementById('gold-prob').innerText = `${probCalc}%`;
+
+            // Incremento directo de métricas del Dashboard
+            totalPacientesMemoria++;
+            document.getElementById('stat-total-pacientes').innerText = totalPacientesMemoria;
 
             document.getElementById('form-registro-paciente').reset();
         } else {
@@ -141,7 +185,7 @@ async function guardarPacienteSupabase(e) {
     }
 }
 
-// CONSULTA PACIENTE POR DNI
+// CONSULTA PACIENTE POR DNI EN SUPABASE
 async function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
     if(!dniInput) {
@@ -174,7 +218,7 @@ async function buscarPacienteDNI() {
     }
 }
 
-// MODELADO 3D THREE.JS
+// MODELADO 3D INTERACTIVO
 function initThreeJS() {
     const container = document.getElementById('three-container');
     if(!container || container.children.length > 1) return;
@@ -186,20 +230,26 @@ function initThreeJS() {
     container.appendChild(renderer.domElement);
 
     const geometry = new THREE.CylinderGeometry(0.8, 0.6, 2.5, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xc084fc, wireframe: true });
-    const cylinder = new THREE.Mesh(geometry, material);
-    scene.add(cylinder);
+    currentMaterial = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
+    currentMesh = new THREE.Mesh(geometry, currentMaterial);
+    scene.add(currentMesh);
 
     camera.position.z = 4;
     function animate() {
         requestAnimationFrame(animate);
-        cylinder.rotation.y += 0.01;
+        currentMesh.rotation.y += 0.01;
         renderer.render(scene, camera);
     }
     animate();
 }
 
-// GRÁFICOS CHART.JS
+// DASHBOARD Y FILTROS TEMPORALES
+function filtrarPeriodo(periodo, btn) {
+    document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    alert(`🔍 Dashboard filtrado por: ${periodo.toUpperCase()}`);
+}
+
 let chartsLoaded = false;
 function initCharts() {
     if(chartsLoaded) return;
@@ -210,7 +260,7 @@ function initCharts() {
         type: 'bar',
         data: {
             labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
-            datasets: [{ label: 'Sesiones', data: [16, 20, 14, 0, 0], backgroundColor: '#38bdf8' }]
+            datasets: [{ label: 'Sesiones', data: [16, 20, 14, 8, 5], backgroundColor: '#38bdf8' }]
         },
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
@@ -219,8 +269,8 @@ function initCharts() {
     new Chart(ctxDonut, {
         type: 'doughnut',
         data: {
-            labels: ['Hombro', 'Rodilla', 'Lumbar'],
-            datasets: [{ data: [1, 1, 1], backgroundColor: ['#38bdf8', '#c084fc', '#ec4899'] }]
+            labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
+            datasets: [{ data: [10, 8, 6, 4, 2], backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'] }]
         },
         options: { responsive: true }
     });
