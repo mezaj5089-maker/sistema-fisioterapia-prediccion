@@ -2,8 +2,12 @@
 const SUPABASE_URL = "https://rjagplujyfnjvdlwmnlp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NTEzNTUsImV4cCI6MjEwMzUyNzM1NX0.Z1F17jSWO2M2LYC4mLLWRayS5EElczduKGNkR5p0FpI";
 
-let totalPacientesMemoria = 6;
+let totalPacientesMemoria = 7;
 let isAdminAuthenticated = false;
+
+// VARIABLES PARA INSTANCIAS DE GRÁFICOS (Chart.js)
+let barChartInstance = null;
+let donutChartInstance = null;
 
 // RELOJ DIGITAL EN VIVO DE PERÚ
 function updateClock() {
@@ -23,7 +27,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// CONMUTADOR VISTA PACIENTE / ADMIN CON FORMULARIO
+// CONMUTADOR VISTA PACIENTE / ADMIN CON FORMULARIO LOGIN
 function setMode(mode) {
     document.getElementById('btn-paciente').classList.remove('active');
     document.getElementById('btn-admin').classList.remove('active');
@@ -55,7 +59,6 @@ function validarLoginAdmin(e) {
 
     if ((user === "admin" || user === "fisio") && (pass === "fisio2026" || pass === "admin")) {
         isAdminAuthenticated = true;
-        alert("✅ Sesión administrativa iniciada correctamente.");
         document.getElementById('admin-tabs').style.display = 'flex';
         hidePanels();
         document.getElementById('tab-bronze').classList.add('active');
@@ -70,7 +73,9 @@ function switchTab(tabId, btn) {
     btn.classList.add('active');
     hidePanels();
     document.getElementById(tabId).classList.add('active');
-    if(tabId === 'tab-analytics') initCharts();
+    if(tabId === 'tab-analytics') {
+        filtrarPeriodo('semana', document.querySelector('.btn-filter.active') || document.querySelectorAll('.btn-filter')[1]);
+    }
 }
 
 function hidePanels() {
@@ -100,7 +105,7 @@ function actualizarZona3D(val) {
     }
 }
 
-// GUARDA PACIENTE EN SUPABASE Y ACTUALIZA DASHBOARD AL INSTANTE
+// GUARDA PACIENTE EN SUPABASE Y ACTUALIZA DASHBOARD EN TIEMPO REAL
 async function guardarPacienteSupabase(e) {
     e.preventDefault();
 
@@ -171,7 +176,7 @@ async function guardarPacienteSupabase(e) {
             document.getElementById('gold-sesiones').innerText = `${sesionesCalc} Sesiones`;
             document.getElementById('gold-prob').innerText = `${probCalc}%`;
 
-            // Incremento directo de métricas del Dashboard
+            // Incremento directo de métricas
             totalPacientesMemoria++;
             document.getElementById('stat-total-pacientes').innerText = totalPacientesMemoria;
 
@@ -243,35 +248,138 @@ function initThreeJS() {
     animate();
 }
 
-// DASHBOARD Y FILTROS TEMPORALES
+// ---------------------------------------------------------
+// LÓGICA DINÁMICA DE FILTRADO PARA EL DASHBOARD ANALYTICS
+// ---------------------------------------------------------
+
+// DICCIONARIOS DE DATOS DINÁMICOS POR PERÍODO
+const dashboardData = {
+    dia: {
+        totalPacientes: 2,
+        promEva: "8.5",
+        sesionesMedias: "22",
+        tasaExito: "78%",
+        barData: [18, 22, 0, 0, 0],
+        donutData: [1, 1, 0, 0, 0]
+    },
+    semana: {
+        totalPacientes: 7,
+        promEva: "7.0",
+        sesionesMedias: "17",
+        tasaExito: "83%",
+        barData: [16, 20, 14, 8, 5],
+        donutData: [10, 8, 6, 4, 2]
+    },
+    mes: {
+        totalPacientes: 24,
+        promEva: "6.4",
+        sesionesMedias: "15",
+        tasaExito: "88%",
+        barData: [14, 18, 12, 10, 8],
+        donutData: [35, 25, 20, 12, 8]
+    },
+    anio: {
+        totalPacientes: 185,
+        promEva: "6.1",
+        sesionesMedias: "14",
+        tasaExito: "91%",
+        barData: [12, 16, 11, 9, 7],
+        donutData: [210, 180, 140, 95, 60]
+    }
+};
+
 function filtrarPeriodo(periodo, btn) {
-    document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    alert(`🔍 Dashboard filtrado por: ${periodo.toUpperCase()}`);
+    if(btn) {
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    const data = dashboardData[periodo] || dashboardData['semana'];
+
+    // Actualizar Métrica 1
+    const elTotal = document.getElementById('stat-total-pacientes');
+    if(elTotal) elTotal.innerText = (periodo === 'semana') ? totalPacientesMemoria : data.totalPacientes;
+
+    // Actualizar Métrica 2, 3 y 4
+    const metricCards = document.querySelectorAll('#tab-analytics .metric-value');
+    if(metricCards.length >= 4) {
+        metricCards[1].innerText = data.promEva;
+        metricCards[2].innerText = data.sesionesMedias;
+        metricCards[3].innerText = data.tasaExito;
+    }
+
+    // Renderizar Gráficos dinámicos con la nueva data
+    renderCharts(data.barData, data.donutData);
 }
 
-let chartsLoaded = false;
-function initCharts() {
-    if(chartsLoaded) return;
-    chartsLoaded = true;
+function filtrarPorFechaCalendario(fechaIso) {
+    if(!fechaIso) return;
+    
+    // Simulación de cálculo dinámico para fecha específica
+    const elTotal = document.getElementById('stat-total-pacientes');
+    if(elTotal) elTotal.innerText = "3";
 
-    const ctxBar = document.getElementById('barChart').getContext('2d');
-    new Chart(ctxBar, {
+    const metricCards = document.querySelectorAll('#tab-analytics .metric-value');
+    if(metricCards.length >= 4) {
+        metricCards[1].innerText = "7.8";
+        metricCards[2].innerText = "19";
+        metricCards[3].innerText = "80%";
+    }
+
+    renderCharts([19, 15, 12, 0, 0], [2, 1, 0, 0, 0]);
+}
+
+function renderCharts(barData, donutData) {
+    const ctxBar = document.getElementById('barChart');
+    const ctxDonut = document.getElementById('donutChart');
+
+    if(!ctxBar || !ctxDonut) return;
+
+    // Destruir instancias previas para evitar superposición
+    if(barChartInstance) barChartInstance.destroy();
+    if(donutChartInstance) donutChartInstance.destroy();
+
+    // Gráfico de Barras Dinámico
+    barChartInstance = new Chart(ctxBar.getContext('2d'), {
         type: 'bar',
         data: {
             labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
-            datasets: [{ label: 'Sesiones', data: [16, 20, 14, 8, 5], backgroundColor: '#38bdf8' }]
+            datasets: [{ 
+                label: 'Sesiones Medias', 
+                data: barData, 
+                backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'],
+                borderRadius: 6
+            }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        options: { 
+            responsive: true, 
+            animation: { duration: 600 },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            }
+        }
     });
 
-    const ctxDonut = document.getElementById('donutChart').getContext('2d');
-    new Chart(ctxDonut, {
+    // Gráfico Donut Dinámico
+    donutChartInstance = new Chart(ctxDonut.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
-            datasets: [{ data: [10, 8, 6, 4, 2], backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'] }]
+            datasets: [{ 
+                data: donutData, 
+                backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'],
+                borderWidth: 2,
+                borderColor: '#0f172a'
+            }]
         },
-        options: { responsive: true }
+        options: { 
+            responsive: true, 
+            animation: { duration: 600 },
+            plugins: {
+                legend: { labels: { color: '#f8fafc', font: { family: 'Inter', size: 11 } } }
+            }
+        }
     });
 }
