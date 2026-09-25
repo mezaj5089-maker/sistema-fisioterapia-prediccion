@@ -9,32 +9,41 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Ruta a la carpeta estática
+# Obtener la ruta absoluta del directorio del proyecto
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 def load_frontend():
-    """Lee el archivo HTML, inyecta el CSS y JS desde la carpeta static."""
+    """Lee el archivo HTML e inyecta CSS y JS desde la carpeta static."""
     html_path = os.path.join(STATIC_DIR, "index.html")
     css_path = os.path.join(STATIC_DIR, "styles.css")
     js_path = os.path.join(STATIC_DIR, "app.js")
 
+    # Verificar que los archivos existan antes de abrir
+    if not os.path.exists(html_path):
+        st.error(f"No se encontró el archivo HTML en: {html_path}")
+        return ""
+
     with open(html_path, "r", encoding="utf-8") as f:
         html_content = f.read()
 
-    with open(css_path, "r", encoding="utf-8") as f:
-        css_content = f.read()
+    css_content = ""
+    if os.path.exists(css_path):
+        with open(css_path, "r", encoding="utf-8") as f:
+            css_content = f.read()
 
-    with open(js_path, "r", encoding="utf-8") as f:
-        js_content = f.read()
+    js_content = ""
+    if os.path.exists(js_path):
+        with open(js_path, "r", encoding="utf-8") as f:
+            js_content = f.read()
 
-    # Inyección limpia de CSS y JS en la plantilla HTML
+    # Inyección de estilos y scripts dentro del HTML
     full_html = html_content.replace(
-        '<link rel="stylesheet" href="styles.css">',
-        f'<style>{css_content}</style>'
+        '</head>',
+        f'<style>{css_content}</style></head>'
     ).replace(
-        '<script src="app.js"></script>',
-        f'<script>{js_content}</script>'
+        '</body>',
+        f'<script>{js_content}</script></body>'
     )
     
     return full_html
@@ -43,11 +52,11 @@ def load_frontend():
 st.sidebar.title("Menú de Administración")
 password = st.sidebar.text_input("Contraseña de Acceso", type="password")
 
-if password == "admin123":  # Ajusta tu contraseña
+if password == "admin123":
     st.sidebar.success("Acceso concedido")
     
-    # Cargar frontend modular
     dashboard_html = load_frontend()
-    components.html(dashboard_html, height=1000, scrolling=True)
+    if dashboard_html:
+        components.html(dashboard_html, height=1000, scrolling=True)
 else:
     st.warning("🔒 Ingrese la contraseña de administrador en la barra lateral para acceder.")
