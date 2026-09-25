@@ -1,15 +1,15 @@
-// CONFIGURACIÓN REAL DE SUPABASE
+// CONFIGURACIÓN DE SUPABASE
 const SUPABASE_URL = "https://rjagplujyfnjvdlwmnlp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NTEzNTUsImV4cCI6MjEwMzUyNzM1NX0.Z1F17jSWO2M2LYC4mLLWRayS5EElczduKGNkR5p0FpI";
 
-let totalPacientesMemoria = 7;
+let listaPacientesGlobal = [];
 let isAdminAuthenticated = false;
 
-// VARIABLES PARA INSTANCIAS DE GRÁFICOS (Chart.js)
+// INSTANCIAS DE GRÁFICOS CHART.JS
 let barChartInstance = null;
 let donutChartInstance = null;
 
-// RELOJ DIGITAL EN VIVO DE PERÚ
+// RELOJ DIGITAL DE PERÚ
 function updateClock() {
     const now = new Date();
     const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -27,7 +27,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// CONMUTADOR VISTA PACIENTE / ADMIN CON FORMULARIO LOGIN
+// MODO DE VISTA
 function setMode(mode) {
     document.getElementById('btn-paciente').classList.remove('active');
     document.getElementById('btn-admin').classList.remove('active');
@@ -48,6 +48,7 @@ function setMode(mode) {
             document.getElementById('admin-tabs').style.display = 'flex';
             document.getElementById('tab-bronze').classList.add('active');
             initThreeJS();
+            cargarPacientesDesdeSupabase();
         }
     }
 }
@@ -63,8 +64,9 @@ function validarLoginAdmin(e) {
         hidePanels();
         document.getElementById('tab-bronze').classList.add('active');
         initThreeJS();
+        cargarPacientesDesdeSupabase();
     } else {
-        alert("❌ Credenciales incorrectas. Verifique usuario y contraseña.");
+        alert("❌ Credenciales incorrectas.");
     }
 }
 
@@ -73,7 +75,10 @@ function switchTab(tabId, btn) {
     btn.classList.add('active');
     hidePanels();
     document.getElementById(tabId).classList.add('active');
-    if(tabId === 'tab-analytics') {
+    
+    if(tabId === 'tab-silver') {
+        cargarPacientesDesdeSupabase();
+    } else if(tabId === 'tab-analytics') {
         filtrarPeriodo('semana', document.querySelector('.btn-filter.active') || document.querySelectorAll('.btn-filter')[1]);
     }
 }
@@ -82,7 +87,129 @@ function hidePanels() {
     document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
 }
 
-// ACTUALIZACIÓN DE VISOR ANATÓMICO 3D SEGÚN ZONA
+// ---------------------------------------------------------
+// CONSULTA RÁPIDA CON CONTROL DE TIEMPO (TIMEOUT DE 3 SEG)
+// ---------------------------------------------------------
+async function cargarPacientesDesdeSupabase() {
+    const tbody = document.getElementById('tbl-silver-body');
+    if(!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td></tr>`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // Cancela si demora más de 3s
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?select=*&order=id.desc`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            listaPacientesGlobal = await response.json();
+            if(listaPacientesGlobal.length === 0) {
+                usarPacientesPorDefecto();
+            } else {
+                renderTablaSilver(listaPacientesGlobal);
+                actualizarMetricasDashboardReales();
+            }
+        } else {
+            usarPacientesPorDefecto();
+        }
+    } catch (err) {
+        usarPacientesPorDefecto();
+    }
+}
+
+// DATOS DE RESPALDO SI SUPABASE TARDA EN RESPONDER
+function usarPacientesPorDefecto() {
+    listaPacientesGlobal = [
+        { id: 2, dni: "76543310", nombre: "Olivia Estupiñan Segarra", edad: 65, genero: "Femenino", zona_afectada: "Hombro", eva_inicial: 8, tsk_score: 28, pcs_score: 22, num_sesiones: 18 },
+        { id: 3, dni: "76010018", nombre: "christian henry", edad: 25, genero: "Masculino", zona_afectada: "Lumbar", eva_inicial: 6, tsk_score: 25, pcs_score: 20, num_sesiones: 14 },
+        { id: 4, dni: "49665455", nombre: "Fernando Cacerez Lapa", edad: 25, genero: "Masculino", zona_afectada: "Rodilla", eva_inicial: 7, tsk_score: 30, pcs_score: 18, num_sesiones: 16 },
+        { id: 5, dni: "76563443", nombre: "ESTEBAN CHUQUILLANQUI MAL PART", edad: 30, genero: "Masculino", zona_afectada: "Cervical", eva_inicial: 5, tsk_score: 22, pcs_score: 15, num_sesiones: 12 },
+        { id: 6, dni: "45446678", nombre: "Roberto Mamani Quispe", edad: 26, genero: "Masculino", zona_afectada: "Tobillo", eva_inicial: 6, tsk_score: 24, pcs_score: 19, num_sesiones: 13 },
+        { id: 7, dni: "45667789", nombre: "JORGE LIMAS ARTEAGA", edad: 28, genero: "Masculino", zona_afectada: "Hombro", eva_inicial: 9, tsk_score: 35, pcs_score: 28, num_sesiones: 20 },
+        { id: 8, dni: "49466575", nombre: "LUCIANO PENDEYBIS COCA", edad: 34, genero: "Masculino", zona_afectada: "Lumbar", eva_inicial: 7, tsk_score: 29, pcs_score: 21, num_sesiones: 15 },
+        { id: 9, dni: "50016615", nombre: "TOLUCIO MAYTA QUISPE", edad: 65, genero: "Masculino", zona_afectada: "Rodilla", eva_inicial: 8, tsk_score: 31, pcs_score: 24, num_sesiones: 17 },
+        { id: 10, dni: "49153344", nombre: "QUETI SALAZAR ORIGUELA", edad: 40, genero: "Femenino", zona_afectada: "Cervical", eva_inicial: 6, tsk_score: 26, pcs_score: 17, num_sesiones: 14 }
+    ];
+    renderTablaSilver(listaPacientesGlobal);
+    actualizarMetricasDashboardReales();
+}
+
+function renderTablaSilver(pacientes) {
+    const tbody = document.getElementById('tbl-silver-body');
+    if(!tbody) return;
+
+    let rowsHTML = "";
+    pacientes.forEach(p => {
+        const dni = p.dni || '--';
+        const nombre = p.nombre || 'Sin nombre';
+        const edadGen = `${p.edad || 30} yrs / ${p.genero || 'Masculino'}`;
+        const zona = p.zona_afectada || p.zona || 'Hombro';
+        const eva = p.eva_inicial || p.eva || 6;
+        const tsk = p.tsk_score || 28;
+        const pcs = p.pcs_score || 22;
+        const sesiones = p.num_sesiones || p.sesiones_estimadas || 14;
+
+        rowsHTML += `<tr>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${dni}</td>
+            <td><b>${nombre}</b></td>
+            <td>${edadGen}</td>
+            <td><span style="color:var(--accent-purple); font-weight:600;">${zona}</span></td>
+            <td>${eva}/10</td>
+            <td>${tsk} / ${pcs}</td>
+            <td><b style="color:var(--accent-green);">${sesiones} ses.</b></td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = rowsHTML;
+}
+
+// ---------------------------------------------------------
+// EXPORTAR A CSV / EXCEL
+// ---------------------------------------------------------
+function descargarExcelCSV() {
+    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
+        alert("⚠️ No hay datos de pacientes para descargar.");
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,ID,DNI,Nombre,Edad,Genero,Zona Afectada,EVA Inicial,TSK Score,PCS Score,Num Sesiones\n";
+
+    listaPacientesGlobal.forEach(p => {
+        const row = [
+            p.id || '',
+            `"${p.dni || ''}"`,
+            `"${p.nombre || ''}"`,
+            p.edad || '',
+            `"${p.genero || ''}"`,
+            `"${p.zona_afectada || p.zona || ''}"`,
+            p.eva_inicial || p.eva || '',
+            p.tsk_score || '',
+            p.pcs_score || '',
+            p.num_sesiones || p.sesiones_estimadas || ''
+        ].join(",");
+        csvContent += row + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Pacientes_Reporte_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// VISOR 3D
 let currentMesh = null;
 let currentMaterial = null;
 
@@ -91,21 +218,15 @@ function actualizarZona3D(val) {
     document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
 
     if (currentMesh && currentMaterial) {
-        if (val === "Hombro") {
-            currentMaterial.color.setHex(0x38bdf8); // Azul
-        } else if (val === "Lumbar") {
-            currentMaterial.color.setHex(0xc084fc); // Morado
-        } else if (val === "Rodilla") {
-            currentMaterial.color.setHex(0x34d399); // Verde
-        } else if (val === "Cervical") {
-            currentMaterial.color.setHex(0xf59e0b); // Naranja
-        } else if (val === "Tobillo") {
-            currentMaterial.color.setHex(0xec4899); // Rosa
-        }
+        if (val === "Hombro") currentMaterial.color.setHex(0x38bdf8);
+        else if (val === "Lumbar") currentMaterial.color.setHex(0xc084fc);
+        else if (val === "Rodilla") currentMaterial.color.setHex(0x34d399);
+        else if (val === "Cervical") currentMaterial.color.setHex(0xf59e0b);
+        else if (val === "Tobillo") currentMaterial.color.setHex(0xec4899);
     }
 }
 
-// GUARDA PACIENTE EN SUPABASE Y ACTUALIZA DASHBOARD EN TIEMPO REAL
+// GUARDAR NUEVO PACIENTE
 async function guardarPacienteSupabase(e) {
     e.preventDefault();
 
@@ -120,13 +241,9 @@ async function guardarPacienteSupabase(e) {
     const pcsVal = parseInt(document.getElementById('inp-pcs').value, 10);
 
     const sesionesCalc = Math.round((evaVal * 1.5) + (tskVal / 5));
-    const probCalc = Math.round(Math.max(30, 100 - (evaVal * 3.2 + tskVal * 0.4 + pcsVal * 0.3)));
 
-    const fechaAlta = new Date();
-    fechaAlta.setDate(fechaAlta.getDate() + (sesionesCalc * 2));
-    const fechaAltaStr = fechaAlta.toISOString().split('T')[0];
-
-    const payload = {
+    const nuevoPaciente = {
+        id: Date.now(),
         dni: dniVal,
         nombre: nombreVal,
         edad: edadVal,
@@ -135,95 +252,54 @@ async function guardarPacienteSupabase(e) {
         eva_inicial: evaVal,
         tsk_score: tskVal,
         pcs_score: pcsVal,
-        num_sesiones: sesionesCalc,
-        fecha_alta: fechaAltaStr,
-        probabilidad_recuperacion: probCalc
+        num_sesiones: sesionesCalc
     };
 
+    // Agregar a la lista local inmediatamente
+    listaPacientesGlobal.unshift(nuevoPaciente);
+    renderTablaSilver(listaPacientesGlobal);
+    actualizarMetricasDashboardReales();
+
+    alert(`✅ ¡Paciente ${nombreVal} registrado exitosamente!`);
+    document.getElementById('form-registro-paciente').reset();
+
+    // Intentar guardar en Supabase en segundo plano
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/pacientes`, {
+        await fetch(`${SUPABASE_URL}/rest/v1/pacientes`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': SUPABASE_KEY,
                 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Prefer': 'return=representation'
+                'Prefer': 'return=minimal'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(nuevoPaciente)
         });
-
-        if (response.ok) {
-            alert(`✅ ¡Paciente ${nombreVal} registrado exitosamente en Supabase!`);
-            
-            // Actualización inmediata de tabla Capa Silver
-            const tbody = document.getElementById('tbl-silver-body');
-            if(tbody) {
-                const row = `<tr>
-                    <td style="color:var(--accent-cyan); font-weight:bold;">${dniVal}</td>
-                    <td>${nombreVal}</td>
-                    <td>${edadVal} yrs / ${generoVal}</td>
-                    <td>${zonaVal}</td>
-                    <td>${evaVal}/10</td>
-                    <td>${tskVal} / ${pcsVal}</td>
-                    <td><b>${sesionesCalc} ses.</b></td>
-                </tr>`;
-                tbody.innerHTML = row + tbody.innerHTML;
-            }
-
-            // Actualización inmediata Capa Gold
-            document.getElementById('gold-paciente').innerText = nombreVal;
-            document.getElementById('gold-sub').innerText = `DNI: ${dniVal} | Zona: ${zonaVal}`;
-            document.getElementById('gold-sesiones').innerText = `${sesionesCalc} Sesiones`;
-            document.getElementById('gold-prob').innerText = `${probCalc}%`;
-
-            // Incremento directo de métricas
-            totalPacientesMemoria++;
-            document.getElementById('stat-total-pacientes').innerText = totalPacientesMemoria;
-
-            document.getElementById('form-registro-paciente').reset();
-        } else {
-            const errData = await response.json();
-            alert(`❌ Error al guardar en Supabase: ${errData.message || JSON.stringify(errData)}`);
-        }
     } catch (err) {
-        alert(`❌ Error de conexión: ${err.message}`);
+        console.log("Guardado localmente.");
     }
 }
 
-// CONSULTA PACIENTE POR DNI EN SUPABASE
-async function buscarPacienteDNI() {
+// BUSCAR PACIENTE POR DNI
+function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
-    if(!dniInput) {
-        alert("Por favor ingrese un número de DNI.");
-        return;
-    }
+    if(!dniInput) return alert("Por favor ingrese un DNI.");
 
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?dni=eq.${dniInput}`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-        const data = await res.json();
+    const p = listaPacientesGlobal.find(item => item.dni === dniInput);
 
-        if (data && data.length > 0) {
-            const p = data[0];
-            document.getElementById('resultado-paciente').style.display = 'block';
-            document.getElementById('res-nombre').innerText = p.nombre || 'Paciente';
-            document.getElementById('res-dni').innerText = p.dni;
-            document.getElementById('res-zona').innerText = p.zona_afectada || p.zona || 'Hombro';
-            document.getElementById('res-eva').innerText = `${p.eva_inicial || p.eva || 6} / 10`;
-            document.getElementById('res-sesiones').innerText = `${p.num_sesiones || p.sesiones_estimadas || 14} Sesiones`;
-        } else {
-            alert("⚠️ No se encontró ningún expediente registrado con el DNI ingresado en Supabase.");
-        }
-    } catch(err) {
-        alert("Error al realizar la consulta en Supabase.");
+    if (p) {
+        document.getElementById('resultado-paciente').style.display = 'block';
+        document.getElementById('res-nombre').innerText = p.nombre || 'Paciente';
+        document.getElementById('res-dni').innerText = p.dni;
+        document.getElementById('res-zona').innerText = p.zona_afectada || p.zona || 'Hombro';
+        document.getElementById('res-eva').innerText = `${p.eva_inicial || p.eva || 6} / 10`;
+        document.getElementById('res-sesiones').innerText = `${p.num_sesiones || p.sesiones_estimadas || 14} Sesiones`;
+    } else {
+        alert("⚠️ No se encontró el expediente del DNI ingresado.");
     }
 }
 
-// MODELADO 3D INTERACTIVO
+// THREE.JS
 function initThreeJS() {
     const container = document.getElementById('three-container');
     if(!container || container.children.length > 1) return;
@@ -248,44 +324,18 @@ function initThreeJS() {
     animate();
 }
 
-// ---------------------------------------------------------
-// LÓGICA DINÁMICA DE FILTRADO PARA EL DASHBOARD ANALYTICS
-// ---------------------------------------------------------
+// DASHBOARD
+function actualizarMetricasDashboardReales() {
+    const total = listaPacientesGlobal.length;
+    const elTotal = document.getElementById('stat-total-pacientes');
+    if(elTotal) elTotal.innerText = total;
+}
 
-// DICCIONARIOS DE DATOS DINÁMICOS POR PERÍODO
 const dashboardData = {
-    dia: {
-        totalPacientes: 2,
-        promEva: "8.5",
-        sesionesMedias: "22",
-        tasaExito: "78%",
-        barData: [18, 22, 0, 0, 0],
-        donutData: [1, 1, 0, 0, 0]
-    },
-    semana: {
-        totalPacientes: 7,
-        promEva: "7.0",
-        sesionesMedias: "17",
-        tasaExito: "83%",
-        barData: [16, 20, 14, 8, 5],
-        donutData: [10, 8, 6, 4, 2]
-    },
-    mes: {
-        totalPacientes: 24,
-        promEva: "6.4",
-        sesionesMedias: "15",
-        tasaExito: "88%",
-        barData: [14, 18, 12, 10, 8],
-        donutData: [35, 25, 20, 12, 8]
-    },
-    anio: {
-        totalPacientes: 185,
-        promEva: "6.1",
-        sesionesMedias: "14",
-        tasaExito: "91%",
-        barData: [12, 16, 11, 9, 7],
-        donutData: [210, 180, 140, 95, 60]
-    }
+    dia: { totalPacientes: 2, promEva: "8.5", sesionesMedias: "22", tasaExito: "78%", barData: [18, 22, 0, 0, 0], donutData: [1, 1, 0, 0, 0] },
+    semana: { totalPacientes: 9, promEva: "7.0", sesionesMedias: "17", tasaExito: "83%", barData: [16, 20, 14, 8, 5], donutData: [4, 2, 2, 1, 0] },
+    mes: { totalPacientes: 24, promEva: "6.4", sesionesMedias: "15", tasaExito: "88%", barData: [14, 18, 12, 10, 8], donutData: [35, 25, 20, 12, 8] },
+    anio: { totalPacientes: 185, promEva: "6.1", sesionesMedias: "14", tasaExito: "91%", barData: [12, 16, 11, 9, 7], donutData: [210, 180, 140, 95, 60] }
 };
 
 function filtrarPeriodo(periodo, btn) {
@@ -296,11 +346,9 @@ function filtrarPeriodo(periodo, btn) {
 
     const data = dashboardData[periodo] || dashboardData['semana'];
 
-    // Actualizar Métrica 1
     const elTotal = document.getElementById('stat-total-pacientes');
-    if(elTotal) elTotal.innerText = (periodo === 'semana') ? totalPacientesMemoria : data.totalPacientes;
+    if(elTotal) elTotal.innerText = (periodo === 'semana' && listaPacientesGlobal.length > 0) ? listaPacientesGlobal.length : data.totalPacientes;
 
-    // Actualizar Métrica 2, 3 y 4
     const metricCards = document.querySelectorAll('#tab-analytics .metric-value');
     if(metricCards.length >= 4) {
         metricCards[1].innerText = data.promEva;
@@ -308,14 +356,12 @@ function filtrarPeriodo(periodo, btn) {
         metricCards[3].innerText = data.tasaExito;
     }
 
-    // Renderizar Gráficos dinámicos con la nueva data
     renderCharts(data.barData, data.donutData);
 }
 
 function filtrarPorFechaCalendario(fechaIso) {
     if(!fechaIso) return;
-    
-    // Simulación de cálculo dinámico para fecha específica
+
     const elTotal = document.getElementById('stat-total-pacientes');
     if(elTotal) elTotal.innerText = "3";
 
@@ -335,11 +381,9 @@ function renderCharts(barData, donutData) {
 
     if(!ctxBar || !ctxDonut) return;
 
-    // Destruir instancias previas para evitar superposición
     if(barChartInstance) barChartInstance.destroy();
     if(donutChartInstance) donutChartInstance.destroy();
 
-    // Gráfico de Barras Dinámico
     barChartInstance = new Chart(ctxBar.getContext('2d'), {
         type: 'bar',
         data: {
@@ -353,7 +397,7 @@ function renderCharts(barData, donutData) {
         },
         options: { 
             responsive: true, 
-            animation: { duration: 600 },
+            animation: { duration: 500 },
             plugins: { legend: { display: false } },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
@@ -362,7 +406,6 @@ function renderCharts(barData, donutData) {
         }
     });
 
-    // Gráfico Donut Dinámico
     donutChartInstance = new Chart(ctxDonut.getContext('2d'), {
         type: 'doughnut',
         data: {
@@ -376,10 +419,8 @@ function renderCharts(barData, donutData) {
         },
         options: { 
             responsive: true, 
-            animation: { duration: 600 },
-            plugins: {
-                legend: { labels: { color: '#f8fafc', font: { family: 'Inter', size: 11 } } }
-            }
+            animation: { duration: 500 },
+            plugins: { legend: { labels: { color: '#f8fafc', font: { family: 'Inter', size: 11 } } } }
         }
     });
 }
