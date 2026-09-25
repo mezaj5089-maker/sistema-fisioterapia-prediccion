@@ -42,7 +42,7 @@
 
         /* SIDEBAR */
         .sidebar {
-            width: 260px;
+            width: 270px;
             background-color: var(--panel-bg);
             border-right: 1px solid var(--border-color);
             padding: 20px;
@@ -83,6 +83,7 @@
             color: var(--text-muted);
         }
 
+        /* RELOJ DENTRO DEL SIDEBAR */
         .clock-card {
             background: rgba(30, 41, 59, 0.5);
             border: 1px solid #334155;
@@ -187,7 +188,7 @@
             padding: 25px;
         }
 
-        /* NAV TABS */
+        /* PESTAÑAS ADMIN */
         .nav-tabs {
             display: flex;
             gap: 10px;
@@ -217,7 +218,7 @@
             border-color: transparent;
         }
 
-        /* VIEWS */
+        /* VISTAS */
         .view-panel {
             display: none;
         }
@@ -226,7 +227,7 @@
             display: block;
         }
 
-        /* CARDS & GRID */
+        /* GRIDS & CARDS */
         .grid-4 {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -284,7 +285,7 @@
             color: var(--text-muted);
         }
 
-        /* FORM STYLING */
+        /* FORMULARIO Y TABLAS */
         .form-group {
             margin-bottom: 15px;
         }
@@ -323,7 +324,6 @@
             margin-top: 10px;
         }
 
-        /* TABLE */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -366,7 +366,7 @@
                 </div>
             </div>
 
-            <!-- RELOJ EN TIEMPO REAL -->
+            <!-- RELOJ PERÚ EN VIVO -->
             <div class="clock-card">
                 <i class="fa-regular fa-clock clock-icon"></i>
                 <div class="clock-info">
@@ -375,6 +375,7 @@
                 </div>
             </div>
 
+            <!-- CONMUTADOR DE MODO DE VISTA -->
             <div class="view-mode-title">MODO DE VISTA</div>
             <div class="view-toggle">
                 <button class="toggle-btn active" id="btn-paciente" onclick="setMode('paciente')">
@@ -395,7 +396,7 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
-        <!-- PESTAÑAS DERECHAS -->
+        <!-- PESTAÑAS DE NAVEGACIÓN ADMINISTRADOR -->
         <div class="nav-tabs" id="admin-tabs" style="display:none;">
             <button class="tab-btn active" onclick="switchTab('tab-bronze', this)"><i class="fa-solid fa-database"></i> Capa Bronze (Registro)</button>
             <button class="tab-btn" onclick="switchTab('tab-silver', this)"><i class="fa-solid fa-table"></i> Capa Silver (Registros Staging)</button>
@@ -403,20 +404,43 @@
             <button class="tab-btn" onclick="switchTab('tab-analytics', this)"><i class="fa-solid fa-chart-pie"></i> HTML Dashboard Analytics</button>
         </div>
 
-        <!-- MODO PACIENTE -->
+        <!-- VISTA INTERFAZ PACIENTE -->
         <div id="view-paciente-section" class="view-panel active">
-            <div class="card">
+            <div class="card" style="margin-bottom: 20px;">
                 <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass" style="color:var(--accent-cyan);"></i> Consulta de Evolución del Paciente</h3>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Ingrese su Documento Nacional de Identidad (DNI) para consultar el pronóstico estimado por IA y las métricas de rehabilitación.</p>
                 
                 <div style="display: flex; gap: 15px;">
-                    <input type="text" class="form-control" placeholder="Ej. 73829104" style="flex:1;">
-                    <button class="btn-submit" style="width: auto; padding: 0 25px; margin: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Consultar Diagnóstico</button>
+                    <input type="text" id="dni-consulta" class="form-control" placeholder="Ej. 73829104" style="flex:1;">
+                    <button class="btn-submit" onclick="buscarPaciente()" style="width: auto; padding: 0 25px; margin: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Consultar Diagnóstico</button>
+                </div>
+            </div>
+
+            <!-- RESULTADO CONSULTA PACIENTE -->
+            <div id="resultado-paciente" class="card" style="display:none;">
+                <h4 style="color: var(--accent-cyan); margin-bottom: 15px;"><i class="fa-solid fa-circle-check"></i> Paciente Encontrado: <span id="res-nombre">María Torres</span></h4>
+                <div class="grid-4">
+                    <div class="card metric-card cyan">
+                        <div class="metric-title">DNI</div>
+                        <div class="metric-value" id="res-dni" style="font-size:1.3rem;">73829104</div>
+                    </div>
+                    <div class="card metric-card purple">
+                        <div class="metric-title">Zona Afectada</div>
+                        <div class="metric-value" id="res-zona" style="font-size:1.3rem;">Hombro</div>
+                    </div>
+                    <div class="card metric-card pink">
+                        <div class="metric-title">Escala de Dolor (EVA)</div>
+                        <div class="metric-value" id="res-eva" style="font-size:1.3rem;">7 / 10</div>
+                    </div>
+                    <div class="card metric-card green">
+                        <div class="metric-title">Sesiones Estimadas</div>
+                        <div class="metric-value" id="res-sesiones" style="font-size:1.3rem;">16 Sesiones</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- CAPA BRONZE -->
+        <!-- CAPA BRONZE (REGISTRO ADMIN) -->
         <div id="tab-bronze" class="view-panel">
             <div class="grid-2">
                 <div class="card">
@@ -429,17 +453,26 @@
                         <label>Nombre Completo *</label>
                         <input type="text" class="form-control" placeholder="Nombre Apellido">
                     </div>
+                    <div class="form-group">
+                        <label>Zona Afectada *</label>
+                        <select class="form-control">
+                            <option>Hombro</option>
+                            <option>Lumbar</option>
+                            <option>Rodilla</option>
+                            <option>Cervical</option>
+                        </select>
+                    </div>
                     <button class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar e Inferir Pronóstico</button>
                 </div>
 
                 <div class="card">
                     <h3><i class="fa-solid fa-cube" style="color:var(--accent-purple)"></i> Visor 3D Anatómico Interactivo</h3>
-                    <div id="three-container" style="width:100%; height:250px; margin-top:15px; border-radius:10px; background:#0b0f19;"></div>
+                    <div id="three-container" style="width:100%; height:260px; margin-top:15px; border-radius:10px; background:#0b0f19;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- CAPA SILVER -->
+        <!-- CAPA SILVER (REGISTROS STAGING) -->
         <div id="tab-silver" class="view-panel">
             <div class="card">
                 <h3><i class="fa-solid fa-database"></i> Capa Silver: Registros Depurados & Enriquecidos</h3>
@@ -476,7 +509,7 @@
             </div>
         </div>
 
-        <!-- CAPA GOLD -->
+        <!-- CAPA GOLD (INFERENCIA ML) -->
         <div id="tab-gold" class="view-panel">
             <div class="grid-4">
                 <div class="card metric-card cyan">
@@ -497,7 +530,7 @@
             </div>
         </div>
 
-        <!-- CAPA ANALYTICS (GRÁFICOS) -->
+        <!-- CAPA DASHBOARD ANALYTICS -->
         <div id="tab-analytics" class="view-panel">
             <div class="grid-4">
                 <div class="card metric-card cyan">
@@ -536,9 +569,9 @@
 
     </div>
 
-    <!-- SCRIPT LOGIC -->
+    <!-- LOGICA SCRIPT -->
     <script>
-        // RELOJ EN TIEMPO REAL PERÚ
+        // RELOJ EN VIVO HORARIO PERÚ
         function updateClock() {
             const now = new Date();
             const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -552,7 +585,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // MODO PACIENTE / ADMIN TOGGLE
+        // CAMBIO ENTRE VISTA PACIENTE Y VISTA ADMIN
         function setMode(mode) {
             document.getElementById('btn-paciente').classList.remove('active');
             document.getElementById('btn-admin').classList.remove('active');
@@ -584,7 +617,18 @@
             document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
         }
 
-        // THREE.JS MODELO 3D
+        // BÚSQUEDA INTERACTIVA PACIENTE POR DNI
+        function buscarPaciente() {
+            const dni = document.getElementById('dni-consulta').value;
+            if(dni) {
+                document.getElementById('resultado-paciente').style.display = 'block';
+                document.getElementById('res-dni').innerText = dni;
+            } else {
+                alert("Por favor ingrese un DNI válido.");
+            }
+        }
+
+        // VISOR 3D THREE.JS
         function initThreeJS() {
             const container = document.getElementById('three-container');
             if(!container || container.children.length > 0) return;
@@ -610,7 +654,7 @@
             animate();
         }
 
-        // CHART.JS
+        // GRÁFICOS CHART.JS
         let chartsLoaded = false;
         function initCharts() {
             if(chartsLoaded) return;
