@@ -92,9 +92,9 @@ function hidePanels() {
 // ---------------------------------------------------------
 async function cargarPacientesDesdeSupabase() {
     const tbody = document.getElementById('tbl-silver-body');
-    if(!tbody) return;
-
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td></tr>`;
+    if(tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td></tr>`;
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -309,12 +309,20 @@ async function guardarPacienteSupabase(e) {
     }
 }
 
-// BUSCAR PACIENTE POR DNI
-function buscarPacienteDNI() {
+// ---------------------------------------------------------
+// BUSCAR PACIENTE POR DNI (CORREGIDO CON AUTO-CARGA)
+// ---------------------------------------------------------
+async function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
     if(!dniInput) return alert("Por favor ingrese un DNI.");
 
-    const p = listaPacientesGlobal.find(item => item.dni === dniInput);
+    // Si la lista está vacía al momento de hacer la consulta, se intenta descargar desde Supabase
+    if (!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
+        await cargarPacientesDesdeSupabase();
+    }
+
+    // Búsqueda flexible convirtiendo ambos valores a String y removiendo espacios sobrantes
+    const p = listaPacientesGlobal.find(item => String(item.dni).trim() === String(dniInput).trim());
 
     if (p) {
         document.getElementById('resultado-paciente').style.display = 'block';
@@ -453,3 +461,6 @@ function renderCharts(barData, donutData) {
         }
     });
 }
+
+// INICIALIZACIÓN AUTOMÁTICA AL CARGAR LA PÁGINA
+cargarPacientesDesdeSupabase();
