@@ -1,0 +1,39 @@
+/* Variables de Color del Panel Web */
+:root {
+  --bg-primary: #0f172a;      /* Fondo principal azul oscuro/gris */
+  --bg-card: #1e293b;         /* Fondo de las tarjetas/paneles */
+  --text-main: #f8fafc;        /* Color de texto principal */
+  --accent-color: #0ea5e9;     /* Color primario de realce (Cyan/Azul) */
+  --accent-hover: #0284c7;     /* Color de hover */
+  --border-color: #334155;     /* Color de bordes */
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 1rem;
+}
+
+.dashboard-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
