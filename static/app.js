@@ -1,4 +1,8 @@
-// RELOJ DIGITAL EN VIVO DE PERÚ (GMT-5)
+// CONFIGURACIÓN DE SUPABASE (CREDENCIONALES DE API REST)
+const SUPABASE_URL = "https://rjagplujyfnjvdlwmnlp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MDAwMDAsImV4cCI6MjA0MjI3NjAwMH0.PLACEHOLDER_COMPLETA_TU_ANON_KEY";
+
+// RELOJ DIGITAL LUJOSO DE PERÚ
 function updateClock() {
     const now = new Date();
     const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -16,7 +20,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// CONMUTADOR VISTA PACIENTE / ADMIN CON SEGURIDAD LOGIN
+// CAMBIO DE MODO PACIENTE / ADMIN CON LOGIN
 function setMode(mode) {
     document.getElementById('btn-paciente').classList.remove('active');
     document.getElementById('btn-admin').classList.remove('active');
@@ -27,16 +31,15 @@ function setMode(mode) {
         hidePanels();
         document.getElementById('view-paciente-section').classList.add('active');
     } else {
-        // Solicitud de Login de Administrador
-        const password = prompt("🔒 Acceso Restringido - Ingrese la Contraseña de Administrador:");
-        if (password === "fisio2026" || password === "admin123") {
+        const password = prompt("🔒 Acceso Restringido Admin/Fisio - Ingrese la contraseña:");
+        if (password === "fisio2026" || password === "admin") {
             document.getElementById('btn-admin').classList.add('active');
             document.getElementById('admin-tabs').style.display = 'flex';
             hidePanels();
             document.getElementById('tab-bronze').classList.add('active');
             initThreeJS();
         } else {
-            alert("❌ Contraseña incorrecta. Acceso denegado.");
+            alert("❌ Contraseña incorrecta.");
             setMode('paciente');
         }
     }
@@ -58,7 +61,124 @@ function actualizarZona3D(val) {
     document.getElementById('lbl-zona-3d').innerText = val;
 }
 
-// VISOR ANATÓMICO 3D (THREE.JS)
+// ---------------------------------------------------------
+// REGISTRO DE PACIENTE Y GUARDADO REAL EN SUPABASE
+// ---------------------------------------------------------
+async function guardarPacienteSupabase(e) {
+    e.preventDefault();
+
+    const dniVal = document.getElementById('inp-dni').value.trim();
+    const nombreVal = document.getElementById('inp-nombre').value.trim();
+    const edadVal = parseInt(document.getElementById('inp-edad').value, 10) || 34;
+    const generoVal = document.getElementById('inp-genero').value;
+    const zonaVal = document.getElementById('inp-zona').value;
+    
+    // CONVERSIÓN A ENTEROS STRICTOS (Evita error 'invalid input syntax for type integer: "5.0"')
+    const evaVal = parseInt(document.getElementById('inp-eva').value, 10);
+    const tskVal = parseInt(document.getElementById('inp-tsk').value, 10);
+    const pcsVal = parseInt(document.getElementById('inp-pcs').value, 10);
+
+    const sesionesCalc = Math.round((evaVal * 1.5) + (tskVal / 5));
+    const probCalc = Math.round(Math.max(30, 100 - (evaVal * 3.2 + tskVal * 0.4 + pcsVal * 0.3)));
+
+    const fechaAlta = new Date();
+    fechaAlta.setDate(fechaAlta.getDate() + (sesionesCalc * 2));
+    const fechaAltaStr = fechaAlta.toISOString().split('T')[0];
+
+    const payload = {
+        dni: dniVal,
+        nombre: nombreVal,
+        edad: edadVal,
+        genero: generoVal,
+        zona_afectada: zonaVal,
+        eva_inicial: evaVal,      // Entero
+        tsk_score: tskVal,        // Entero
+        pcs_score: pcsVal,        // Entero
+        num_sesiones: sesionesCalc,
+        fecha_alta: fechaAltaStr,
+        probabilidad_recuperacion: probCalc
+    };
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/pacientes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert(`✅ ¡Paciente ${nombreVal} guardado con éxito en Supabase! (${sesionesCalc} sesiones estimadas).`);
+            
+            // Agregar a la tabla Capa Silver visualmente
+            const tbody = document.getElementById('tbl-silver-body');
+            if(tbody) {
+                const row = `<tr>
+                    <td style="color:var(--accent-cyan); font-weight:bold;">${dniVal}</td>
+                    <td>${nombreVal}</td>
+                    <td>${edadVal} yrs / ${generoVal}</td>
+                    <td>${zonaVal}</td>
+                    <td>${evaVal}/10</td>
+                    <td>${tskVal} / ${pcsVal}</td>
+                    <td><b>${sesionesCalc} ses.</b></td>
+                </tr>`;
+                tbody.innerHTML = row + tbody.innerHTML;
+            }
+
+            // Actualizar Capa Gold
+            document.getElementById('gold-paciente').innerText = nombreVal;
+            document.getElementById('gold-sub').innerText = `DNI: ${dniVal} | Zona: ${zonaVal}`;
+            document.getElementById('gold-sesiones').innerText = `${sesionesCalc} Sesiones`;
+            document.getElementById('gold-prob').innerText = `${probCalc}%`;
+
+            document.getElementById('form-registro-paciente').reset();
+        } else {
+            const errData = await response.json();
+            alert(`❌ Error al guardar en Supabase: ${errData.message || JSON.stringify(errData)}`);
+        }
+    } catch (err) {
+        alert(`❌ Error de conexión: ${err.message}`);
+    }
+}
+
+// CONSULTA DE PACIENTE POR DNI EN SUPABASE
+async function buscarPacienteDNI() {
+    const dniInput = document.getElementById('dni-consulta').value.trim();
+    if(!dniInput) {
+        alert("Por favor ingrese un número de DNI.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?dni=eq.${dniInput}`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+            const p = data[0];
+            document.getElementById('resultado-paciente').style.display = 'block';
+            document.getElementById('res-nombre').innerText = p.nombre || 'Paciente';
+            document.getElementById('res-dni').innerText = p.dni;
+            document.getElementById('res-zona').innerText = p.zona_afectada || p.zona || 'Hombro';
+            document.getElementById('res-eva').innerText = `${p.eva_inicial || p.eva || 6} / 10`;
+            document.getElementById('res-sesiones').innerText = `${p.num_sesiones || p.sesiones_estimadas || 14} Sesiones`;
+        } else {
+            alert("⚠️ No se encontró ningún expediente registrado con el DNI ingresado en Supabase.");
+        }
+    } catch(err) {
+        alert("Error al realizar la consulta en Supabase.");
+    }
+}
+
+// THREE.JS MODELO 3D
 function initThreeJS() {
     const container = document.getElementById('three-container');
     if(!container || container.children.length > 1) return;
@@ -82,9 +202,8 @@ function initThreeJS() {
     }
     animate();
 }
-initThreeJS();
 
-// GRÁFICOS (CHART.JS)
+// CHART.JS
 let chartsLoaded = false;
 function initCharts() {
     if(chartsLoaded) return;
