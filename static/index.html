@@ -56,7 +56,26 @@
             <button class="tab-btn" onclick="switchTab('tab-analytics', this)"><i class="fa-solid fa-chart-pie"></i> HTML Dashboard Analytics</button>
         </div>
 
-        <!-- CONSULTA PACIENTE -->
+        <!-- FORMULARIO DE LOGIN ADMINISTRADOR -->
+        <div id="view-login-admin" class="view-panel">
+            <div class="card" style="max-width: 480px; margin: 40px auto; text-align: center;">
+                <h3 style="margin-bottom: 10px; color: var(--accent-cyan);"><i class="fa-solid fa-lock"></i> Acceso Restringido Fisioterapeuta</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Ingrese usuario y contraseña de la clínica para gestionar el sistema.</p>
+                <form onsubmit="validarLoginAdmin(event)">
+                    <div class="form-group" style="text-align: left;">
+                        <label>Usuario</label>
+                        <input type="text" id="login-user" class="form-control" placeholder="Ej. admin" required>
+                    </div>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Contraseña</label>
+                        <input type="password" id="login-pass" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-submit"><i class="fa-solid fa-key"></i> Iniciar Sesión Administrative</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- CONSULTA PACIENTE POR DNI -->
         <div id="view-paciente-section" class="view-panel active">
             <div class="card">
                 <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass" style="color:var(--accent-cyan);"></i> Consulta de Evolución del Paciente</h3>
@@ -78,12 +97,12 @@
             </div>
         </div>
 
-        <!-- CAPA BRONZE (REGISTRO REGISTRADO DIRECTO A SUPABASE) -->
+        <!-- CAPA BRONZE (REGISTRO Y VISOR ANATÓMICO POR ZONA) -->
         <div id="tab-bronze" class="view-panel">
             <div class="grid-2">
                 <div class="card">
                     <h3 style="margin-bottom: 6px;"><i class="fa-solid fa-user-plus" style="color:var(--accent-cyan)"></i> Capa Bronze: Captura de Datos Clínicos</h3>
-                    <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 20px;">Ingreso directo a Supabase.</p>
+                    <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 20px;">Ingreso directo a la base de datos de Supabase.</p>
 
                     <form id="form-registro-paciente" onsubmit="guardarPacienteSupabase(event)">
                         <div class="form-row">
@@ -113,11 +132,11 @@
                             <div>
                                 <label>Zona Afectada *</label>
                                 <select id="inp-zona" class="form-control" onchange="actualizarZona3D(this.value)">
-                                    <option>Hombro</option>
-                                    <option>Lumbar</option>
-                                    <option>Rodilla</option>
-                                    <option>Cervical</option>
-                                    <option>Tobillo</option>
+                                    <option value="Hombro">Hombro</option>
+                                    <option value="Lumbar">Lumbar</option>
+                                    <option value="Rodilla">Rodilla</option>
+                                    <option value="Cervical">Cervical</option>
+                                    <option value="Tobillo">Tobillo</option>
                                 </select>
                             </div>
                         </div>
@@ -153,7 +172,7 @@
                 <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
                     <div>
                         <h3><i class="fa-solid fa-cube" style="color:var(--accent-purple)"></i> Visor 3D Anatómico Interactivo</h3>
-                        <p style="color: var(--text-muted); font-size: 0.78rem; margin-top:4px;">Interacción biomecánica</p>
+                        <div class="anatomico-badge" id="badge-zona-desc">Dolencia activa: Hombro</div>
                     </div>
                     <div id="three-container" style="width:100%; height:280px; margin: 15px 0; border-radius:12px; background:#050811; border:1px solid var(--border-color);"></div>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
@@ -215,10 +234,25 @@
             </div>
         </div>
 
-        <!-- CAPA ANALYTICS -->
+        <!-- CAPA ANALYTICS + CONTROLES DE FECHA Y CALENDARIO -->
         <div id="tab-analytics" class="view-panel">
+            
+            <!-- FILTROS TEMPORALES -->
+            <div class="filter-bar">
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan);"><i class="fa-solid fa-filter"></i> Filtrar Dolencias por:</span>
+                <button class="btn-filter active" onclick="filtrarPeriodo('dia', this)">Hoy (Día)</button>
+                <button class="btn-filter" onclick="filtrarPeriodo('semana', this)">Semana</button>
+                <button class="btn-filter" onclick="filtrarPeriodo('mes', this)">Mes</button>
+                <button class="btn-filter" onclick="filtrarPeriodo('anio', this)">Año</button>
+                
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-regular fa-calendar-days"></i> Calendario:</label>
+                    <input type="date" class="form-control" style="width: auto; padding: 6px 10px;" onchange="alert('Filtrando registros del día: ' + this.value)">
+                </div>
+            </div>
+
             <div class="grid-4">
-                <div class="card metric-card cyan"><div class="metric-title">Total Pacientes</div><div class="metric-value">6</div><div class="metric-sub">Base de datos activa</div></div>
+                <div class="card metric-card cyan"><div class="metric-title">Total Pacientes</div><div class="metric-value" id="stat-total-pacientes">6</div><div class="metric-sub">Base de datos activa</div></div>
                 <div class="card metric-card purple"><div class="metric-title">Promedio EVA Inicial</div><div class="metric-value">7.0</div><div class="metric-sub">Escala de Dolor</div></div>
                 <div class="card metric-card pink"><div class="metric-title">Sesiones Medias Estimadas</div><div class="metric-value">17</div><div class="metric-sub">Duración clínica promedio</div></div>
                 <div class="card metric-card green"><div class="metric-title">Tasa Éxito Estimada</div><div class="metric-value">83%</div><div class="metric-sub">Terapia efectiva</div></div>
