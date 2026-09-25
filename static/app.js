@@ -1,8 +1,8 @@
-// CONFIGURACIÓN DE SUPABASE (CREDENCIONALES DE API REST)
+// CONFIGURACIÓN REAL DE SUPABASE
 const SUPABASE_URL = "https://rjagplujyfnjvdlwmnlp.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MDAwMDAsImV4cCI6MjA0MjI3NjAwMH0.PLACEHOLDER_COMPLETA_TU_ANON_KEY";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWdwbHVqeWZuanZkbHdtbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NTEzNTUsImV4cCI6MjEwMzUyNzM1NX0.Z1F17jSWO2M2LYC4mLLWRayS5EElczduKGNkR5p0FpI";
 
-// RELOJ DIGITAL LUJOSO DE PERÚ
+// RELOJ DIGITAL DE PERÚ EN VIVO
 function updateClock() {
     const now = new Date();
     const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -20,7 +20,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// CAMBIO DE MODO PACIENTE / ADMIN CON LOGIN
+// CONMUTADOR PACIENTE / ADMIN CON LOGIN
 function setMode(mode) {
     document.getElementById('btn-paciente').classList.remove('active');
     document.getElementById('btn-admin').classList.remove('active');
@@ -61,9 +61,7 @@ function actualizarZona3D(val) {
     document.getElementById('lbl-zona-3d').innerText = val;
 }
 
-// ---------------------------------------------------------
-// REGISTRO DE PACIENTE Y GUARDADO REAL EN SUPABASE
-// ---------------------------------------------------------
+// GUARDA PACIENTE EN SUPABASE
 async function guardarPacienteSupabase(e) {
     e.preventDefault();
 
@@ -73,7 +71,7 @@ async function guardarPacienteSupabase(e) {
     const generoVal = document.getElementById('inp-genero').value;
     const zonaVal = document.getElementById('inp-zona').value;
     
-    // CONVERSIÓN A ENTEROS STRICTOS (Evita error 'invalid input syntax for type integer: "5.0"')
+    // ENTEROS ESTRICTOS (Resuelve el error 22P02 de Supabase)
     const evaVal = parseInt(document.getElementById('inp-eva').value, 10);
     const tskVal = parseInt(document.getElementById('inp-tsk').value, 10);
     const pcsVal = parseInt(document.getElementById('inp-pcs').value, 10);
@@ -91,9 +89,9 @@ async function guardarPacienteSupabase(e) {
         edad: edadVal,
         genero: generoVal,
         zona_afectada: zonaVal,
-        eva_inicial: evaVal,      // Entero
-        tsk_score: tskVal,        // Entero
-        pcs_score: pcsVal,        // Entero
+        eva_inicial: evaVal,
+        tsk_score: tskVal,
+        pcs_score: pcsVal,
         num_sesiones: sesionesCalc,
         fecha_alta: fechaAltaStr,
         probabilidad_recuperacion: probCalc
@@ -114,7 +112,6 @@ async function guardarPacienteSupabase(e) {
         if (response.ok) {
             alert(`✅ ¡Paciente ${nombreVal} guardado con éxito en Supabase! (${sesionesCalc} sesiones estimadas).`);
             
-            // Agregar a la tabla Capa Silver visualmente
             const tbody = document.getElementById('tbl-silver-body');
             if(tbody) {
                 const row = `<tr>
@@ -129,7 +126,6 @@ async function guardarPacienteSupabase(e) {
                 tbody.innerHTML = row + tbody.innerHTML;
             }
 
-            // Actualizar Capa Gold
             document.getElementById('gold-paciente').innerText = nombreVal;
             document.getElementById('gold-sub').innerText = `DNI: ${dniVal} | Zona: ${zonaVal}`;
             document.getElementById('gold-sesiones').innerText = `${sesionesCalc} Sesiones`;
@@ -145,7 +141,7 @@ async function guardarPacienteSupabase(e) {
     }
 }
 
-// CONSULTA DE PACIENTE POR DNI EN SUPABASE
+// CONSULTA PACIENTE POR DNI
 async function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
     if(!dniInput) {
@@ -178,7 +174,7 @@ async function buscarPacienteDNI() {
     }
 }
 
-// THREE.JS MODELO 3D
+// MODELADO 3D THREE.JS
 function initThreeJS() {
     const container = document.getElementById('three-container');
     if(!container || container.children.length > 1) return;
@@ -203,7 +199,7 @@ function initThreeJS() {
     animate();
 }
 
-// CHART.JS
+// GRÁFICOS CHART.JS
 let chartsLoaded = false;
 function initCharts() {
     if(chartsLoaded) return;
