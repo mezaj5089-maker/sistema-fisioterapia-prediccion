@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Librería para generar archivos Excel nativos (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -182,7 +184,7 @@
             </div>
         </div>
 
-        <!-- CAPA SILVER CON BOTÓN DE DESCARGA EXCEL / CSV -->
+        <!-- CAPA SILVER CON OPCIONES INDEPENDIENTES DE DESCARGA -->
         <div id="tab-silver" class="view-panel">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -190,9 +192,14 @@
                         <h3><i class="fa-solid fa-database" style="color:var(--accent-cyan)"></i> Capa Silver: Registros Depurados & Enriquecidos</h3>
                         <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Sincronización en tiempo real desde Supabase.</p>
                     </div>
-                    <button class="btn-submit" onclick="descargarExcelCSV()" style="width: auto; padding: 10px 20px; margin: 0; background: linear-gradient(135deg, #10b981, #059669);">
-                        <i class="fa-solid fa-file-excel"></i> Descargar Excel / CSV
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-submit" onclick="descargarExcel()" style="width: auto; padding: 10px 18px; margin: 0; background: #10b981;">
+                            <i class="fa-solid fa-file-excel"></i> Descargar Excel (.xlsx)
+                        </button>
+                        <button class="btn-submit" onclick="descargarCSV()" style="width: auto; padding: 10px 18px; margin: 0; background: #0284c7;">
+                            <i class="fa-solid fa-file-csv"></i> Descargar CSV
+                        </button>
+                    </div>
                 </div>
 
                 <table style="margin-top:10px;">
@@ -237,7 +244,7 @@
             </div>
         </div>
 
-        <!-- CAPA ANALYTICS CON FILTROS DINÁMICOS Y CALENDARIO -->
+        <!-- CAPA ANALYTICS -->
         <div id="tab-analytics" class="view-panel">
             
             <div class="filter-bar">
