@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KineData Analytics - Fisioterapia Predictiva</title>
-    
-    <!-- Fuentes y CDN -->
+    <title>KineData Analytics</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +12,6 @@
 </head>
 <body>
 
-    <!-- BARRA LATERAL -->
     <div class="sidebar">
         <div>
             <div class="brand">
@@ -25,7 +22,6 @@
                 </div>
             </div>
 
-            <!-- RELOJ PERÚ MODERNO -->
             <div class="clock-card">
                 <div class="clock-title">🕒 HORA LOCAL (PERÚ)</div>
                 <div class="clock-display">
@@ -52,10 +48,7 @@
         </div>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <div class="main-content">
-
-        <!-- PESTAÑAS ADMIN MEDALLION -->
         <div class="nav-tabs" id="admin-tabs" style="display:none;">
             <button class="tab-btn active" onclick="switchTab('tab-bronze', this)"><i class="fa-solid fa-database"></i> Capa Bronze (Registro)</button>
             <button class="tab-btn" onclick="switchTab('tab-silver', this)"><i class="fa-solid fa-table"></i> Capa Silver (Registros Staging)</button>
@@ -63,98 +56,106 @@
             <button class="tab-btn" onclick="switchTab('tab-analytics', this)"><i class="fa-solid fa-chart-pie"></i> HTML Dashboard Analytics</button>
         </div>
 
-        <!-- VISTA PACIENTE -->
+        <!-- CONSULTA PACIENTE -->
         <div id="view-paciente-section" class="view-panel active">
             <div class="card">
                 <h3 style="margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass" style="color:var(--accent-cyan);"></i> Consulta de Evolución del Paciente</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Ingrese su Documento Nacional de Identidad (DNI) para consultar el pronóstico estimado por IA y las métricas de rehabilitación.</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Ingrese su DNI para consultar el pronóstico estimado por IA.</p>
                 <div style="display: flex; gap: 15px;">
                     <input type="text" id="dni-consulta" class="form-control" placeholder="Ej. 76543310" style="flex:1;">
-                    <button class="btn-submit" style="width: auto; padding: 0 25px; margin: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Consultar Diagnóstico</button>
+                    <button class="btn-submit" onclick="buscarPacienteDNI()" style="width: auto; padding: 0 25px; margin: 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> Consultar Diagnóstico</button>
+                </div>
+            </div>
+
+            <div id="resultado-paciente" class="card" style="display:none; margin-top:20px;">
+                <h4 style="color: var(--accent-cyan); margin-bottom: 15px;"><i class="fa-solid fa-circle-check"></i> Paciente: <span id="res-nombre">--</span></h4>
+                <div class="grid-4">
+                    <div class="card metric-card cyan"><div class="metric-title">DNI</div><div class="metric-value" id="res-dni">--</div></div>
+                    <div class="card metric-card purple"><div class="metric-title">Zona Afectada</div><div class="metric-value" id="res-zona">--</div></div>
+                    <div class="card metric-card pink"><div class="metric-title">Dolor (EVA)</div><div class="metric-value" id="res-eva">--</div></div>
+                    <div class="card metric-card green"><div class="metric-title">Sesiones Estimadas</div><div class="metric-value" id="res-sesiones">--</div></div>
                 </div>
             </div>
         </div>
 
-        <!-- CAPA BRONZE (REGISTRO CLINICO) -->
+        <!-- CAPA BRONZE (REGISTRO REGISTRADO DIRECTO A SUPABASE) -->
         <div id="tab-bronze" class="view-panel">
             <div class="grid-2">
                 <div class="card">
                     <h3 style="margin-bottom: 6px;"><i class="fa-solid fa-user-plus" style="color:var(--accent-cyan)"></i> Capa Bronze: Captura de Datos Clínicos</h3>
-                    <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 20px;">Ingreso de variables biomecánicas y psicológicas del paciente.</p>
+                    <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 20px;">Ingreso directo a Supabase.</p>
 
-                    <div class="form-row">
-                        <div>
-                            <label>DNI del Paciente *</label>
-                            <input type="text" id="inp-dni" class="form-control" placeholder="8 dígitos">
+                    <form id="form-registro-paciente" onsubmit="guardarPacienteSupabase(event)">
+                        <div class="form-row">
+                            <div>
+                                <label>DNI del Paciente *</label>
+                                <input type="text" id="inp-dni" class="form-control" placeholder="8 dígitos" required>
+                            </div>
+                            <div>
+                                <label>Nombre Completo *</label>
+                                <input type="text" id="inp-nombre" class="form-control" placeholder="Nombre Apellido" required>
+                            </div>
                         </div>
-                        <div>
-                            <label>Nombre Completo *</label>
-                            <input type="text" id="inp-nombre" class="form-control" placeholder="Nombre Apellido">
-                        </div>
-                    </div>
 
-                    <div class="grid-3-inline" style="margin-bottom: 15px;">
-                        <div>
-                            <label>Edad</label>
-                            <input type="number" id="inp-edad" class="form-control" value="34">
+                        <div class="grid-3-inline" style="margin-bottom: 15px;">
+                            <div>
+                                <label>Edad</label>
+                                <input type="number" id="inp-edad" class="form-control" value="34">
+                            </div>
+                            <div>
+                                <label>Género</label>
+                                <select id="inp-genero" class="form-control">
+                                    <option>Masculino</option>
+                                    <option>Femenino</option>
+                                    <option>Otro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Zona Afectada *</label>
+                                <select id="inp-zona" class="form-control" onchange="actualizarZona3D(this.value)">
+                                    <option>Hombro</option>
+                                    <option>Lumbar</option>
+                                    <option>Rodilla</option>
+                                    <option>Cervical</option>
+                                    <option>Tobillo</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label>Género</label>
-                            <select id="inp-genero" class="form-control">
-                                <option>Masculino</option>
-                                <option>Femenino</option>
-                                <option>Otro</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Zona Afectada *</label>
-                            <select id="inp-zona" class="form-control" onchange="actualizarZona3D(this.value)">
-                                <option>Hombro</option>
-                                <option>Lumbar</option>
-                                <option>Rodilla</option>
-                                <option>Cervical</option>
-                                <option>Tobillo</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <!-- SLIDERS COMPLETOS -->
-                    <div class="form-group">
-                        <div class="slider-header">
-                            <label>Nivel de Dolor (Escala EVA):</label>
-                            <span class="slider-value" id="val-eva">6 / 10</span>
+                        <div class="form-group">
+                            <div class="slider-header">
+                                <label>Nivel de Dolor (Escala EVA):</label>
+                                <span class="slider-value" id="val-eva">6 / 10</span>
+                            </div>
+                            <input type="range" id="inp-eva" min="1" max="10" value="6" oninput="document.getElementById('val-eva').innerText = this.value + ' / 10'">
                         </div>
-                        <input type="range" id="inp-eva" min="1" max="10" value="6" oninput="document.getElementById('val-eva').innerText = this.value + ' / 10'">
-                    </div>
 
-                    <div class="form-group">
-                        <div class="slider-header">
-                            <label>Kinesiofobia (Escala TSK-11):</label>
-                            <span class="slider-value" id="val-tsk">28 pts</span>
+                        <div class="form-group">
+                            <div class="slider-header">
+                                <label>Kinesiofobia (Escala TSK-11):</label>
+                                <span class="slider-value" id="val-tsk">28 pts</span>
+                            </div>
+                            <input type="range" id="inp-tsk" min="11" max="44" value="28" oninput="document.getElementById('val-tsk').innerText = this.value + ' pts'">
                         </div>
-                        <input type="range" id="inp-tsk" min="11" max="44" value="28" oninput="document.getElementById('val-tsk').innerText = this.value + ' pts'">
-                    </div>
 
-                    <div class="form-group">
-                        <div class="slider-header">
-                            <label>Catastrofización (Escala PCS):</label>
-                            <span class="slider-value" id="val-pcs">22 pts</span>
+                        <div class="form-group">
+                            <div class="slider-header">
+                                <label>Catastrofización (Escala PCS):</label>
+                                <span class="slider-value" id="val-pcs">22 pts</span>
+                            </div>
+                            <input type="range" id="inp-pcs" min="0" max="52" value="22" oninput="document.getElementById('val-pcs').innerText = this.value + ' pts'">
                         </div>
-                        <input type="range" id="inp-pcs" min="0" max="52" value="22" oninput="document.getElementById('val-pcs').innerText = this.value + ' pts'">
-                    </div>
 
-                    <button class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar e Inferir Pronóstico</button>
+                        <button type="submit" class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar e Inferir Pronóstico</button>
+                    </form>
                 </div>
 
-                <!-- VISOR 3D ANATÓMICO -->
                 <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
                     <div>
                         <h3><i class="fa-solid fa-cube" style="color:var(--accent-purple)"></i> Visor 3D Anatómico Interactivo</h3>
-                        <p style="color: var(--text-muted); font-size: 0.78rem; margin-top:4px;">Interacción visual biomecánica (Girar / Seleccionar zona)</p>
+                        <p style="color: var(--text-muted); font-size: 0.78rem; margin-top:4px;">Interacción biomecánica</p>
                     </div>
-                    
                     <div id="three-container" style="width:100%; height:280px; margin: 15px 0; border-radius:12px; background:#050811; border:1px solid var(--border-color);"></div>
-
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
                         Zona Seleccionada: <span id="lbl-zona-3d" style="color:var(--accent-cyan); font-weight:700;">Hombro</span>
                     </div>
@@ -198,17 +199,17 @@
             <div class="grid-4">
                 <div class="card metric-card cyan">
                     <div class="metric-title">Paciente Evaluado</div>
-                    <div class="metric-value">Olivia Estupiñan</div>
-                    <div class="metric-sub">DNI: 76543310 | Zona: Hombro</div>
+                    <div class="metric-value" id="gold-paciente">Olivia Estupiñan</div>
+                    <div class="metric-sub" id="gold-sub">DNI: 76543310 | Zona: Hombro</div>
                 </div>
                 <div class="card metric-card purple">
                     <div class="metric-title">Predicción de Sesiones</div>
-                    <div class="metric-value">18 Sesiones</div>
+                    <div class="metric-value" id="gold-sesiones">18 Sesiones</div>
                     <div class="metric-sub">R² Score Modelo: 0.92</div>
                 </div>
                 <div class="card metric-card green">
                     <div class="metric-title">Probabilidad Éxito</div>
-                    <div class="metric-value">85%</div>
+                    <div class="metric-value" id="gold-prob">85%</div>
                     <div class="metric-sub">Clasificación: Alta Probabilidad</div>
                 </div>
             </div>
@@ -234,7 +235,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <script src="app.js"></script>
