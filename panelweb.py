@@ -40,11 +40,6 @@ def load_modular_web():
         with open(js_path, "r", encoding="utf-8") as f:
             js_content = f.read()
 
-    # Reemplazar la clave de anon con la del entorno
-    supabase_key = st.secrets.get("SUPABASE_KEY", "")
-    if supabase_key:
-        js_content = js_content.replace("PLACEHOLDER_COMPLETA_TU_ANON_KEY", supabase_key)
-
     full_html = html_content.replace(
         '<link rel="stylesheet" href="styles.css">',
         f'<style>{css_content}</style>'
