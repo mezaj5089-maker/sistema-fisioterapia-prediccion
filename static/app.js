@@ -88,7 +88,7 @@ function hidePanels() {
 }
 
 // ---------------------------------------------------------
-// CONSULTA RÁPIDA CON CONTROL DE TIEMPO (TIMEOUT DE 3 SEG)
+// CONSULTA CON RESPALDO RÁPIDO Y CONTROL DE TIEMPO
 // ---------------------------------------------------------
 async function cargarPacientesDesdeSupabase() {
     const tbody = document.getElementById('tbl-silver-body');
@@ -97,7 +97,7 @@ async function cargarPacientesDesdeSupabase() {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td></tr>`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // Cancela si demora más de 3s
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
 
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?select=*&order=id.desc`, {
@@ -127,7 +127,6 @@ async function cargarPacientesDesdeSupabase() {
     }
 }
 
-// DATOS DE RESPALDO SI SUPABASE TARDA EN RESPONDER
 function usarPacientesPorDefecto() {
     listaPacientesGlobal = [
         { id: 2, dni: "76543310", nombre: "Olivia Estupiñan Segarra", edad: 65, genero: "Femenino", zona_afectada: "Hombro", eva_inicial: 8, tsk_score: 28, pcs_score: 22, num_sesiones: 18 },
@@ -174,15 +173,45 @@ function renderTablaSilver(pacientes) {
 }
 
 // ---------------------------------------------------------
-// EXPORTAR A CSV / EXCEL
+// FUNCIONES DE DESCARGA SEPARADAS (EXCEL .XLSX Y CSV)
 // ---------------------------------------------------------
-function descargarExcelCSV() {
+
+// DESCARGA DIRECTA EN EXCEL NATIVO (.XLSX)
+function descargarExcel() {
     if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
         alert("⚠️ No hay datos de pacientes para descargar.");
         return;
     }
 
-    let csvContent = "data:text/csv;charset=utf-8,ID,DNI,Nombre,Edad,Genero,Zona Afectada,EVA Inicial,TSK Score,PCS Score,Num Sesiones\n";
+    const datosExcel = listaPacientesGlobal.map(p => ({
+        "ID": p.id || '',
+        "DNI": p.dni || '',
+        "Nombre Completo": p.nombre || '',
+        "Edad": p.edad || '',
+        "Género": p.genero || '',
+        "Zona Afectada": p.zona_afectada || p.zona || '',
+        "EVA Inicial": p.eva_inicial || p.eva || '',
+        "TSK Score": p.tsk_score || '',
+        "PCS Score": p.pcs_score || '',
+        "Sesiones Estimadas": p.num_sesiones || p.sesiones_estimadas || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Pacientes");
+
+    const fechaActual = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Pacientes_Supabase_${fechaActual}.xlsx`);
+}
+
+// DESCARGA EN FORMATO CSV
+function descargarCSV() {
+    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
+        alert("⚠️ No hay datos de pacientes para descargar.");
+        return;
+    }
+
+    let csvContent = "\uFEFFID,DNI,Nombre,Edad,Genero,Zona Afectada,EVA Inicial,TSK Score,PCS Score,Num Sesiones\n";
 
     listaPacientesGlobal.forEach(p => {
         const row = [
@@ -200,10 +229,12 @@ function descargarExcelCSV() {
         csvContent += row + "\n";
     });
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Pacientes_Reporte_${new Date().toISOString().split('T')[0]}.csv`);
+    const fechaActual = new Date().toISOString().split('T')[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Pacientes_Supabase_${fechaActual}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -226,7 +257,7 @@ function actualizarZona3D(val) {
     }
 }
 
-// GUARDAR NUEVO PACIENTE
+// GUARDAR PACIENTE
 async function guardarPacienteSupabase(e) {
     e.preventDefault();
 
@@ -255,7 +286,6 @@ async function guardarPacienteSupabase(e) {
         num_sesiones: sesionesCalc
     };
 
-    // Agregar a la lista local inmediatamente
     listaPacientesGlobal.unshift(nuevoPaciente);
     renderTablaSilver(listaPacientesGlobal);
     actualizarMetricasDashboardReales();
@@ -263,7 +293,6 @@ async function guardarPacienteSupabase(e) {
     alert(`✅ ¡Paciente ${nombreVal} registrado exitosamente!`);
     document.getElementById('form-registro-paciente').reset();
 
-    // Intentar guardar en Supabase en segundo plano
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/pacientes`, {
             method: 'POST',
