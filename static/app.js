@@ -240,20 +240,26 @@ function descargarCSV() {
     document.body.removeChild(link);
 }
 
-// VISOR 3D
+// ---------------------------------------------------------
+// VISOR 3D ANATÓMICO MEJORADO (SÓLIDO Y ESTILIZADO)
+// ---------------------------------------------------------
 let currentMesh = null;
 let currentMaterial = null;
+let cuerpoGrupoGlobal = null;
 
 function actualizarZona3D(val) {
     document.getElementById('lbl-zona-3d').innerText = val;
     document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
 
-    if (currentMesh && currentMaterial) {
-        if (val === "Hombro") currentMaterial.color.setHex(0x38bdf8);
-        else if (val === "Lumbar") currentMaterial.color.setHex(0xc084fc);
-        else if (val === "Rodilla") currentMaterial.color.setHex(0x34d399);
-        else if (val === "Cervical") currentMaterial.color.setHex(0xf59e0b);
-        else if (val === "Tobillo") currentMaterial.color.setHex(0xec4899);
+    if (currentMaterial) {
+        const colores = {
+            "Hombro": 0x38bdf8,   // Azul Cyan
+            "Lumbar": 0xc084fc,   // Morado
+            "Rodilla": 0x34d399,  // Verde
+            "Cervical": 0xf59e0b, // Naranja
+            "Tobillo": 0xec4899   // Rosa
+        };
+        currentMaterial.color.setHex(colores[val] || 0x38bdf8);
     }
 }
 
@@ -316,12 +322,10 @@ async function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
     if(!dniInput) return alert("Por favor ingrese un DNI.");
 
-    // Si la lista está vacía al momento de hacer la consulta, se intenta descargar desde Supabase
     if (!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
         await cargarPacientesDesdeSupabase();
     }
 
-    // Búsqueda flexible convirtiendo ambos valores a String y removiendo espacios sobrantes
     const p = listaPacientesGlobal.find(item => String(item.dni).trim() === String(dniInput).trim());
 
     if (p) {
@@ -336,10 +340,12 @@ async function buscarPacienteDNI() {
     }
 }
 
-// THREE.JS
+// ---------------------------------------------------------
+// INITIALIZACIÓN DE THREE.JS CON MODELO ANATÓMICO SÓLIDO
+// ---------------------------------------------------------
 function initThreeJS() {
     const container = document.getElementById('three-container');
-    if(!container || container.children.length > 1) return;
+    if(!container || container.children.length > 0) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
@@ -347,15 +353,71 @@ function initThreeJS() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    const geometry = new THREE.CylinderGeometry(0.8, 0.6, 2.5, 16);
-    currentMaterial = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
-    currentMesh = new THREE.Mesh(geometry, currentMaterial);
-    scene.add(currentMesh);
+    // Luces para renderizado sólido real
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
 
-    camera.position.z = 4;
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+
+    cuerpoGrupoGlobal = new THREE.Group();
+
+    // Material Sólido con reflejos (wireframe: false)
+    currentMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x38bdf8, 
+        roughness: 0.35,
+        metalness: 0.2,
+        wireframe: false
+    });
+
+    // Torso / Tronco
+    const torsoGeo = new THREE.CylinderGeometry(0.45, 0.3, 1.4, 16);
+    currentMesh = new THREE.Mesh(torsoGeo, currentMaterial);
+    cuerpoGrupoGlobal.add(currentMesh);
+
+    // Cabeza
+    const cabezaGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    const cabezaMesh = new THREE.Mesh(cabezaGeo, currentMaterial);
+    cabezaMesh.position.y = 0.95;
+    cuerpoGrupoGlobal.add(cabezaMesh);
+
+    // Cuello
+    const cuelloGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.2, 12);
+    const cuelloMesh = new THREE.Mesh(cuelloGeo, currentMaterial);
+    cuelloMesh.position.y = 0.75;
+    cuerpoGrupoGlobal.add(cuelloMesh);
+
+    // Brazos (Izquierdo y Derecho)
+    const brazoGeo = new THREE.CylinderGeometry(0.08, 0.07, 1.0, 12);
+    const brazoIzq = new THREE.Mesh(brazoGeo, currentMaterial);
+    brazoIzq.position.set(-0.55, 0.1, 0);
+    brazoIzq.rotation.z = 0.15;
+    cuerpoGrupoGlobal.add(brazoIzq);
+
+    const brazoDer = new THREE.Mesh(brazoGeo, currentMaterial);
+    brazoDer.position.set(0.55, 0.1, 0);
+    brazoDer.rotation.z = -0.15;
+    cuerpoGrupoGlobal.add(brazoDer);
+
+    // Piernas (Izquierda y Derecha)
+    const piernaGeo = new THREE.CylinderGeometry(0.12, 0.09, 1.1, 12);
+    const piernaIzq = new THREE.Mesh(piernaGeo, currentMaterial);
+    piernaIzq.position.set(-0.2, -1.0, 0);
+    cuerpoGrupoGlobal.add(piernaIzq);
+
+    const piernaDer = new THREE.Mesh(piernaGeo, currentMaterial);
+    piernaDer.position.set(0.2, -1.0, 0);
+    cuerpoGrupoGlobal.add(piernaDer);
+
+    scene.add(cuerpoGrupoGlobal);
+    camera.position.set(0, 0, 3.8);
+
     function animate() {
         requestAnimationFrame(animate);
-        currentMesh.rotation.y += 0.01;
+        if(cuerpoGrupoGlobal) {
+            cuerpoGrupoGlobal.rotation.y += 0.01;
+        }
         renderer.render(scene, camera);
     }
     animate();
