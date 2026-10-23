@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Inteligente de Predicción en Fisioterapia</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="/static/fisio.png" alt="Logo" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2966/2966327.png'">
+                <h2>FisioPredicción</h2>
+            </div>
+            <nav class="menu">
+                <button class="nav-btn active" onclick="switchTab('evaluacion')">
+                    <i class="fa-solid fa-stethoscope"></i> Evaluación e Inferencia
+                </button>
+                <button class="nav-btn" onclick="switchTab('pacientes')">
+                    <i class="fa-solid fa-users"></i> Consulta de Pacientes
+                </button>
+                <button class="nav-btn" onclick="switchTab('dashboard')">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard Analítico
+                </button>
+                <button class="nav-btn" onclick="switchTab('citas')">
+                    <i class="fa-solid fa-calendar-check"></i> Gestión de Citas
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="status-dot online"></span> Supabase Conectado
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>Sistema Inteligente de Predicción y Seguimiento en Fisioterapia</h1>
+                    <p>Plataforma Clínica impulsada por Arquitectura Medallion en Supabase y Machine Learning</p>
+                </div>
+            </header>
+
+            <!-- TAB 1: EVALUACIÓN Y PREDICCIÓN -->
+            <section id="tab-evaluacion" class="tab-content active">
+                <div class="card-panel">
+                    <h3><i class="fa-solid fa-user-pen"></i> Evaluación de Paciente e Inferencia Clínica</h3>
+                    <form id="form-prediccion" class="form-grid">
+                        <div class="form-section">
+                            <h4><i class="fa-solid fa-id-card"></i> Datos Demográficos</h4>
+                            <div class="input-group">
+                                <label>DNI / Documento</label>
+                                <input type="text" id="p_dni" placeholder="Ej: 71234567" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Nombre Completo</label>
+                                <input type="text" id="p_nombre" placeholder="Nombre del paciente" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Correo Electrónico</label>
+                                <input type="email" id="p_email" placeholder="paciente@correo.com" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Edad</label>
+                                <input type="number" id="p_edad" value="45" min="10" max="90" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Género</label>
+                                <select id="p_genero">
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4><i class="fa-solid fa-notes-medical"></i> Evaluación Física</h4>
+                            <div class="input-group">
+                                <label>Tipo de Lesión</label>
+                                <select id="p_lesion">
+                                    <option value="Articular">Articular</option>
+                                    <option value="Muscular">Muscular</option>
+                                    <option value="Tendinosa">Tendinosa</option>
+                                    <option value="Post-quirúrgica">Post-quirúrgica</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Dolor Inicial (EVA 0-10)</label>
+                                <input type="range" id="p_eva" min="0" max="10" value="6" oninput="document.getElementById('eva_val').innerText = this.value">
+                                <span class="range-val" id="eva_val">6</span>
+                            </div>
+                            <div class="input-group">
+                                <label>Sesiones Planificadas</label>
+                                <input type="number" id="p_sesiones" value="12" min="1" max="30">
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4><i class="fa-solid fa-brain"></i> Factores Psicosociales</h4>
+                            <div class="input-group">
+                                <label>Kinesiofobia (TSK 17-68)</label>
+                                <input type="range" id="p_tsk" min="17" max="68" value="38" oninput="document.getElementById('tsk_val').innerText = this.value">
+                                <span class="range-val" id="tsk_val">38</span>
+                            </div>
+                            <div class="input-group">
+                                <label>Catastrofismo (PCS 0-52)</label>
+                                <input type="range" id="p_pcs" min="0" max="52" value="25" oninput="document.getElementById('pcs_val').innerText = this.value">
+                                <span class="range-val" id="pcs_val">25</span>
+                            </div>
+                            <div class="input-group">
+                                <label>Asistencia Estimada (%)</label>
+                                <input type="range" id="p_asistencia" min="0" max="100" value="80" oninput="document.getElementById('asist_val').innerText = this.value + '%'">
+                                <span class="range-val" id="asist_val">80%</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions full-width">
+                            <button type="button" class="btn-primary" onclick="calcularPrediccion()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Calcular Predicción de Riesgo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Resultado de Inferencia -->
+                <div id="resultado-panel" class="card-panel result-card hidden">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Resultado de la Inferencia Clínica</h3>
+                    <div class="result-grid">
+                        <div class="result-badge" id="risk-badge">
+                            <span id="risk-level">RIESGO MODERADO</span>
+                            <small id="risk-prob">Probabilidad de Deserción: 42%</small>
+                        </div>
+                        <div class="result-details">
+                            <p><strong>Índice Psicosocial Calculado:</strong> <span id="res-psico">63</span> pts</p>
+                            <p><strong>Recomendación Clínica:</strong> <span id="res-recom">Implementar programa de desensibilización al movimiento y seguimiento quincenal.</span></p>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="guardarPacienteEnSupabase()">
+                            <i class="fa-solid fa-floppy-disk"></i> Guardar Historial en Supabase
+                        </button>
+                        <button class="btn-success" onclick="enviarNotificacionEmail()">
+                            <i class="fa-solid fa-paper-plane"></i> Enviar Notificación por Gmail SMTP
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PACIENTES -->
+            <section id="tab-pacientes" class="tab-content">
+                <div class="card-panel">
+                    <div class="panel-header-actions">
+                        <h3><i class="fa-solid fa-hospital-user"></i> Directorio de Pacientes en Registro</h3>
+                        <input type="text" id="search-dni" class="search-input" placeholder="Buscar por DNI o Nombre..." onkeyup="filtrarPacientes()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>DNI</th>
+                                    <th>Paciente</th>
+                                    <th>Lesión</th>
+                                    <th>Nivel de Riesgo</th>
+                                    <th>Asistencia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pacientes-table-body">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: DASHBOARD ANALÍTICO -->
+            <section id="tab-dashboard" class="tab-content">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-users kpi-icon"></i>
+                        <div>
+                            <span class="kpi-title">Total Pacientes</span>
+                            <h3 class="kpi-value" id="kpi-total">128</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-triangle-exclamation kpi-icon warning"></i>
+                        <div>
+                            <span class="kpi-title">Pacientes Alto Riesgo</span>
+                            <h3 class="kpi-value" id="kpi-alto">24</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-circle-check kpi-icon success"></i>
+                        <div>
+                            <span class="kpi-title">Tasa Adherencia</span>
+                            <h3 class="kpi-value" id="kpi-adherencia">81.5%</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="card-panel">
+                        <h3>Distribución de Riesgo Clinico</h3>
+                        <canvas id="chartRiesgo"></canvas>
+                    </div>
+                    <div class="card-panel">
+                        <h3>Prevalencia por Tipo de Lesión</h3>
+                        <canvas id="chartLesiones"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: CITAS Y GMAIL -->
+            <section id="tab-citas" class="tab-content">
+                <div class="card-panel">
+                    <h3><i class="fa-solid fa-calendar-days"></i> Programación de Citas y Envío de Confirmaciones</h3>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>DNI Paciente</label>
+                            <input type="text" id="cita_dni" placeholder="Ingrese DNI">
+                        </div>
+                        <div class="input-group">
+                            <label>Fecha de la Cita</label>
+                            <input type="date" id="cita_fecha">
+                        </div>
+                        <div class="input-group">
+                            <label>Hora</label>
+                            <input type="time" id="cita_hora" value="09:00">
+                        </div>
+                        <div class="input-group full-width">
+                            <label>Notas del Fisioterapeuta</label>
+                            <textarea id="cita_notas" rows="3" placeholder="Observaciones preliminares..."></textarea>
+                        </div>
+                        <div class="form-actions full-width">
+                            <button class="btn-primary" onclick="agendarCita()">
+                                <i class="fa-solid fa-envelope"></i> Confirmar Cita y Notificar por Correo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
