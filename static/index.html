@@ -12,10 +12,44 @@
 </head>
 <body>
 
-    <!-- ESTRUCTURA PRINCIPAL DE PANTALLA COMPLETA -->
+    <!-- MODAL DE IDENTIFICACIÓN / LOGIN POR DNI Y ROL -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-hospital-user login-icon"></i>
+                <h2>KineData Analytics</h2>
+                <p>Plataforma de Fisioterapia e Inferencia IA</p>
+            </div>
+            
+            <div class="role-selector">
+                <button type="button" id="btn-role-paciente" class="role-btn active" onclick="seleccionarRolModal('paciente')">
+                    <i class="fa-solid fa-user"></i> Paciente
+                </button>
+                <button type="button" id="btn-role-admin" class="role-btn" onclick="seleccionarRolModal('admin')">
+                    <i class="fa-solid fa-user-doctor"></i> Administrador
+                </button>
+            </div>
+
+            <form id="form-login" onsubmit="iniciarSesion(event)">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-id-card"></i> Ingrese su DNI de Acceso</label>
+                    <input type="text" id="login-dni" placeholder="Ej: 72849102" required>
+                </div>
+                <div class="input-group hidden" id="group-pass">
+                    <label><i class="fa-solid fa-lock"></i> Contraseña de Administrador</label>
+                    <input type="password" id="login-pass" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary full-width">
+                    <i class="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ESTRUCTURA PRINCIPAL -->
     <div class="app-layout">
         
-        <!-- SIDEBAR LATERAL: MARCA, RELOJ Y NAVEGACIÓN -->
+        <!-- SIDEBAR LATERAL -->
         <aside class="anatomy-sidebar">
             <div class="brand-box">
                 <i class="fa-solid fa-heart-pulse logo-icon"></i>
@@ -30,173 +64,288 @@
                 <div id="peru-date" class="date-display">--/--/----</div>
             </div>
 
-            <div class="sidebar-section-title">MODO DE VISTA</div>
-            <div class="role-selector">
-                <button type="button" id="btn-role-paciente" class="role-btn active" onclick="seleccionarRol('paciente')">
-                    <i class="fa-solid fa-user"></i> Paciente
+            <div class="sidebar-section-title">CONTROL DE SESIÓN</div>
+            <div style="margin-bottom: 15px;">
+                <span id="badge-rol" class="badge-role paciente">PACIENTE</span>
+                <button class="btn-logout-small" onclick="cerrarSesion()"><i class="fa-solid fa-power-off"></i> Salir</button>
+            </div>
+
+            <div class="sidebar-section-title">NAVEGACIÓN</div>
+            <div class="nav-menu" id="menu-paciente">
+                <button class="nav-tab-btn active" onclick="switchTab('paciente-citas')" id="tab-btn-paciente-citas">
+                    <i class="fa-solid fa-calendar-check"></i> Mis Citas y Sesiones
                 </button>
-                <button type="button" id="btn-role-admin" class="role-btn" onclick="seleccionarRol('admin')">
-                    <i class="fa-solid fa-user-doctor"></i> Admin/Fisio
+                <button class="nav-tab-btn" onclick="switchTab('paciente-reprogramar')" id="tab-btn-paciente-reprogramar">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Solicitar Reprogramación
                 </button>
             </div>
 
-            <!-- NAVEGACIÓN ENTRE VISTAS -->
-            <div class="nav-menu">
-                <button class="nav-tab-btn active" onclick="switchTab('registro')" id="tab-btn-registro">
-                    <i class="fa-solid fa-notes-medical"></i> Registro Paciente
+            <div class="nav-menu hidden" id="menu-admin">
+                <button class="nav-tab-btn active" onclick="switchTab('admin-registro')" id="tab-btn-admin-registro">
+                    <i class="fa-solid fa-notes-medical"></i> Registro & Inferencia ML
                 </button>
-                <button class="nav-tab-btn" onclick="switchTab('expedientes')" id="tab-btn-expedientes">
-                    <i class="fa-solid fa-database"></i> Expedientes (Silver)
+                <button class="nav-tab-btn" onclick="switchTab('admin-silver')" id="tab-btn-admin-silver">
+                    <i class="fa-solid fa-database"></i> Capa Silver (Expedientes)
                 </button>
-                <button class="nav-tab-btn" onclick="switchTab('dashboard')" id="tab-btn-dashboard">
-                    <i class="fa-solid fa-chart-pie"></i> Dashboard Analítico
+                <button class="nav-tab-btn" onclick="switchTab('admin-dashboard')" id="tab-btn-admin-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard Medallion (Gold)
+                </button>
+                <button class="nav-tab-btn" onclick="switchTab('admin-notif')" id="tab-btn-admin-notif">
+                    <i class="fa-solid fa-envelope-open-text"></i> Notificaciones (Gmail/SMS)
                 </button>
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL DE CONTENIDO -->
+        <!-- CONTENIDO PRINCIPAL -->
         <main class="main-wrapper">
             
             <header class="top-bar">
                 <div class="user-info-bar">
-                    <span id="badge-rol" class="badge-role paciente">ROL: PACIENTE</span>
-                    <span id="user-display-name">Panel Clínico Activo</span>
+                    <span id="user-display-name">Bienvenido al Sistema Clínico</span>
                 </div>
             </header>
 
             <div class="content-area">
                 
-                <!-- VISTA 1: REGISTRO E INFERENCIA CLÍNICA -->
-                <section id="tab-registro" class="tab-content active">
+                <!-- ================= VISTAS DE PACIENTE ================= -->
+                
+                <!-- 1. MIS CITAS Y SESIONES (PACIENTE) -->
+                <section id="tab-paciente-citas" class="tab-content active">
                     <div class="card-panel">
-                        <h3><i class="fa-solid fa-user-plus"></i> Registro de Nuevo Paciente & Inferencia IA</h3>
-                        <form id="form-evaluacion" class="form-grid-3" onsubmit="event.preventDefault(); calcularInferenciaIA();">
+                        <h3><i class="fa-solid fa-user-injured"></i> Estado de Tratamiento y Sesiones Activas</h3>
+                        <div class="info-grid-2">
+                            <div class="info-card">
+                                <p><strong>DNI de Usuario:</strong> <span id="p-dni-val" class="highlight-text">--</span></p>
+                                <p><strong>Nombre del Paciente:</strong> <span id="p-nombre-val">--</span></p>
+                                <p><strong>Dolencia / Diagnóstico:</strong> <span id="p-dolencia-val">Lumbalgia Mecánica Crónica</span></p>
+                                <p><strong>Próxima Sesión Programada:</strong> <span class="text-cyan" id="p-prox-cita">Miércoles, 29 Oct 2026 - 10:00 AM</span></p>
+                                <p><strong>Sesiones Restantes:</strong> <span class="status-pill good" id="p-sesiones-restantes">Quedan 8 Sesiones</span></p>
+                            </div>
+                            <div class="info-card">
+                                <h4><i class="fa-solid fa-circle-info"></i> Recomendaciones del Fisioterapeuta</h4>
+                                <p>• Cumplir con los ejercicios de estipulados en casa (mínimo 3 veces al día).</p>
+                                <p>• Mantener escala de dolor inicial registrada.</p>
+                                <p>• Asistir puntualmente a los bloques horarios asignados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SOLICITAR REPROGRAMACIÓN (PACIENTE) -->
+                <section id="tab-paciente-reprogramar" class="tab-content">
+                    <div class="card-panel">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Solicitud de Reprogramación de Cita con Anticipación</h3>
+                        <p class="subtitle-text">Envíe su nueva fecha y hora deseada. El sistema validará la disponibilidad en la agenda del fisioterapeuta.</p>
+                        
+                        <form onsubmit="enviarSolicitudReprogramacion(event)" class="form-grid-3">
+                            <div class="input-group">
+                                <label>Nueva Fecha Deseada</label>
+                                <input type="date" id="rep-fecha" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Hora Preferida</label>
+                                <select id="rep-hora">
+                                    <option value="09:00 AM">09:00 AM</option>
+                                    <option value="11:00 AM">11:00 AM</option>
+                                    <option value="03:00 PM">03:00 PM</option>
+                                    <option value="05:00 PM">05:00 PM</option>
+                                </select>
+                            </div>
+                            <div class="input-group full-width">
+                                <label>Motivo del Cambio</label>
+                                <textarea id="rep-motivo" rows="2" placeholder="Describa brevemente el motivo..." required></textarea>
+                            </div>
+                            <div class="full-width">
+                                <button type="submit" class="btn-warning">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar Solicitud a Administración
+                                </button>
+                            </div>
+                        </form>
+                        <div id="status-reprogramacion" class="margin-top"></div>
+                    </div>
+                </section>
+
+
+                <!-- ================= VISTAS DE ADMINISTRADOR ================= -->
+
+                <!-- 1. REGISTRO & INFERENCIA ML (ADMIN) -->
+                <section id="tab-admin-registro" class="tab-content">
+                    <div class="card-panel">
+                        <h3><i class="fa-solid fa-notes-medical"></i> Registro Clínico Completo & Inferencia de IA (Capa Bronze -> Silver)</h3>
+                        <form id="form-evaluacion" class="form-grid-3" onsubmit="event.preventDefault(); registrarPacienteAdmin();">
                             <div class="input-group">
                                 <label>DNI del Paciente</label>
-                                <input type="text" id="ev_dni" placeholder="Ej: 71234567" required>
+                                <input type="text" id="adm_dni" placeholder="Ej: 72849102" required>
                             </div>
                             <div class="input-group">
                                 <label>Nombre Completo</label>
-                                <input type="text" id="ev_nombre" placeholder="Nombre y Apellidos" required>
+                                <input type="text" id="adm_nombre" placeholder="Nombres y Apellidos" required>
                             </div>
                             <div class="input-group">
                                 <label>Edad</label>
-                                <input type="number" id="ev_edad" min="1" max="120" value="35" required>
+                                <input type="number" id="adm_edad" min="1" max="120" value="40" required>
                             </div>
                             <div class="input-group">
-                                <label>Zona Dolorosa</label>
-                                <select id="ev_zona">
-                                    <option value="Lumbar">Lumbar</option>
-                                    <option value="Cervical">Cervical</option>
-                                    <option value="Hombro">Hombro</option>
-                                    <option value="Rodilla">Rodilla</option>
-                                    <option value="Tobillo">Tobillo</option>
+                                <label>Género</label>
+                                <select id="adm_genero">
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>Dolor Inicial (EVA 0-10): <span id="val_eva">6</span></label>
-                                <input type="range" id="ev_eva" min="0" max="10" value="6" oninput="document.getElementById('val_eva').innerText = this.value">
+                                <label>Tipo de Dolencia / Zona</label>
+                                <select id="adm_zona">
+                                    <option value="Lumbar">Lumbalgia / Lumbar</option>
+                                    <option value="Cervical">Cervicalgia / Cervical</option>
+                                    <option value="Hombro">Lesión de Hombro</option>
+                                    <option value="Rodilla">Lesión de Rodilla</option>
+                                    <option value="Tobillo">Esguince de Tobillo</option>
+                                </select>
                             </div>
                             <div class="input-group">
-                                <label>Kinesiofobia (TSK-11: 11-44): <span id="val_tsk">25</span></label>
-                                <input type="range" id="ev_tsk" min="11" max="44" value="25" oninput="document.getElementById('val_tsk').innerText = this.value">
+                                <label>Dolor Inicial (EVA 0-10): <span id="val_eva">7</span></label>
+                                <input type="range" id="adm_eva" min="0" max="10" value="7" oninput="document.getElementById('val_eva').innerText = this.value">
                             </div>
                             <div class="input-group">
-                                <label>Catastrofismo (PCS-13: 0-52): <span id="val_pcs">20</span></label>
-                                <input type="range" id="ev_pcs" min="0" max="52" value="20" oninput="document.getElementById('val_pcs').innerText = this.value">
+                                <label>Kinesiofobia (TSK-11: 11-44): <span id="val_tsk">28</span></label>
+                                <input type="range" id="adm_tsk" min="11" max="44" value="28" oninput="document.getElementById('val_tsk').innerText = this.value">
                             </div>
                             <div class="input-group">
-                                <label>Asistencia Estimada (%): <span id="val_asist">85%</span></label>
-                                <input type="range" id="ev_asistencia" min="0" max="100" value="85" oninput="document.getElementById('val_asist').innerText = this.value + '%'">
+                                <label>Catastrofismo (PCS-13: 0-52): <span id="val_pcs">22</span></label>
+                                <input type="range" id="adm_pcs" min="0" max="52" value="22" oninput="document.getElementById('val_pcs').innerText = this.value">
                             </div>
-                            <div class="full-width">
+                            <div class="input-group">
+                                <label>Días de Tratamiento Recomendados</label>
+                                <input type="number" id="adm_dias" value="15" min="1" max="60" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Correo Gmail (Notificaciones)</label>
+                                <input type="email" id="adm_email" placeholder="paciente@gmail.com" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Teléfono / Celular (SMS)</label>
+                                <input type="text" id="adm_tlf" placeholder="987654321" required>
+                            </div>
+                            <div class="full-width margin-top">
                                 <button type="submit" class="btn-primary">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Procesar Inferencia y Guardar en Capa Silver
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Ejecutar Modelo ML & Guardar en Capa Silver
                                 </button>
                             </div>
                         </form>
 
                         <div id="result-ia-panel" class="result-box hidden margin-top">
-                            <h4><i class="fa-solid fa-brain"></i> Resultado del Modelo Predictivo (Random Forest)</h4>
+                            <h4><i class="fa-solid fa-brain"></i> Resultado de Predicción de Éxito (RandomForest)</h4>
                             <p id="result-text" class="highlight-text"></p>
                         </div>
                     </div>
                 </section>
 
-                <!-- VISTA 2: EXPEDIENTES / CAPA SILVER -->
-                <section id="tab-expedientes" class="tab-content">
+                <!-- 2. CAPA SILVER - EXPEDIENTES (ADMIN) -->
+                <section id="tab-admin-silver" class="tab-content">
                     <div class="card-panel">
                         <div class="flex-between margin-bottom">
-                            <h3><i class="fa-solid fa-database"></i> Expedientes Registrados (Capa Silver)</h3>
-                            <div>
-                                <button class="btn-success" onclick="exportToExcel()">
-                                    <i class="fa-solid fa-file-excel"></i> Descargar Excel (.xlsx)
-                                </button>
-                            </div>
+                            <h3><i class="fa-solid id-card"></i> Base de Datos Estructurada (Capa Silver - Pacientes)</h3>
+                            <button class="btn-success" onclick="exportToExcel()">
+                                <i class="fa-solid fa-file-excel"></i> Exportar Reporte Excel (.xlsx)
+                            </button>
                         </div>
                         <div class="controls-section margin-bottom">
-                            <input type="text" id="searchDni" placeholder="Buscar por DNI o Nombre del paciente..." onkeyup="filterPatients()">
+                            <input type="text" id="searchDni" placeholder="Buscar por DNI o Nombre del paciente en Capa Silver..." onkeyup="filterPatients()">
                         </div>
                         <div class="table-responsive">
                             <table class="data-table" id="tabla-pacientes">
                                 <thead>
                                     <tr>
                                         <th>DNI</th>
-                                        <th>Paciente</th>
-                                        <th>Edad / Género</th>
-                                        <th>Zona</th>
-                                        <th>EVA</th>
-                                        <th>TSK / PCS</th>
+                                        <th>Paciente / Contacto</th>
+                                        <th>Dolencia / Zona</th>
+                                        <th>EVA / TSK / PCS</th>
+                                        <th>Tratamiento</th>
                                         <th>Sesiones Est. (IA)</th>
+                                        <th>Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
-                                    <!-- Inyectado dinámicamente por app.js -->
+                                    <!-- Dinámico por JS -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </section>
 
-                <!-- VISTA 3: DASHBOARD ANALÍTICO (OPTIMIZADO Y COMPACTO) -->
-                <section id="tab-dashboard" class="tab-content">
+                <!-- 3. DASHBOARD MEDALLION / GOLD (ADMIN) -->
+                <section id="tab-admin-dashboard" class="tab-content">
                     <div class="filter-pills-row margin-bottom">
-                        <button class="pill-btn active">Hoy</button>
-                        <button class="pill-btn">Esta Semana</button>
-                        <button class="pill-btn">Este Mes</button>
-                        <button class="pill-btn">Año 2026</button>
+                        <button class="pill-btn active">Resumen General</button>
+                        <button class="pill-btn">Capa Gold (Métricas)</button>
+                        <button class="pill-btn">Rendimiento IA</button>
                     </div>
 
-                    <!-- TARJETAS KPI REDUCIDAS Y ORDENADAS -->
                     <div class="kpi-compact-grid">
                         <div class="kpi-compact-card">
-                            <span class="kpi-title">Pacientes Totales</span>
-                            <h3 class="kpi-value">1,200</h3>
+                            <span class="kpi-title">Total Pacientes (Bronze/Silver)</span>
+                            <h3 class="kpi-value" id="kpi-total">1,200</h3>
                         </div>
                         <div class="kpi-compact-card">
                             <span class="kpi-title">Promedio EVA Inicial</span>
                             <h3 class="kpi-value text-cyan">6.8 / 10</h3>
                         </div>
                         <div class="kpi-compact-card">
-                            <span class="kpi-title">Sesiones Medias (IA)</span>
-                            <h3 class="kpi-value text-purple">14.5</h3>
+                            <span class="kpi-title">Sesiones Promedio IA</span>
+                            <h3 class="kpi-value text-purple">14.5 Días</h3>
                         </div>
                         <div class="kpi-compact-card">
-                            <span class="kpi-title">Tasa de Éxito Modelo</span>
-                            <h3 class="kpi-value text-green">89.6%</h3>
+                            <span class="kpi-title">Precisión del Modelo (ROC-AUC)</span>
+                            <h3 class="kpi-value text-green">95.8%</h3>
                         </div>
                     </div>
 
-                    <!-- GRÁFICOS COMPACTOS -->
                     <div class="charts-compact-grid margin-top">
                         <div class="card-panel chart-box">
-                            <h4>Distribución por Tipo de Lesión</h4>
-                            <canvas id="chartLesiones" height="140"></canvas>
+                            <h4>Prevalencia por Tipo de Lesión (Capa Gold)</h4>
+                            <canvas id="chartLesiones" height="130"></canvas>
                         </div>
                         <div class="card-panel chart-box">
-                            <h4>Adherencia vs Resultado Terapéutico</h4>
-                            <canvas id="chartAdherencia" height="140"></canvas>
+                            <h4>Proyección de Éxito Terapéutico (ML)</h4>
+                            <canvas id="chartAdherencia" height="130"></canvas>
                         </div>
+                    </div>
+                </section>
+
+                <!-- 4. NOTIFICACIONES GMAIL / SMS (ADMIN) -->
+                <section id="tab-admin-notif" class="tab-content">
+                    <div class="card-panel">
+                        <h3><i class="fa-solid fa-bullhorn"></i> Centro de Comunicación y Alertas al Paciente</h3>
+                        <p class="subtitle-text">Envíe notificaciones automáticas vía Gmail o SMS recordándole fecha, hora y recomendaciones de su próxima sesión de terapia física.</p>
+                        
+                        <form onsubmit="enviarNotificacionPaciente(event)" class="form-grid-3">
+                            <div class="input-group">
+                                <label>Seleccionar Paciente</label>
+                                <select id="notif-paciente-select">
+                                    <option value="72849102">Juan Pérez (72849102)</option>
+                                    <option value="41920384">María Rodríguez (41920384)</option>
+                                    <option value="10823741">Carlos Mendoza (10823741)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Canal de Envío</label>
+                                <select id="notif-canal">
+                                    <option value="Gmail">Correo Electrónico (Gmail API)</option>
+                                    <option value="SMS">Mensaje de Texto (SMS Gateway)</option>
+                                    <option value="Ambos">Ambos Canales</option>
+                                </select>
+                            </div>
+                            <div class="input-group full-width">
+                                <label>Mensaje Personalizado</label>
+                                <textarea id="notif-mensaje" rows="3" required>Estimado paciente, le recordamos su cita de fisioterapia programada para mañana a las 10:00 AM. Por favor asistir con ropa cómoda y puntualidad.</textarea>
+                            </div>
+                            <div class="full-width">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar Alerta Informativa
+                                </button>
+                            </div>
+                        </form>
+                        <div id="status-envio-notif" class="margin-top"></div>
                     </div>
                 </section>
 
