@@ -241,16 +241,20 @@ function descargarCSV() {
 }
 
 // ---------------------------------------------------------
-// VISOR 3D ANATÓMICO MEJORADO (SÓLIDO Y ESTILIZADO)
+// VISOR 3D ANATÓMICO (ACTUALIZACIÓN DE ZONA)
 // ---------------------------------------------------------
 let currentMesh = null;
 let currentMaterial = null;
-let cuerpoGrupoGlobal = null;
+let modeloAnatomico = null;
 
 function actualizarZona3D(val) {
-    document.getElementById('lbl-zona-3d').innerText = val;
-    document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
+    const lblZona = document.getElementById('lbl-zona-3d');
+    const badgeZona = document.getElementById('badge-zona-desc');
+    
+    if(lblZona) lblZona.innerText = val;
+    if(badgeZona) badgeZona.innerText = `Dolencia activa: ${val}`;
 
+    // Si hay un modelo o material activo, se ajusta el resalte
     if (currentMaterial) {
         const colores = {
             "Hombro": 0x38bdf8,   // Azul Cyan
@@ -341,7 +345,7 @@ async function buscarPacienteDNI() {
 }
 
 // ---------------------------------------------------------
-// INITIALIZACIÓN DE THREE.JS CON MODELO ANATÓMICO SÓLIDO
+// INICIALIZACIÓN DE THREE.JS CON CÓDIGO GLTFLOADER (ANATOMÍA REAL)
 // ---------------------------------------------------------
 function initThreeJS() {
     const container = document.getElementById('three-container');
@@ -353,70 +357,38 @@ function initThreeJS() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // Luces para renderizado sólido real
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // Iluminación para resaltar los relieves del modelo 3D
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(2, 4, 5);
     scene.add(dirLight);
 
-    cuerpoGrupoGlobal = new THREE.Group();
+    // Cargar modelo 3D anatómico (.glb) usando GLTFLoader
+    if (typeof THREE.GLTFLoader !== 'undefined') {
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', 
+            function (gltf) {
+                modeloAnatomico = gltf.scene;
+                modeloAnatomico.position.y = -1.2;
+                modeloAnatomico.scale.set(1.3, 1.3, 1.3);
+                scene.add(modeloAnatomico);
+            },
+            undefined,
+            function (error) {
+                console.error("Error cargando el modelo 3D GLTF:", error);
+            }
+        );
+    }
 
-    // Material Sólido con reflejos (wireframe: false)
-    currentMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x38bdf8, 
-        roughness: 0.35,
-        metalness: 0.2,
-        wireframe: false
-    });
-
-    // Torso / Tronco
-    const torsoGeo = new THREE.CylinderGeometry(0.45, 0.3, 1.4, 16);
-    currentMesh = new THREE.Mesh(torsoGeo, currentMaterial);
-    cuerpoGrupoGlobal.add(currentMesh);
-
-    // Cabeza
-    const cabezaGeo = new THREE.SphereGeometry(0.25, 16, 16);
-    const cabezaMesh = new THREE.Mesh(cabezaGeo, currentMaterial);
-    cabezaMesh.position.y = 0.95;
-    cuerpoGrupoGlobal.add(cabezaMesh);
-
-    // Cuello
-    const cuelloGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.2, 12);
-    const cuelloMesh = new THREE.Mesh(cuelloGeo, currentMaterial);
-    cuelloMesh.position.y = 0.75;
-    cuerpoGrupoGlobal.add(cuelloMesh);
-
-    // Brazos (Izquierdo y Derecho)
-    const brazoGeo = new THREE.CylinderGeometry(0.08, 0.07, 1.0, 12);
-    const brazoIzq = new THREE.Mesh(brazoGeo, currentMaterial);
-    brazoIzq.position.set(-0.55, 0.1, 0);
-    brazoIzq.rotation.z = 0.15;
-    cuerpoGrupoGlobal.add(brazoIzq);
-
-    const brazoDer = new THREE.Mesh(brazoGeo, currentMaterial);
-    brazoDer.position.set(0.55, 0.1, 0);
-    brazoDer.rotation.z = -0.15;
-    cuerpoGrupoGlobal.add(brazoDer);
-
-    // Piernas (Izquierda y Derecha)
-    const piernaGeo = new THREE.CylinderGeometry(0.12, 0.09, 1.1, 12);
-    const piernaIzq = new THREE.Mesh(piernaGeo, currentMaterial);
-    piernaIzq.position.set(-0.2, -1.0, 0);
-    cuerpoGrupoGlobal.add(piernaIzq);
-
-    const piernaDer = new THREE.Mesh(piernaGeo, currentMaterial);
-    piernaDer.position.set(0.2, -1.0, 0);
-    cuerpoGrupoGlobal.add(piernaDer);
-
-    scene.add(cuerpoGrupoGlobal);
-    camera.position.set(0, 0, 3.8);
+    camera.position.z = 3.5;
 
     function animate() {
         requestAnimationFrame(animate);
-        if(cuerpoGrupoGlobal) {
-            cuerpoGrupoGlobal.rotation.y += 0.01;
+        if (modeloAnatomico) {
+            modeloAnatomico.rotation.y += 0.008; // Rotación suave del cuerpo humano
         }
         renderer.render(scene, camera);
     }
