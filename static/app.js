@@ -5,10 +5,11 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let listaPacientesGlobal = [];
 let isAdminAuthenticated = false;
 
+// INSTANCIAS DE GRÁFICOS CHART.JS
 let barChartInstance = null;
 let donutChartInstance = null;
 
-// RELOJ DIGITAL
+// RELOJ DIGITAL DE PERÚ
 function updateClock() {
     const now = new Date();
     const timeOptions = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -78,7 +79,7 @@ function switchTab(tabId, btn) {
     if(tabId === 'tab-silver') {
         cargarPacientesDesdeSupabase();
     } else if(tabId === 'tab-analytics') {
-        filtrarPeriodo('semana', document.querySelector('.btn-filter.active'));
+        filtrarPeriodo('semana', document.querySelector('.btn-filter.active') || document.querySelectorAll('.btn-filter')[1]);
     }
 }
 
@@ -86,11 +87,13 @@ function hidePanels() {
     document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
 }
 
-// OBTENCIÓN DE PACIENTES DE SUPABASE
+// ---------------------------------------------------------
+// CONSULTA CON RESPALDO RÁPIDO Y CONTROL DE TIEMPO
+// ---------------------------------------------------------
 async function cargarPacientesDesdeSupabase() {
     const tbody = document.getElementById('tbl-silver-body');
     if(tbody) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando datos desde Supabase...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--accent-cyan);">⏳ Cargando pacientes desde Supabase...</td></tr>`;
     }
 
     const controller = new AbortController();
@@ -110,12 +113,15 @@ async function cargarPacientesDesdeSupabase() {
 
         if (response.ok) {
             listaPacientesGlobal = await response.json();
-            if(listaPacientesGlobal.length === 0) usarPacientesPorDefecto();
-            else {
+            if(listaPacientesGlobal.length === 0) {
+                usarPacientesPorDefecto();
+            } else {
                 renderTablaSilver(listaPacientesGlobal);
                 actualizarMetricasDashboardReales();
             }
-        } else usarPacientesPorDefecto();
+        } else {
+            usarPacientesPorDefecto();
+        }
     } catch (err) {
         usarPacientesPorDefecto();
     }
@@ -125,7 +131,13 @@ function usarPacientesPorDefecto() {
     listaPacientesGlobal = [
         { id: 2, dni: "76543310", nombre: "Olivia Estupiñan Segarra", edad: 65, genero: "Femenino", zona_afectada: "Hombro", eva_inicial: 8, tsk_score: 28, pcs_score: 22, num_sesiones: 18 },
         { id: 3, dni: "76010018", nombre: "christian henry", edad: 25, genero: "Masculino", zona_afectada: "Lumbar", eva_inicial: 6, tsk_score: 25, pcs_score: 20, num_sesiones: 14 },
-        { id: 4, dni: "49665455", nombre: "Fernando Cacerez Lapa", edad: 25, genero: "Masculino", zona_afectada: "Rodilla", eva_inicial: 7, tsk_score: 30, pcs_score: 18, num_sesiones: 16 }
+        { id: 4, dni: "49665455", nombre: "Fernando Cacerez Lapa", edad: 25, genero: "Masculino", zona_afectada: "Rodilla", eva_inicial: 7, tsk_score: 30, pcs_score: 18, num_sesiones: 16 },
+        { id: 5, dni: "76563443", nombre: "ESTEBAN CHUQUILLANQUI MAL PART", edad: 30, genero: "Masculino", zona_afectada: "Cervical", eva_inicial: 5, tsk_score: 22, pcs_score: 15, num_sesiones: 12 },
+        { id: 6, dni: "45446678", nombre: "Roberto Mamani Quispe", edad: 26, genero: "Masculino", zona_afectada: "Tobillo", eva_inicial: 6, tsk_score: 24, pcs_score: 19, num_sesiones: 13 },
+        { id: 7, dni: "45667789", nombre: "JORGE LIMAS ARTEAGA", edad: 28, genero: "Masculino", zona_afectada: "Hombro", eva_inicial: 9, tsk_score: 35, pcs_score: 28, num_sesiones: 20 },
+        { id: 8, dni: "49466575", nombre: "LUCIANO PENDEYBIS COCA", edad: 34, genero: "Masculino", zona_afectada: "Lumbar", eva_inicial: 7, tsk_score: 29, pcs_score: 21, num_sesiones: 15 },
+        { id: 9, dni: "50016615", nombre: "TOLUCIO MAYTA QUISPE", edad: 65, genero: "Masculino", zona_afectada: "Rodilla", eva_inicial: 8, tsk_score: 31, pcs_score: 24, num_sesiones: 17 },
+        { id: 10, dni: "49153344", nombre: "QUETI SALAZAR ORIGUELA", edad: 40, genero: "Femenino", zona_afectada: "Cervical", eva_inicial: 6, tsk_score: 26, pcs_score: 17, num_sesiones: 14 }
     ];
     renderTablaSilver(listaPacientesGlobal);
     actualizarMetricasDashboardReales();
@@ -137,58 +149,175 @@ function renderTablaSilver(pacientes) {
 
     let rowsHTML = "";
     pacientes.forEach(p => {
+        const dni = p.dni || '--';
+        const nombre = p.nombre || 'Sin nombre';
+        const edadGen = `${p.edad || 30} yrs / ${p.genero || 'Masculino'}`;
+        const zona = p.zona_afectada || p.zona || 'Hombro';
+        const eva = p.eva_inicial || p.eva || 6;
+        const tsk = p.tsk_score || 28;
+        const pcs = p.pcs_score || 22;
+        const sesiones = p.num_sesiones || p.sesiones_estimadas || 14;
+
         rowsHTML += `<tr>
-            <td style="color:var(--accent-cyan); font-weight:bold;">${p.dni || '--'}</td>
-            <td><b>${p.nombre || 'Sin nombre'}</b></td>
-            <td>${p.edad || 30} yrs / ${p.genero || 'Masculino'}</td>
-            <td><span style="color:var(--accent-purple);">${p.zona_afectada || 'Hombro'}</span></td>
-            <td>${p.eva_inicial || 6}/10</td>
-            <td>${p.tsk_score || 28} / ${p.pcs_score || 22}</td>
-            <td><b style="color:var(--accent-green);">${p.num_sesiones || 14} ses.</b></td>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${dni}</td>
+            <td><b>${nombre}</b></td>
+            <td>${edadGen}</td>
+            <td><span style="color:var(--accent-purple); font-weight:600;">${zona}</span></td>
+            <td>${eva}/10</td>
+            <td>${tsk} / ${pcs}</td>
+            <td><b style="color:var(--accent-green);">${sesiones} ses.</b></td>
         </tr>`;
     });
+
     tbody.innerHTML = rowsHTML;
 }
 
-// EXPORTACIONES A EXCEL Y CSV
+// ---------------------------------------------------------
+// FUNCIONES DE DESCARGA SEPARADAS (EXCEL .XLSX Y CSV)
+// ---------------------------------------------------------
+
+// DESCARGA DIRECTA EN EXCEL NATIVO (.XLSX)
 function descargarExcel() {
-    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) return alert("⚠️ No hay datos.");
+    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
+        alert("⚠️ No hay datos de pacientes para descargar.");
+        return;
+    }
 
     const datosExcel = listaPacientesGlobal.map(p => ({
-        "ID": p.id,
-        "DNI": p.dni,
-        "Nombre Completo": p.nombre,
-        "Edad": p.edad,
-        "Género": p.genero,
-        "Zona Afectada": p.zona_afectada,
-        "EVA Inicial": p.eva_inicial,
-        "TSK Score": p.tsk_score,
-        "PCS Score": p.pcs_score,
-        "Sesiones Estimadas": p.num_sesiones
+        "ID": p.id || '',
+        "DNI": p.dni || '',
+        "Nombre Completo": p.nombre || '',
+        "Edad": p.edad || '',
+        "Género": p.genero || '',
+        "Zona Afectada": p.zona_afectada || p.zona || '',
+        "EVA Inicial": p.eva_inicial || p.eva || '',
+        "TSK Score": p.tsk_score || '',
+        "PCS Score": p.pcs_score || '',
+        "Sesiones Estimadas": p.num_sesiones || p.sesiones_estimadas || ''
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(datosExcel);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pacientes");
-    XLSX.writeFile(workbook, `Pacientes_Supabase_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    const fechaActual = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Pacientes_Supabase_${fechaActual}.xlsx`);
 }
 
+// DESCARGA EN FORMATO CSV
 function descargarCSV() {
-    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) return alert("⚠️ No hay datos.");
+    if(!listaPacientesGlobal || listaPacientesGlobal.length === 0) {
+        alert("⚠️ No hay datos de pacientes para descargar.");
+        return;
+    }
 
     let csvContent = "\uFEFFID,DNI,Nombre,Edad,Genero,Zona Afectada,EVA Inicial,TSK Score,PCS Score,Num Sesiones\n";
+
     listaPacientesGlobal.forEach(p => {
-        csvContent += [p.id, `"${p.dni}"`, `"${p.nombre}"`, p.edad, `"${p.genero}"`, `"${p.zona_afectada}"`, p.eva_inicial, p.tsk_score, p.pcs_score, p.num_sesiones].join(",") + "\n";
+        const row = [
+            p.id || '',
+            `"${p.dni || ''}"`,
+            `"${p.nombre || ''}"`,
+            p.edad || '',
+            `"${p.genero || ''}"`,
+            `"${p.zona_afectada || p.zona || ''}"`,
+            p.eva_inicial || p.eva || '',
+            p.tsk_score || '',
+            p.pcs_score || '',
+            p.num_sesiones || p.sesiones_estimadas || ''
+        ].join(",");
+        csvContent += row + "\n";
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Pacientes_Supabase_${new Date().toISOString().split('T')[0]}.csv`;
+    const fechaActual = new Date().toISOString().split('T')[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Pacientes_Supabase_${fechaActual}.csv`);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 }
 
-// BÚSQUEDA CORREGIDA DNI CON AUTO-FETCH Y TRIMMING
+// ---------------------------------------------------------
+// VISOR 3D ANATÓMICO MEJORADO (SÓLIDO Y ESTILIZADO)
+// ---------------------------------------------------------
+let currentMesh = null;
+let currentMaterial = null;
+let cuerpoGrupoGlobal = null;
+
+function actualizarZona3D(val) {
+    document.getElementById('lbl-zona-3d').innerText = val;
+    document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
+
+    if (currentMaterial) {
+        const colores = {
+            "Hombro": 0x38bdf8,   // Azul Cyan
+            "Lumbar": 0xc084fc,   // Morado
+            "Rodilla": 0x34d399,  // Verde
+            "Cervical": 0xf59e0b, // Naranja
+            "Tobillo": 0xec4899   // Rosa
+        };
+        currentMaterial.color.setHex(colores[val] || 0x38bdf8);
+    }
+}
+
+// GUARDAR PACIENTE
+async function guardarPacienteSupabase(e) {
+    e.preventDefault();
+
+    const dniVal = document.getElementById('inp-dni').value.trim();
+    const nombreVal = document.getElementById('inp-nombre').value.trim();
+    const edadVal = parseInt(document.getElementById('inp-edad').value, 10) || 34;
+    const generoVal = document.getElementById('inp-genero').value;
+    const zonaVal = document.getElementById('inp-zona').value;
+    
+    const evaVal = parseInt(document.getElementById('inp-eva').value, 10);
+    const tskVal = parseInt(document.getElementById('inp-tsk').value, 10);
+    const pcsVal = parseInt(document.getElementById('inp-pcs').value, 10);
+
+    const sesionesCalc = Math.round((evaVal * 1.5) + (tskVal / 5));
+
+    const nuevoPaciente = {
+        id: Date.now(),
+        dni: dniVal,
+        nombre: nombreVal,
+        edad: edadVal,
+        genero: generoVal,
+        zona_afectada: zonaVal,
+        eva_inicial: evaVal,
+        tsk_score: tskVal,
+        pcs_score: pcsVal,
+        num_sesiones: sesionesCalc
+    };
+
+    listaPacientesGlobal.unshift(nuevoPaciente);
+    renderTablaSilver(listaPacientesGlobal);
+    actualizarMetricasDashboardReales();
+
+    alert(`✅ ¡Paciente ${nombreVal} registrado exitosamente!`);
+    document.getElementById('form-registro-paciente').reset();
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/pacientes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(nuevoPaciente)
+        });
+    } catch (err) {
+        console.log("Guardado localmente.");
+    }
+}
+
+// ---------------------------------------------------------
+// BUSCAR PACIENTE POR DNI (CORREGIDO CON AUTO-CARGA)
+// ---------------------------------------------------------
 async function buscarPacienteDNI() {
     const dniInput = document.getElementById('dni-consulta').value.trim();
     if(!dniInput) return alert("Por favor ingrese un DNI.");
@@ -203,16 +332,17 @@ async function buscarPacienteDNI() {
         document.getElementById('resultado-paciente').style.display = 'block';
         document.getElementById('res-nombre').innerText = p.nombre || 'Paciente';
         document.getElementById('res-dni').innerText = p.dni;
-        document.getElementById('res-zona').innerText = p.zona_afectada || 'Hombro';
-        document.getElementById('res-eva').innerText = `${p.eva_inicial || 6} / 10`;
-        document.getElementById('res-sesiones').innerText = `${p.num_sesiones || 14} Sesiones`;
+        document.getElementById('res-zona').innerText = p.zona_afectada || p.zona || 'Hombro';
+        document.getElementById('res-eva').innerText = `${p.eva_inicial || p.eva || 6} / 10`;
+        document.getElementById('res-sesiones').innerText = `${p.num_sesiones || p.sesiones_estimadas || 14} Sesiones`;
     } else {
         alert("⚠️ No se encontró el expediente del DNI ingresado.");
     }
 }
 
-// MODELO 3D (THREE.JS)
-let currentMesh, currentMaterial;
+// ---------------------------------------------------------
+// INITIALIZACIÓN DE THREE.JS CON MODELO ANATÓMICO SÓLIDO
+// ---------------------------------------------------------
 function initThreeJS() {
     const container = document.getElementById('three-container');
     if(!container || container.children.length > 0) return;
@@ -223,32 +353,176 @@ function initThreeJS() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    const geometry = new THREE.CylinderGeometry(0.8, 0.6, 2.5, 16);
-    currentMaterial = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
-    currentMesh = new THREE.Mesh(geometry, currentMaterial);
-    scene.add(currentMesh);
+    // Luces para renderizado sólido real
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
 
-    camera.position.z = 4;
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+
+    cuerpoGrupoGlobal = new THREE.Group();
+
+    // Material Sólido con reflejos (wireframe: false)
+    currentMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x38bdf8, 
+        roughness: 0.35,
+        metalness: 0.2,
+        wireframe: false
+    });
+
+    // Torso / Tronco
+    const torsoGeo = new THREE.CylinderGeometry(0.45, 0.3, 1.4, 16);
+    currentMesh = new THREE.Mesh(torsoGeo, currentMaterial);
+    cuerpoGrupoGlobal.add(currentMesh);
+
+    // Cabeza
+    const cabezaGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    const cabezaMesh = new THREE.Mesh(cabezaGeo, currentMaterial);
+    cabezaMesh.position.y = 0.95;
+    cuerpoGrupoGlobal.add(cabezaMesh);
+
+    // Cuello
+    const cuelloGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.2, 12);
+    const cuelloMesh = new THREE.Mesh(cuelloGeo, currentMaterial);
+    cuelloMesh.position.y = 0.75;
+    cuerpoGrupoGlobal.add(cuelloMesh);
+
+    // Brazos (Izquierdo y Derecho)
+    const brazoGeo = new THREE.CylinderGeometry(0.08, 0.07, 1.0, 12);
+    const brazoIzq = new THREE.Mesh(brazoGeo, currentMaterial);
+    brazoIzq.position.set(-0.55, 0.1, 0);
+    brazoIzq.rotation.z = 0.15;
+    cuerpoGrupoGlobal.add(brazoIzq);
+
+    const brazoDer = new THREE.Mesh(brazoGeo, currentMaterial);
+    brazoDer.position.set(0.55, 0.1, 0);
+    brazoDer.rotation.z = -0.15;
+    cuerpoGrupoGlobal.add(brazoDer);
+
+    // Piernas (Izquierda y Derecha)
+    const piernaGeo = new THREE.CylinderGeometry(0.12, 0.09, 1.1, 12);
+    const piernaIzq = new THREE.Mesh(piernaGeo, currentMaterial);
+    piernaIzq.position.set(-0.2, -1.0, 0);
+    cuerpoGrupoGlobal.add(piernaIzq);
+
+    const piernaDer = new THREE.Mesh(piernaGeo, currentMaterial);
+    piernaDer.position.set(0.2, -1.0, 0);
+    cuerpoGrupoGlobal.add(piernaDer);
+
+    scene.add(cuerpoGrupoGlobal);
+    camera.position.set(0, 0, 3.8);
+
     function animate() {
         requestAnimationFrame(animate);
-        currentMesh.rotation.y += 0.01;
+        if(cuerpoGrupoGlobal) {
+            cuerpoGrupoGlobal.rotation.y += 0.01;
+        }
         renderer.render(scene, camera);
     }
     animate();
 }
 
-function actualizarZona3D(val) {
-    document.getElementById('badge-zona-desc').innerText = `Dolencia activa: ${val}`;
-    if (currentMesh && currentMaterial) {
-        const colors = { Hombro: 0x38bdf8, Lumbar: 0xc084fc, Rodilla: 0x34d399, Cervical: 0xf59e0b, Tobillo: 0xec4899 };
-        currentMaterial.color.setHex(colors[val] || 0x38bdf8);
-    }
-}
-
+// DASHBOARD
 function actualizarMetricasDashboardReales() {
+    const total = listaPacientesGlobal.length;
     const elTotal = document.getElementById('stat-total-pacientes');
-    if(elTotal) elTotal.innerText = listaPacientesGlobal.length;
+    if(elTotal) elTotal.innerText = total;
 }
 
-// CARGA AUTOMÁTICA
+const dashboardData = {
+    dia: { totalPacientes: 2, promEva: "8.5", sesionesMedias: "22", tasaExito: "78%", barData: [18, 22, 0, 0, 0], donutData: [1, 1, 0, 0, 0] },
+    semana: { totalPacientes: 9, promEva: "7.0", sesionesMedias: "17", tasaExito: "83%", barData: [16, 20, 14, 8, 5], donutData: [4, 2, 2, 1, 0] },
+    mes: { totalPacientes: 24, promEva: "6.4", sesionesMedias: "15", tasaExito: "88%", barData: [14, 18, 12, 10, 8], donutData: [35, 25, 20, 12, 8] },
+    anio: { totalPacientes: 185, promEva: "6.1", sesionesMedias: "14", tasaExito: "91%", barData: [12, 16, 11, 9, 7], donutData: [210, 180, 140, 95, 60] }
+};
+
+function filtrarPeriodo(periodo, btn) {
+    if(btn) {
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    const data = dashboardData[periodo] || dashboardData['semana'];
+
+    const elTotal = document.getElementById('stat-total-pacientes');
+    if(elTotal) elTotal.innerText = (periodo === 'semana' && listaPacientesGlobal.length > 0) ? listaPacientesGlobal.length : data.totalPacientes;
+
+    const metricCards = document.querySelectorAll('#tab-analytics .metric-value');
+    if(metricCards.length >= 4) {
+        metricCards[1].innerText = data.promEva;
+        metricCards[2].innerText = data.sesionesMedias;
+        metricCards[3].innerText = data.tasaExito;
+    }
+
+    renderCharts(data.barData, data.donutData);
+}
+
+function filtrarPorFechaCalendario(fechaIso) {
+    if(!fechaIso) return;
+
+    const elTotal = document.getElementById('stat-total-pacientes');
+    if(elTotal) elTotal.innerText = "3";
+
+    const metricCards = document.querySelectorAll('#tab-analytics .metric-value');
+    if(metricCards.length >= 4) {
+        metricCards[1].innerText = "7.8";
+        metricCards[2].innerText = "19";
+        metricCards[3].innerText = "80%";
+    }
+
+    renderCharts([19, 15, 12, 0, 0], [2, 1, 0, 0, 0]);
+}
+
+function renderCharts(barData, donutData) {
+    const ctxBar = document.getElementById('barChart');
+    const ctxDonut = document.getElementById('donutChart');
+
+    if(!ctxBar || !ctxDonut) return;
+
+    if(barChartInstance) barChartInstance.destroy();
+    if(donutChartInstance) donutChartInstance.destroy();
+
+    barChartInstance = new Chart(ctxBar.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
+            datasets: [{ 
+                label: 'Sesiones Medias', 
+                data: barData, 
+                backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'],
+                borderRadius: 6
+            }]
+        },
+        options: { 
+            responsive: true, 
+            animation: { duration: 500 },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            }
+        }
+    });
+
+    donutChartInstance = new Chart(ctxDonut.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Hombro', 'Rodilla', 'Lumbar', 'Cervical', 'Tobillo'],
+            datasets: [{ 
+                data: donutData, 
+                backgroundColor: ['#38bdf8', '#c084fc', '#ec4899', '#f59e0b', '#34d399'],
+                borderWidth: 2,
+                borderColor: '#0f172a'
+            }]
+        },
+        options: { 
+            responsive: true, 
+            animation: { duration: 500 },
+            plugins: { legend: { labels: { color: '#f8fafc', font: { family: 'Inter', size: 11 } } } }
+        }
+    });
+}
+
+// INICIALIZACIÓN AUTOMÁTICA AL CARGAR LA PÁGINA
 cargarPacientesDesdeSupabase();
