@@ -1,164 +1,276 @@
 :root {
     --bg-dark: #0b0f19;
-    --card-bg: rgba(23, 32, 54, 0.7);
+    --card-bg: rgba(18, 26, 43, 0.85);
     --card-bg-solid: #121a2b;
+    --border-color: rgba(56, 189, 248, 0.2);
     --accent-cyan: #38bdf8;
     --accent-purple: #c084fc;
     --accent-green: #34d399;
+    --accent-amber: #f59e0b;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-cyan: rgba(56, 189, 248, 0.25);
 }
 
-body {
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+    width: 100vw;
+    height: 100vh;
     background-color: var(--bg-dark);
     color: var(--text-main);
+    overflow: hidden;
 }
 
-.app-container {
+.app-layout {
     display: flex;
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
 }
 
-.sidebar {
+/* SIDEBAR ESTILIZADO */
+.anatomy-sidebar {
     width: 280px;
     background: #0f172a;
     border-right: 1px solid var(--border-color);
-    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-}
-
-.main-content {
-    flex: 1;
-    padding: 30px;
+    padding: 20px;
+    flex-shrink: 0;
     overflow-y: auto;
 }
 
-.clock-card {
-    background: rgba(56, 189, 248, 0.05);
-    border: 1px solid var(--accent-cyan);
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-#hora-min {
-    font-size: 2rem;
-    font-weight: 800;
+.brand-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: var(--accent-cyan);
 }
 
-#seg {
-    font-size: 1.2rem;
-    color: var(--accent-purple);
+.logo-icon { font-size: 1.6rem; }
+.brand-box h2 { font-size: 1.2rem; font-weight: 800; }
+.subtitle-text { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
+
+/* RELOJ DIGITAL */
+.peru-clock-box {
+    background: rgba(56, 189, 248, 0.05);
+    border: 1px solid var(--accent-cyan);
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.view-panel {
-    display: none;
+.clock-title { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
+.clock-display { font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); font-family: monospace; }
+.date-display { font-size: 0.8rem; color: var(--accent-green); font-weight: 600; }
+
+.sidebar-section-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+
+.role-selector { display: flex; gap: 8px; margin-bottom: 20px; }
+.role-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.role-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+
+.nav-menu { display: flex; flex-direction: column; gap: 8px; }
+.nav-tab-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: left;
+    transition: all 0.2s;
+}
+.nav-tab-btn.active, .nav-tab-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
 }
 
-.view-panel.active {
-    display: block;
-    animation: fadeIn 0.3s ease-in-out;
+/* ÁREA PRINCIPAL */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
 }
+
+.top-bar {
+    padding: 12px 24px;
+    background: rgba(13, 19, 34, 0.9);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge-role {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-right: 10px;
+}
+.badge-role.paciente { background: var(--accent-green); color: #000; }
+.badge-role.admin { background: var(--accent-amber); color: #000; }
+
+.content-area { padding: 24px; flex: 1; }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Tablas corporativas optimizadas */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    background-color: var(--card-bg-solid);
-    border-radius: 10px;
-    overflow: hidden;
+/* TARJETAS Y PANELES */
+.card-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
-th, td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.95rem;
+.card-panel h3 { color: var(--accent-cyan); font-size: 1.1rem; margin-bottom: 16px; }
+.card-panel h4 { color: var(--text-main); font-size: 0.95rem; margin-bottom: 12px; }
+
+.form-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+
+.input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.input-group label { font-size: 0.85rem; color: var(--text-muted); }
+.input-group input, .input-group select, .input-group textarea {
+    background: #0b0f19;
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
+    color: #fff;
+    border-radius: 8px;
+    outline: none;
+}
+.input-group input:focus, .input-group select:focus { border-color: var(--accent-cyan); }
+
+.controls-section input[type="text"] {
+    width: 100%;
+    background: #0b0f19;
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    color: #fff;
+    border-radius: 8px;
+    outline: none;
 }
 
-th {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-muted);
-    font-weight: 600;
+/* BOTONES PROFESIONALES */
+.btn-primary {
+    background: var(--accent-cyan);
+    color: #000;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
 }
+.btn-primary:hover { opacity: 0.9; }
 
-tr:hover {
-    background-color: rgba(56, 189, 248, 0.02);
-}
-
-/* Botones especiales mejorados */
-.btn-excel {
+.btn-success {
     background: #107c41;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-success:hover { background: #0e6b37; }
+
+/* DASHBOARD COMPACTO Y REDUCIDO (Solución al tamaño gigante) */
+.filter-pills-row { display: flex; gap: 8px; }
+.pill-btn {
+    background: var(--card-bg-solid);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.2s;
 }
+.pill-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
 
-.btn-excel:hover {
-    background: #0e6b37;
+.kpi-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
 }
-
-.btn-csv {
-    background: #0284c7;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
+.kpi-compact-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 14px 18px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
+.kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.kpi-value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
 
-.btn-csv:hover {
-    background: #0369a1;
+.charts-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
 }
+.chart-box { padding: 16px !important; margin-bottom: 0 !important; }
 
-/* Reducción y optimización moderna de tarjetas del Dashboard y KPIs */
-.dashboard-container, .kpi-container, div.stMetric, .card-metric {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--border-cyan) !important;
-    border-radius: 12px !important;
-    padding: 16px !important;
-    margin-bottom: 15px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+/* TABLAS */
+.table-responsive { width: 100%; overflow-x: auto; }
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: var(--card-bg-solid);
+    border-radius: 8px;
+    overflow: hidden;
 }
+.data-table th, .data-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.data-table th { background: rgba(255,255,255,0.04); color: var(--text-muted); font-weight: 600; }
+.data-table tr:hover { background: rgba(56, 189, 248, 0.02); }
 
-/* Control de tamaños para gráficos y contenedores de métricas grandes */
-.element-container iframe, canvas {
-    max-height: 350px !important;
+/* UTILIDADES */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.hidden { display: none !important; }
+.full-width { width: 100%; }
+.margin-top { margin-top: 16px; }
+.margin-bottom { margin-bottom: 16px; }
+.text-cyan { color: var(--accent-cyan); }
+.text-purple { color: var(--accent-purple); }
+.text-green { color: var(--accent-green); }
+
+.result-box {
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid var(--accent-cyan);
+    padding: 16px;
     border-radius: 8px;
 }
-
-/* Ajustes limpios para formularios y entradas */
-input, select, textarea {
-    background-color: #121a2b !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 8px !important;
-    padding: 10px !important;
-}
-
-input:focus, select:focus {
-    border-color: var(--accent-cyan) !important;
-    outline: none !important;
-}
+.highlight-text { font-size: 1.05rem; font-weight: 700; color: var(--accent-cyan); }
