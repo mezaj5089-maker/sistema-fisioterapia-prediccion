@@ -3,15 +3,15 @@ import streamlit.components.v1 as components
 import os
 import joblib
 
-# Configuración estricta de la página a pantalla completa (Wide Mode)
+# Configuración estricta de página a pantalla completa (Wide Mode)
 st.set_page_config(
-    page_title="KineData Analytics Pro",
+    page_title="KineData Analytics Pro - Sistema Clínico de Fisioterapia e IA",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Inyección CSS para eliminar márgenes blancos por defecto de Streamlit
+# Inyección CSS para eliminar márgenes blancos de Streamlit
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
@@ -32,7 +32,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Carga segura del modelo de Machine Learning serializado (RandomForestRegressor)
+# Carga segura del modelo predictivo serializado (Random Forest / Scikit-Learn)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "modelo_fisioterapia.pkl")
 try:
     if os.path.exists(MODEL_PATH):
@@ -50,7 +50,6 @@ def main():
         with open(path_html, "r", encoding="utf-8") as f_html:
             html_content = f_html.read()
 
-        # Inyección interna de estilos y lógica para sincronización perfecta
         if os.path.exists(path_css):
             with open(path_css, "r", encoding="utf-8") as f_css:
                 css_content = f_css.read()
@@ -69,7 +68,7 @@ def main():
 
         components.html(html_content, height=1000, scrolling=True)
     else:
-        st.error("No se encontró el archivo 'static/index.html'. Verifique la estructura del repositorio.")
+        st.error("No se encontró 'static/index.html'. Verifique la estructura de carpetas.")
 
 if __name__ == "__main__":
     main()
