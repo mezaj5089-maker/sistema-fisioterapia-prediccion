@@ -1,30 +1,84 @@
-let currentData = [
-    { dni: "72849102", nombre: "Juan Pérez", edad: 45, genero: "Masculino", zona: "Lumbar", eva_inicial: 8, tsk: 28, pcs: 22, sesiones_estimadas: 12 },
-    { dni: "41920384", nombre: "María Rodríguez", edad: 32, genero: "Femenino", zona: "Cervical", eva_inicial: 5, tsk: 19, pcs: 15, sesiones_estimadas: 6 },
-    { dni: "10823741", nombre: "Carlos Mendoza", edad: 58, genero: "Masculino", zona: "Rodilla", eva_inicial: 9, tsk: 34, pcs: 28, sesiones_estimadas: 15 }
+let currentRol = 'paciente';
+let currentDni = '72849102';
+
+let pacientesData = [
+    { dni: "72849102", nombre: "Juan Pérez", edad: 45, genero: "Masculino", zona: "Lumbar", eva_inicial: 8, tsk: 28, pcs: 22, sesiones_estimadas: 12, email: "juan.perez@gmail.com", tlf: "987654321" },
+    { dni: "41920384", nombre: "María Rodríguez", edad: 32, genero: "Femenino", zona: "Cervical", eva_inicial: 5, tsk: 19, pcs: 15, sesiones_estimadas: 6, email: "maria.rod@gmail.com", tlf: "912345678" },
+    { dni: "10823741", nombre: "Carlos Mendoza", edad: 58, genero: "Masculino", zona: "Rodilla", eva_inicial: 9, tsk: 34, pcs: 28, sesiones_estimadas: 15, email: "carlos.men@gmail.com", tlf: "998877665" }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarRelojPeru();
-    renderTable(currentData);
+    renderTable(pacientesData);
     inicializarGraficos();
 });
 
-// Reloj digital oficial Perú (UTC-5)
+// Reloj oficial Perú UTC-5
 function iniciarRelojPeru() {
     setInterval(() => {
         const ahora = new Date();
         const opcionesHora = { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
         const opcionesFecha = { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' };
         
-        const relojEl = document.getElementById("peru-clock");
-        const fechaEl = document.getElementById("peru-date");
-        if (relojEl) relojEl.innerText = ahora.toLocaleTimeString('es-PE', opcionesHora);
-        if (fechaEl) fechaEl.innerText = ahora.toLocaleDateString('es-PE', opcionesFecha);
+        const rEl = document.getElementById("peru-clock");
+        const fEl = document.getElementById("peru-date");
+        if (rEl) rEl.innerText = ahora.toLocaleTimeString('es-PE', opcionesHora);
+        if (fEl) fEl.innerText = ahora.toLocaleDateString('es-PE', opcionesFecha);
     }, 1000);
 }
 
-// Navegación de Pestañas
+// Selección de Rol en Modal
+function seleccionarRolModal(rol) {
+    currentRol = rol;
+    document.getElementById("btn-role-paciente").classList.toggle("active", rol === 'paciente');
+    document.getElementById("btn-role-admin").classList.toggle("active", rol === 'admin');
+    document.getElementById("group-pass").classList.toggle("hidden", rol === 'paciente');
+}
+
+// Iniciar Sesión por DNI
+function iniciarSesion(e) {
+    e.preventDefault();
+    const dniInput = document.getElementById("login-dni").value.trim();
+    if (!dniInput) return;
+
+    currentDni = dniInput;
+    document.getElementById("login-modal").classList.add("hidden");
+
+    const badge = document.getElementById("badge-rol");
+    badge.innerText = currentRol.toUpperCase();
+    badge.className = `badge-role ${currentRol}`;
+
+    if (currentRol === 'paciente') {
+        document.getElementById("menu-paciente").classList.remove("hidden");
+        document.getElementById("menu-admin").classList.add("hidden");
+        switchTab('paciente-citas');
+        
+        // Buscar paciente en la base de datos simulada
+        const pacienteEncontrado = pacientesData.find(p => String(p.dni).trim() === currentDni);
+        if (pacienteEncontrado) {
+            document.getElementById("p-dni-val").innerText = pacienteEncontrado.dni;
+            document.getElementById("p-nombre-val").innerText = pacienteEncontrado.nombre;
+            document.getElementById("p-dolencia-val").innerText = `${pacienteEncontrado.zona} (EVA: ${pacienteEncontrado.eva_inicial}/10)`;
+            document.getElementById("p-sesiones-restantes").innerText = `Quedan ${pacienteEncontrado.sesiones_estimadas} Sesiones`;
+            document.getElementById("user-display-name").innerText = `Paciente: ${pacienteEncontrado.nombre}`;
+        } else {
+            document.getElementById("p-dni-val").innerText = currentDni;
+            document.getElementById("p-nombre-val").innerText = "Paciente Registrado (Nuevo)";
+            document.getElementById("user-display-name").innerText = `DNI: ${currentDni}`;
+        }
+    } else {
+        document.getElementById("menu-paciente").classList.add("hidden");
+        document.getElementById("menu-admin").classList.remove("hidden");
+        switchTab('admin-registro');
+        document.getElementById("user-display-name").innerText = "Administrador / Fisioterapeuta Principal";
+    }
+}
+
+function cerrarSesion() {
+    document.getElementById("login-modal").classList.remove("hidden");
+}
+
+// Navegación de Vistas
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-tab-btn').forEach(el => el.classList.remove('active'));
@@ -36,93 +90,121 @@ function switchTab(tabId) {
     if (targetBtn) targetBtn.classList.add('active');
 }
 
-// Control de Roles
-function seleccionarRol(rol) {
-    const badge = document.getElementById("badge-rol");
-    if (badge) {
-        badge.innerText = `ROL: ${rol.toUpperCase()}`;
-        badge.className = `badge-role ${rol}`;
-    }
+// Solicitud de Reprogramación (Paciente)
+function enviarSolicitudReprogramacion(e) {
+    e.preventDefault();
+    const fecha = document.getElementById("rep-fecha").value;
+    const hora = document.getElementById("rep-hora").value;
+    const motivo = document.getElementById("rep-motivo").value;
+
+    const statusBox = document.getElementById("status-reprogramacion");
+    statusBox.innerHTML = `
+        <div class="result-box">
+            <i class="fa-solid fa-circle-check text-green"></i> <strong>Solicitud enviada con éxito.</strong><br>
+            Fecha propuesta: <strong>${fecha} a las ${hora}</strong>.<br>
+            Estado: <span class="text-cyan">Pendiente de aprobación administrativa. Se le notificará a su correo.</span>
+        </div>
+    `;
 }
 
-// Renderizado de tabla Silver
-function renderTable(data) {
-    const tbody = document.getElementById('tableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    data.forEach(patient => {
-        const row = `
-            <tr>
-                <td><strong>${String(patient.dni).trim()}</strong></td>
-                <td>${patient.nombre}</td>
-                <td>${patient.edad} yrs / ${patient.genero}</td>
-                <td class="text-cyan">${patient.zona}</td>
-                <td>${patient.eva_inicial}/10</td>
-                <td>${patient.tsk} / ${patient.pcs}</td>
-                <td><strong class="text-green">${patient.sesiones_estimadas} ses.</strong></td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
-}
+// Registro Admin y Predicción ML
+function registrarPacienteAdmin() {
+    const dni = document.getElementById("adm_dni").value.trim();
+    const nombre = document.getElementById("adm_nombre").value;
+    const edad = parseInt(document.getElementById("adm_edad").value);
+    const genero = document.getElementById("adm_genero").value;
+    const zona = document.getElementById("adm_zona").value;
+    const eva = parseInt(document.getElementById("adm_eva").value);
+    const tsk = parseInt(document.getElementById("adm_tsk").value);
+    const pcs = parseInt(document.getElementById("adm_pcs").value);
+    const dias = parseInt(document.getElementById("adm_dias").value);
+    const email = document.getElementById("adm_email").value;
+    const tlf = document.getElementById("adm_tlf").value;
 
-// Filtrado robusto por DNI o Nombre (Corrección técnica especificada en informe)
-function filterPatients() {
-    const query = document.getElementById('searchDni').value.toLowerCase().trim();
-    const filtered = currentData.filter(p => 
-        String(p.dni).toLowerCase().includes(query) || 
-        String(p.nombre).toLowerCase().includes(query)
-    );
-    renderTable(filtered);
-}
+    // Cálculo predictivo con Random Forest (simulado)
+    const sesionesEst = Math.round((eva * 0.75) + (tsk * 0.12) + (pcs * 0.1) + (edad * 0.03));
 
-// Cálculo de Inferencia IA simulada con modelo
-function calcularInferenciaIA() {
-    const dni = document.getElementById("ev_dni").value;
-    const nombre = document.getElementById("ev_nombre").value;
-    const edad = parseInt(document.getElementById("ev_edad").value);
-    const zona = document.getElementById("ev_zona").value;
-    const eva = parseInt(document.getElementById("ev_eva").value);
-    const tsk = parseInt(document.getElementById("ev_tsk").value);
-    const pcs = parseInt(document.getElementById("ev_pcs").value);
-    const asistencia = document.getElementById("ev_asistencia").value;
-
-    // Estimación matemática basada en pesos del modelo Random Forest
-    const sesionesEst = Math.round((eva * 0.8) + (tsk * 0.15) + (pcs * 0.1) + (edad * 0.05));
-
-    const nuevoPaciente = {
+    const nuevo = {
         dni: dni,
         nombre: nombre,
         edad: edad,
-        genero: "No especificado",
+        genero: genero,
         zona: zona,
         eva_inicial: eva,
         tsk: tsk,
         pcs: pcs,
-        sesiones_estimadas: sesionesEst > 0 ? sesionesEst : 5
+        sesiones_estimadas: sesionesEst > 0 ? sesionesEst : 8,
+        email: email,
+        tlf: tlf
     };
 
-    currentData.unshift(nuevoPaciente);
-    renderTable(currentData);
+    pacientesData.unshift(nuevo);
+    renderTable(pacientesData);
 
-    const resultBox = document.getElementById("result-ia-panel");
-    const resultText = document.getElementById("result-text");
-    if (resultText) {
-        resultText.innerHTML = `Paciente <strong>${nombre}</strong> registrado con éxito en Capa Silver.<br>Estimación óptima de rehabilitación por IA: <span class="text-cyan">${nuevoPaciente.sesiones_estimadas} sesiones</span> con un nivel de confianza R² > 0.85.`;
+    const box = document.getElementById("result-ia-panel");
+    const txt = document.getElementById("result-text");
+    if (txt) {
+        txt.innerHTML = `Paciente <strong>${nombre}</strong> procesado correctamente (Bronze -> Silver).<br>Proyección óptima del Modelo IA: <span class="text-cyan">${nuevo.sesiones_estimadas} sesiones de rehabilitación</span> (Probabilidad de Éxito: 91.4%).`;
     }
-    if (resultBox) resultBox.classList.remove("hidden");
+    if (box) box.classList.remove("hidden");
 }
 
-// Exportación instantánea a Excel mediante SheetJS (Capa Cliente)
+// Renderizado de Capa Silver en Tabla
+function renderTable(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(p => {
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>${p.dni}</strong></td>
+                <td>${p.nombre}<br><small class="text-muted">${p.email || 'Sin correo'} / ${p.tlf || ''}</small></td>
+                <td class="text-cyan">${p.zona}</td>
+                <td>${p.eva_inicial}/10 | ${p.tsk} / ${p.pcs}</td>
+                <td>Activo (Capa Silver)</td>
+                <td><strong class="text-green">${p.sesiones_estimadas} ses.</strong></td>
+                <td><button class="btn-success" onclick="alert('Historial clínico verificado.')">Ver</button></td>
+            </tr>
+        `;
+    });
+}
+
+// Filtrar Pacientes por DNI o Nombre
+function filterPatients() {
+    const q = document.getElementById('searchDni').value.toLowerCase().trim();
+    const filtrados = pacientesData.filter(p => 
+        String(p.dni).toLowerCase().includes(q) || 
+        String(p.nombre).toLowerCase().includes(q)
+    );
+    renderTable(filtrados);
+}
+
+// Enviar Notificación por Gmail o SMS
+function enviarNotificacionPaciente(e) {
+    e.preventDefault();
+    const canal = document.getElementById("notif-canal").value;
+    const mensaje = document.getElementById("notif-mensaje").value;
+
+    const box = document.getElementById("status-envio-notif");
+    box.innerHTML = `
+        <div class="result-box">
+            <i class="fa-solid fa-paper-plane text-cyan"></i> <strong>Notificación enviada exitosamente.</strong><br>
+            Canal utilizado: <strong>${canal}</strong>.<br>
+            El paciente ha sido informado correctamente en su bandeja y celular.
+        </div>
+    `;
+}
+
+// Exportar a Excel con SheetJS
 function exportToExcel() {
-    const ws = XLSX.utils.json_to_sheet(currentData);
+    const ws = XLSX.utils.json_to_sheet(pacientesData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pacientes_Silver");
-    XLSX.writeFile(wb, "KineData_Reporte_Pacientes.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Capa_Silver_Pacientes");
+    XLSX.writeFile(wb, "KineData_Reporte_Silver.xlsx");
 }
 
-// Inicialización de Gráficos compactos con Chart.js
+// Gráficos Chart.js
 function inicializarGraficos() {
     const ctxL = document.getElementById('chartLesiones');
     if (ctxL) {
@@ -130,20 +212,9 @@ function inicializarGraficos() {
             type: 'bar',
             data: {
                 labels: ['Lumbar', 'Cervical', 'Hombro', 'Rodilla', 'Tobillo'],
-                datasets: [{
-                    label: 'Pacientes',
-                    data: [450, 280, 210, 160, 100],
-                    backgroundColor: '#38bdf8'
-                }]
+                datasets: [{ data: [450, 280, 210, 160, 100], backgroundColor: '#38bdf8' }]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#f8fafc' }, grid: { display: false } },
-                    y: { ticks: { color: '#f8fafc' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                }
-            }
+            options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#f8fafc' } }, y: { ticks: { color: '#f8fafc' } } } }
         });
     }
 
@@ -152,16 +223,10 @@ function inicializarGraficos() {
         new Chart(ctxA.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Éxito Terapéutico', 'En Proceso', 'Deserción'],
-                datasets: [{
-                    data: [78, 16, 6],
-                    backgroundColor: ['#34d399', '#38bdf8', '#f59e0b']
-                }]
+                labels: ['Éxito Favorable', 'En Evolución', 'Riesgo Deserción'],
+                datasets: [{ data: [82, 12, 6], backgroundColor: ['#34d399', '#38bdf8', '#f59e0b'] }]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', boxWidth: 12 } } }
-            }
+            options: { plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', boxWidth: 12 } } } }
         });
     }
 }
