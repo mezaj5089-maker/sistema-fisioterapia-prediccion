@@ -1,232 +1,175 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KineData Analytics - Sistema de Fisioterapia e Inferencia IA</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-
-    <!-- ESTRUCTURA PRINCIPAL PANTALLA COMPLETA -->
-    <div class="app-layout">
-        
-        <!-- LATERAL IZQUIERDO: VISOR ANATÓMICO Y RELOJ DIGITAL PERÚ -->
-        <aside class="anatomy-sidebar">
-            <div class="brand-box">
-                <i class="fa-solid fa-heart-pulse logo-icon"></i>
-                <h2>KineData IA</h2>
-            </div>
-
-            <div class="sidebar-header">
-                <i class="fa-solid fa-bone"></i> ANATOMÍA DE LA COLUMNA
-            </div>
-            
-            <div class="anatomy-container">
-                <img src="Anatomía de la columna vertebral.png" alt="Anatomía de la Columna Vertebral" class="anatomy-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2966/2966327.png'">
-            </div>
-
-            <div class="peru-clock-box">
-                <div class="clock-title"><i class="fa-solid fa-clock"></i> HORA OFICIAL PERÚ (UTC-5)</div>
-                <div id="peru-clock" class="clock-display">00:00:00</div>
-                <div id="peru-date" class="date-display">--/--/----</div>
-            </div>
-        </aside>
-
-        <!-- CONTENEDOR PRINCIPAL DE PANTALLA -->
-        <div class="main-wrapper">
-            
-            <!-- BARRA SUPERIOR -->
-            <header class="top-bar">
-                <div class="user-info-bar">
-                    <span class="badge-role admin">ADMINISTRADOR / CLÍNICO</span>
-                    <span>Plataforma Predictiva Avanzada de Fisioterapia</span>
-                </div>
-            </header>
-
-            <!-- MENÚ DE NAVEGACIÓN DE 4 PESTAÑAS -->
-            <nav class="nav-tabs-bar">
-                <button class="tab-btn active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">
-                    <i class="fa-solid fa-chart-line"></i> Dashboard Analítico
-                </button>
-                <button class="tab-btn" id="tab-btn-evaluacion" onclick="switchTab('evaluacion')">
-                    <i class="fa-solid fa-stethoscope"></i> Evaluación e Inferencia
-                </button>
-                <button class="tab-btn" id="tab-btn-pacientes" onclick="switchTab('pacientes')">
-                    <i class="fa-solid fa-users"></i> Consulta de Pacientes
-                </button>
-                <button class="tab-btn" id="tab-btn-citas" onclick="switchTab('citas')">
-                    <i class="fa-solid fa-calendar-days"></i> Citas y Calendario
-                </button>
-            </nav>
-
-            <!-- CONTENIDO DE LAS PESTAÑAS -->
-            <div class="content-area">
-                
-                <!-- PESTAÑA 1: DASHBOARD ANALÍTICO CON FILTROS TEMPORALES -->
-                <section id="tab-dashboard" class="tab-content active">
-                    <div class="card-panel filter-panel">
-                        <h3><i class="fa-solid fa-filter"></i> Filtros Temporales del Dashboard</h3>
-                        <div class="filters-grid">
-                            <div class="input-group">
-                                <label>Año</label>
-                                <select id="filtro-anio" onchange="actualizarDashboardFiltros()">
-                                    <option value="2026">2026</option>
-                                    <option value="2025">2025</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Mes</label>
-                                <select id="filtro-mes" onchange="actualizarDashboardFiltros()">
-                                    <option value="todos">Todos los Meses</option>
-                                    <option value="10">Octubre</option>
-                                    <option value="09">Septiembre</option>
-                                    <option value="08">Agosto</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Día</label>
-                                <select id="filtro-dia" onchange="actualizarDashboardFiltros()">
-                                    <option value="todos">Todos los Días</option>
-                                    <option value="24">24</option>
-                                    <option value="23">23</option>
-                                    <option value="22">22</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Hora</label>
-                                <select id="filtro-hora" onchange="actualizarDashboardFiltros()">
-                                    <option value="todas">Todas las Horas</option>
-                                    <option value="09">09:00 AM</option>
-                                    <option value="12">12:00 PM</option>
-                                    <option value="16">04:00 PM</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kpi-row">
-                        <div class="kpi-card kpi-blue">
-                            <i class="fa-solid fa-users kpi-icon"></i>
-                            <div><span>Total Evaluaciones</span><h4 id="kpi-total">142</h4></div>
-                        </div>
-                        <div class="kpi-card kpi-amber">
-                            <i class="fa-solid fa-triangle-exclamation kpi-icon"></i>
-                            <div><span>Pacientes Alto Riesgo</span><h4 id="kpi-riesgo">18</h4></div>
-                        </div>
-                        <div class="kpi-card kpi-green">
-                            <i class="fa-solid fa-heart-pulse kpi-icon"></i>
-                            <div><span>Tasa de Adherencia</span><h4 id="kpi-adherencia">88.4%</h4></div>
-                        </div>
-                    </div>
-
-                    <div class="charts-grid">
-                        <div class="card-panel">
-                            <h3>Tendencia Temporal (Líneas)</h3>
-                            <canvas id="chartLineal"></canvas>
-                        </div>
-                        <div class="card-panel">
-                            <h3>Prevalencia por Tipo de Lesión (Barras)</h3>
-                            <canvas id="chartBarras"></canvas>
-                        </div>
-                        <div class="card-panel full-width-chart">
-                            <h3>Distribución de Riesgo Clínico (Circular / Doughnut)</h3>
-                            <canvas id="chartCircular"></canvas>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- PESTAÑA 2: EVALUACIÓN E INFERENCIA CLÍNICA -->
-                <section id="tab-evaluacion" class="tab-content">
-                    <div class="card-panel">
-                        <h3><i class="fa-solid fa-notes-medical"></i> Motor de Inferencia de Machine Learning</h3>
-                        <form id="form-evaluacion" class="form-grid-3" onsubmit="event.preventDefault(); ejecutarInferenciaIA();">
-                            <div class="form-section">
-                                <h4>Datos Demográficos</h4>
-                                <div class="input-group"><label>DNI</label><input type="text" id="ev-dni" required></div>
-                                <div class="input-group"><label>Nombre Completo</label><input type="text" id="ev-nombre" required></div>
-                            </div>
-                            <div class="form-section">
-                                <h4>Evaluación Física</h4>
-                                <div class="input-group">
-                                    <label>Tipo de Lesión</label>
-                                    <select id="ev-lesion"><option>Lumbalgia</option><option>Cervicalgia</option><option>Articular</option><option>Post-quirúrgica</option></select>
-                                </div>
-                                <div class="input-group"><label>Dolor Inicial (EVA 0-10): <span id="val_eva">6</span></label><input type="range" id="ev_eva" min="0" max="10" value="6" oninput="document.getElementById('val_eva').innerText = this.value"></div>
-                            </div>
-                            <div class="form-section">
-                                <h4>Factores Psicosociales</h4>
-                                <div class="input-group"><label>Kinesiofobia (TSK 17-68)</label><input type="number" id="ev-tsk" value="38" min="17" max="68"></div>
-                                <div class="input-group"><label>Catastrofismo (PCS 0-52)</label><input type="number" id="ev-pcs" value="22" min="0" max="52"></div>
-                                <div class="input-group"><label>Asistencia (%)</label><input type="number" id="ev-asistencia" value="85" min="0" max="100"></div>
-                            </div>
-                            <div class="full-width margin-top">
-                                <button type="submit" class="btn-primary"><i class="fa-solid fa-wand-magic-sparkles"></i> Calcular Predicción IA</button>
-                            </div>
-                        </form>
-                        <div id="result-ia-panel" class="result-box hidden margin-top">
-                            <div id="badge-risk-result" class="risk-badge">RIESGO EVALUADO</div>
-                            <p id="desc-risk-result">Resultado procesado con éxito.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- PESTAÑA 3: CONSULTA DE PACIENTES -->
-                <section id="tab-pacientes" class="tab-content">
-                    <div class="card-panel">
-                        <div class="flex-between margin-bottom">
-                            <h3><i class="fa-solid fa-database"></i> Directorio y Historial Clínico de Pacientes</h3>
-                            <button class="btn-success" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exportar a Excel (.XLSX)</button>
-                        </div>
-                        <div class="input-group margin-bottom">
-                            <input type="text" id="search-dni" placeholder="Buscar por DNI o Nombre..." onkeyup="filtrarPacientes()">
-                        </div>
-                        <div class="table-responsive">
-                            <table class="data-table" id="tabla-pacientes">
-                                <thead>
-                                    <tr>
-                                        <th>DNI</th>
-                                        <th>Paciente</th>
-                                        <th>Lesión</th>
-                                        <th>Terapia</th>
-                                        <th>Progreso</th>
-                                        <th>Riesgo IA</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body">
-                                    <tr><td>71029384</td><td>Carlos Mendoza</td><td>Cervicalgia</td><td>Tracción Cervical</td><td><span class="status-pill good">90%</span></td><td><span class="status-pill low">Bajo</span></td></tr>
-                                    <tr><td>42918234</td><td>María Gutiérrez</td><td>Lumbalgia</td><td>Magnetoterapia</td><td><span class="status-pill regular">65%</span></td><td><span class="status-pill mid">Moderado</span></td></tr>
-                                    <tr><td>78123901</td><td>Jorge Ramírez</td><td>Post-quirúrgica</td><td>Electroterapia</td><td><span class="status-pill bad">40%</span></td><td><span class="status-pill high">Alto</span></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- PESTAÑA 4: CITAS Y CALENDARIO INTERACTIVO -->
-                <section id="tab-citas" class="tab-content">
-                    <div class="cards-grid">
-                        <div class="card-panel">
-                            <h3><i class="fa-solid fa-calendar-check"></i> Reprogramación Anticipada de Cita</h3>
-                            <form onsubmit="reprogramarCita(event)">
-                                <div class="input-group"><label>DNI Paciente</label><input type="text" id="cita-dni" required></div>
-                                <div class="input-group"><label>Nueva Fecha Deseada</label><input type="date" id="cita-fecha" required></div>
-                                <div class="input-group"><label>Motivo de Reprogramación</label><textarea id="cita-motivo" rows="3" placeholder="Ej: Motivos laborales o clínicos..." required></textarea></div>
-                                <button type="submit" class="btn-warning full-width"><i class="fa-solid fa-paper-plane"></i> Solicitar Reprogramación Anticipada</button>
-                            </form>
-                        </div>
-                        <div class="card-panel">
-                            <h3><i class="fa-solid fa-calendar-days"></i> Calendario Interactivo de Sesiones</h3>
-                            <div id="calendar-widget" class="calendar-grid"></div>
-                        </div>
-                    </div>
-                </section>
+<div class="app-container">
+    <!-- BARRA LATERAL / SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="logo-icon"></div>
+            <div>
+                <h2>KineData Analytics</h2>
+                <small>Medicina Física & IA</small>
             </div>
         </div>
-    </div>
-    <script src="app.js"></script>
-</body>
-</html>
+
+        <!-- RELOJ DIGITAL DE PERÚ -->
+        <div class="clock-card">
+            <span class="clock-label">⏰ HORA LOCAL (PERÚ)</span>
+            <div class="clock-display">
+                <span id="hora-min">00:00</span><span id="seg">:00</span>
+            </div>
+            <div id="fecha-completa" class="clock-date">--,-- -- --- ----</div>
+        </div>
+
+        <!-- SELECTOR DE VISTA -->
+        <div class="view-selector">
+            <label>MODO DE VISTA</label>
+            <div class="btn-group">
+                <button id="btn-paciente" class="active" onclick="setMode('paciente')">👤 Paciente</button>
+                <button id="btn-admin" onclick="setMode('admin')">👨‍⚕️ Admin/Fisio</button>
+            </div>
+        </div>
+
+        <!-- PESTAÑAS ADMINISTRATIVAS -->
+        <nav id="admin-tabs" class="admin-nav" style="display:none;">
+            <button class="tab-btn active" onclick="switchTab('tab-bronze', this)">📥 Registro Paciente</button>
+            <button class="tab-btn" onclick="switchTab('tab-silver', this)">📊 Expedientes (Silver)</button>
+            <button class="tab-btn" onclick="switchTab('tab-analytics', this)">📈 Dashboard Analítico</button>
+        </nav>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+        <!-- VISTA CONSULTA PACIENTE -->
+        <section id="view-paciente-section" class="view-panel active">
+            <div class="search-card">
+                <h3>🔍 Consulta de Expediente Digital</h3>
+                <p>Ingrese su DNI para verificar el diagnóstico y número de sesiones estimadas:</p>
+                <div class="search-box">
+                    <input type="text" id="dni-consulta" placeholder="Ingrese DNI (ej: 76543310)..." maxlength="12">
+                    <button onclick="buscarPacienteDNI()">✨ Consultar Diagnóstico</button>
+                </div>
+            </div>
+
+            <div id="resultado-paciente" class="result-card" style="display:none;">
+                <h4 id="res-nombre">Nombre Paciente</h4>
+                <div class="result-grid">
+                    <div><b>DNI:</b> <span id="res-dni">--</span></div>
+                    <div><b>Zona Afectada:</b> <span id="res-zona">--</span></div>
+                    <div><b>Dolor Inicial (EVA):</b> <span id="res-eva">--</span></div>
+                    <div><b>Tratamiento:</b> <span id="res-sesiones" class="highlight">--</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA LOGIN ADMIN -->
+        <section id="view-login-admin" class="view-panel">
+            <form onsubmit="validarLoginAdmin(event)" class="login-card">
+                <h3>🔐 Acceso Profesional</h3>
+                <input type="text" id="login-user" placeholder="Usuario" required>
+                <input type="password" id="login-pass" placeholder="Contraseña" required>
+                <button type="submit">Ingresar al Sistema</button>
+            </form>
+        </section>
+
+        <!-- PESTAÑA REGISTRO (BRONZE) -->
+        <section id="tab-bronze" class="view-panel">
+            <div class="grid-2col">
+                <form id="form-registro-paciente" onsubmit="guardarPacienteSupabase(event)" class="form-card">
+                    <h3>📝 Registro de Nuevo Paciente</h3>
+                    <input type="text" id="inp-dni" placeholder="DNI del Paciente" required>
+                    <input type="text" id="inp-nombre" placeholder="Nombre Completo" required>
+                    <div class="form-row">
+                        <input type="number" id="inp-edad" placeholder="Edad" min="1" max="120" required>
+                        <select id="inp-genero">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                        </select>
+                    </div>
+                    <label>Zona Dolorosa:</label>
+                    <select id="inp-zona" onchange="actualizarZona3D(this.value)">
+                        <option value="Hombro">Hombro</option>
+                        <option value="Lumbar">Lumbar</option>
+                        <option value="Rodilla">Rodilla</option>
+                        <option value="Cervical">Cervical</option>
+                        <option value="Tobillo">Tobillo</option>
+                    </select>
+                    <label>Nivel de Dolor (EVA 1-10):</label>
+                    <input type="range" id="inp-eva" min="1" max="10" value="6" oninput="this.nextElementSibling.value = this.value">
+                    <output>6</output>
+                    <div class="form-row">
+                        <input type="number" id="inp-tsk" placeholder="Score TSK (Kinesiophobia)" value="28">
+                        <input type="number" id="inp-pcs" placeholder="Score PCS (Catastrofización)" value="22">
+                    </div>
+                    <button type="submit" class="btn-primary">💾 Guardar Paciente</button>
+                </form>
+
+                <!-- VISOR 3D -->
+                <div class="viewer-3d-card">
+                    <h3>🧍 Modelo Anatómico 3D</h3>
+                    <span id="badge-zona-desc" class="badge">Dolencia activa: Hombro</span>
+                    <div id="three-container"></div>
+                    <p class="legend">Representación visual dinámica de la zona corporal bajo análisis.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA EXPEDIENTES (SILVER) -->
+        <section id="tab-silver" class="view-panel">
+            <div class="header-actions">
+                <h3>📋 Expedientes Registrados (Capa Silver)</h3>
+                <div>
+                    <button onclick="descargarExcel()" class="btn-excel">📊 Descargar Excel (.xlsx)</button>
+                    <button onclick="descargarCSV()" class="btn-csv">📄 Descargar CSV</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Nombre</th>
+                            <th>Edad / Género</th>
+                            <th>Zona</th>
+                            <th>EVA</th>
+                            <th>TSK / PCS</th>
+                            <th>Tratamiento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbl-silver-body">
+                        <!-- Carga dinámica vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- PESTAÑA ANALÍTICA (GOLD) -->
+        <section id="tab-analytics" class="view-panel">
+            <div class="filters-bar">
+                <button class="btn-filter" onclick="filtrarPeriodo('dia', this)">Hoy</button>
+                <button class="btn-filter active" onclick="filtrarPeriodo('semana', this)">Esta Semana</button>
+                <button class="btn-filter" onclick="filtrarPeriodo('mes', this)">Este Mes</button>
+                <button class="btn-filter" onclick="filtrarPeriodo('anio', this)">Año 2026</button>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>Pacientes Totales</h4>
+                    <span id="stat-total-pacientes" class="metric-value">0</span>
+                </div>
+                <div class="metric-card">
+                    <h4>Promedio EVA</h4>
+                    <span class="metric-value">7.0</span>
+                </div>
+                <div class="metric-card">
+                    <h4>Sesiones Medias</h4>
+                    <span class="metric-value">17</span>
+                </div>
+                <div class="metric-card">
+                    <h4>Tasa de Exito</h4>
+                    <span class="metric-value">83%</span>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card"><canvas id="barChart"></canvas></div>
+                <div class="chart-card"><canvas id="donutChart"></canvas></div>
+            </div>
+        </section>
+    </main>
+</div>
