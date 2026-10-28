@@ -3,15 +3,14 @@ import streamlit.components.v1 as components
 import os
 import joblib
 
-# Configuración estricta de página a pantalla completa (Wide Mode)
 st.set_page_config(
-    page_title="KineData Analytics Pro - Sistema Clínico de Fisioterapia e IA",
-    page_icon="🏥",
+    page_title="KineData Analytics Pro - Centro de Fisioterapia & IA",
+    page_icon="🩺",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Inyección CSS para eliminar márgenes blancos de Streamlit
+# Inyección CSS para pantalla completa limpia sin bordes de Streamlit
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
@@ -32,7 +31,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Carga segura del modelo predictivo serializado (Random Forest / Scikit-Learn)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "modelo_fisioterapia.pkl")
 try:
     if os.path.exists(MODEL_PATH):
