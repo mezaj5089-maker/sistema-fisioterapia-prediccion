@@ -1,65 +1,39 @@
 let currentRol = 'paciente';
-let currentDni = '72849102';
+let currentDni = '45446678';
 let chartDolenciasInstance = null;
 let chartGeneroTerapiaInstance = null;
 let chartProgresoClinicaInstance = null;
 let chartEvolucionInstance = null;
 let chartProgresoIndividualInstance = null;
 
-let pacientesData = [
+// CARGAR PACIENTES DESDE LA DATA INYECTADA DE SUPABASE O USAR RESPALDO LOCAL
+let pacientesData = window.pacientesSupabaseData || [
     {
-        dni: "72849102",
-        nombre: "Juan Pérez",
-        edad: 45,
+        dni: "45446678",
+        nombre: "Roberto Mamani Quispe",
+        edad: 26,
         genero: "Masculino",
         zona: "Lumbalgia / Zona Lumbar",
         eva: 7,
         fecha_inicio: "2026-10-15",
         citas_totales: 10,
-        citas_asistidas: 7,
-        citas_faltantes: 3,
-        citas_reprogramadas: 1,
+        citas_asistidas: 6,
+        citas_faltantes: 4,
+        citas_reprogramadas: 0,
         reprog_estado: "Aceptada",
         ocupacion: "Independiente",
-        sueldo: 2800,
-        hijos: 2,
+        sueldo: 2500,
+        hijos: 1,
         esposas: 1,
         movilidad: "Propia (Carro/Moto)",
         vivienda: "Propia",
-        email: "juan.perez@gmail.com",
+        email: "roberto.mamani@gmail.com",
         tlf: "987654321",
-        tutor: "María Pérez (Esposa)",
+        tutor: "Ana Quispe (Madre)",
         tutor_tlf: "912345678",
         horario: "09:00 AM - 10:00 AM",
-        prediccion_continuidad: "Alta (92.4% - Favorable)",
-        historial_eva: [8, 7, 5, 4, 3]
-    },
-    {
-        dni: "41920384",
-        nombre: "María Rodríguez",
-        edad: 32,
-        genero: "Femenino",
-        zona: "Cervicalgia / Cuello",
-        eva: 5,
-        fecha_inicio: "2026-10-18",
-        citas_totales: 12,
-        citas_asistidas: 10,
-        citas_faltantes: 2,
-        citas_reprogramadas: 0,
-        reprog_estado: "N/A",
-        ocupacion: "Docente",
-        sueldo: 3100,
-        hijos: 1,
-        esposas: 0,
-        movilidad: "Transporte Público",
-        vivienda: "Alquilada",
-        email: "maria.rod@gmail.com",
-        tlf: "998877665",
-        tutor: "Jorge Rodríguez (Padre)",
-        tutor_tlf: "955443322",
-        horario: "11:00 AM - 12:00 PM",
-        prediccion_continuidad: "Muy Alta (95.1% - Favorable)",
-        historial_eva: [7, 5, 4, 3, 2]
+        prediccion_continuidad: "Alta (94.2% - Favorable)",
+        historial_eva: [8, 7, 6, 5, 4]
     }
 ];
 
@@ -243,17 +217,20 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     data.forEach((p, index) => {
+        // Asegurar formato por defecto si faltan propiedades de historial
+        if(!p.historial_eva) p.historial_eva = [8, 7, p.eva || 6];
+
         tbody.innerHTML += `
             <tr>
                 <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
                 <td>
-                    <small>Ocup: ${p.ocupacion}<br>Sueldo: S/.${p.sueldo} | Hijos: ${p.hijos}<br>Mov: ${p.movilidad}</small>
+                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Hijos: ${p.hijos || 0}<br>Mov: ${p.movilidad || 'N/A'}</small>
                 </td>
-                <td><strong class="text-primary">${p.zona}</strong><br>Horario: ${p.horario}</td>
+                <td><strong class="text-primary">${p.zona || 'Lumbalgia / Zona Lumbar'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
                 <td>
-                    Tot: ${p.citas_totales} | Asist: ${p.citas_asistidas}<br>Falta: ${p.citas_faltantes} | Reprog: ${p.citas_reprogramadas} (${p.reprog_estado})
+                    Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10} | Reprog: ${p.citas_reprogramadas || 0} (${p.reprog_estado || 'N/A'})
                 </td>
-                <td><span class="status-pill good">${p.prediccion_continuidad}</span></td>
+                <td><span class="status-pill good">${p.prediccion_continuidad || 'Favorable'}</span></td>
                 <td>
                     <button class="btn-success-small margin-bottom" onclick="aceptarReprogramacion(${index})">Aceptar Reprog.</button><br>
                     <button class="btn-action-small" onclick="marcarAsistenciaAdmin(${index})">Marcar Asistencia</button>
@@ -274,11 +251,9 @@ function marcarAsistenciaAdmin(index) {
         pacientesData[index].citas_asistidas += 1;
         pacientesData[index].citas_faltantes -= 1;
         
-        // Simular mejora en historial EVA
-        if(pacientesData[index].historial_eva.length > 0) {
-            let ultimoEva = pacientesData[index].historial_eva[pacientesData[index].historial_eva.length - 1];
-            pacientesData[index].historial_eva.push(Math.max(0, ultimoEva - 1));
-        }
+        if(!pacientesData[index].historial_eva) pacientesData[index].historial_eva = [8, 7, 6];
+        let ultimoEva = pacientesData[index].historial_eva[pacientesData[index].historial_eva.length - 1];
+        pacientesData[index].historial_eva.push(Math.max(0, ultimoEva - 1));
 
         renderTable(pacientesData);
         actualizarDashboardRealTime();
@@ -302,7 +277,7 @@ function poblarSelectNotificaciones() {
     if (!select) return;
     select.innerHTML = '';
     pacientesData.forEach(p => {
-        select.innerHTML += `<option value="${p.dni}">${p.nombre} - Tutor: ${p.tutor}</option>`;
+        select.innerHTML += `<option value="${p.dni}">${p.nombre} - Tutor: ${p.tutor || 'Familiar'}</option>`;
     });
 }
 
@@ -325,10 +300,10 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-// ================= CONSULTA DE PROGRESO INDIVIDUAL POR DNI =================
+// ================= BÚSQUEDA Y CONSULTA DE PROGRESO POR DNI CORREGIDA =================
 function consultarProgresoPorDni() {
     const dniBuscado = document.getElementById("input-consulta-dni").value.trim();
-    const paciente = pacientesData.find(p => String(p.dni).trim() === dniBuscado);
+    const paciente = pacientesData.find(p => String(p.dni).trim() === String(dniBuscado));
     
     const contenedorRes = document.getElementById("resultado-consulta-dni");
     if(!paciente) {
@@ -339,16 +314,17 @@ function consultarProgresoPorDni() {
 
     contenedorRes.classList.remove("hidden");
     document.getElementById("res-nombre").innerText = paciente.nombre;
-    document.getElementById("res-dolencia").innerText = paciente.zona;
+    document.getElementById("res-dolencia").innerText = paciente.zona || "Lumbalgia / Zona Lumbar";
     document.getElementById("res-genero-edad").innerText = `${paciente.genero} / ${paciente.edad} años`;
-    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo} | Mov: ${paciente.movilidad}`;
-    document.getElementById("res-citas").innerText = `${paciente.citas_asistidas} asistidas de ${paciente.citas_totales} totales`;
-    document.getElementById("res-cont").innerText = paciente.prediccion_continuidad;
+    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo || 2000} | Mov: ${paciente.movilidad || 'Propia'}`;
+    document.getElementById("res-citas").innerText = `${paciente.citas_asistidas || 0} asistidas de ${paciente.citas_totales || 10} totales`;
+    document.getElementById("res-cont").innerText = paciente.prediccion_continuidad || "Favorable";
     
-    let estadoTxt = paciente.citas_faltantes === 0 ? "Tratamiento Culminado" : "En Tratamiento Activo";
+    let estadoTxt = (paciente.citas_faltantes === 0) ? "Tratamiento Culminado" : "En Tratamiento Activo";
     document.getElementById("res-estado").innerText = estadoTxt;
 
-    // Gráfico Individual EVA
+    if(!paciente.historial_eva) paciente.historial_eva = [8, 7, paciente.eva || 6];
+
     const ctxInd = document.getElementById('chartProgresoIndividual');
     if(ctxInd) {
         if(chartProgresoIndividualInstance) chartProgresoIndividualInstance.destroy();
@@ -370,7 +346,7 @@ function consultarProgresoPorDni() {
     }
 }
 
-// ================= DASHBOARD CONECTADO Y EN TIEMPO REAL =================
+// ================= DASHBOARD EN TIEMPO REAL =================
 let tipoFiltroActual = 'mes';
 let tipoChartActual = 'bar';
 
@@ -393,14 +369,14 @@ function actualizarDashboardRealTime() {
     let sumaAsistenciaPct = 0;
 
     pacientesData.forEach(p => {
-        let pctAsist = (p.citas_asistidas / (p.citas_totales || 1)) * 100;
+        let pctAsist = ((p.citas_asistidas || 0) / (p.citas_totales || 10)) * 100;
         sumaAsistenciaPct += pctAsist;
 
-        // Criterio de mejoría: si EVA bajó o faltan pocas citas
-        let evaInicial = p.historial_eva[0] || 5;
+        if(!p.historial_eva) p.historial_eva = [8, 7, p.eva || 6];
+        let evaInicial = p.historial_eva[0] || 6;
         let evaActual = p.historial_eva[p.historial_eva.length - 1] || evaInicial;
         
-        if (evaActual < evaInicial || p.citas_faltantes <= 2) {
+        if (evaActual < evaInicial || (p.citas_faltantes || 10) <= 2) {
             enMejoria += 1;
         } else {
             enProlongado += 1;
@@ -418,11 +394,11 @@ function actualizarDashboardRealTime() {
 }
 
 function inicializarGraficos(filtro, tipoGrafico) {
-    // 1. Gráfico de Dolencias Recurrentes
     let conteoDolencias = { "Lumbalgia / Zona Lumbar": 0, "Cervicalgia / Cuello": 0, "Tendinitis de Hombro": 0, "Lesión de Rodilla": 0, "Esguince de Tobillo": 0 };
     pacientesData.forEach(p => {
-        if(conteoDolencias[p.zona] !== undefined) conteoDolencias[p.zona] += 1;
-        else conteoDolencias[p.zona] = 1;
+        let z = p.zona || "Lumbalgia / Zona Lumbar";
+        if(conteoDolencias[z] !== undefined) conteoDolencias[z] += 1;
+        else conteoDolencias[z] = 1;
     });
 
     const ctxDol = document.getElementById('chartDolencias');
@@ -442,7 +418,6 @@ function inicializarGraficos(filtro, tipoGrafico) {
         });
     }
 
-    // 2. Gráfico de Recurrencia por Género
     let varones = pacientesData.filter(p => p.genero === 'Masculino').length;
     let mujeres = pacientesData.filter(p => p.genero === 'Femenino').length;
 
@@ -462,7 +437,6 @@ function inicializarGraficos(filtro, tipoGrafico) {
         });
     }
 
-    // 3. Gráfico Progreso General de la Clínica (Mejoría vs Tratamiento prolongado)
     let enMejoria = parseInt(document.getElementById("dash-mejora").innerText) || 1;
     let enProlongado = parseInt(document.getElementById("dash-prolongado").innerText) || 0;
 
@@ -483,7 +457,6 @@ function inicializarGraficos(filtro, tipoGrafico) {
         });
     }
 
-    // 4. Gráfico Evolución Global EVA
     const ctxE = document.getElementById('chartEvolucion');
     if (ctxE) {
         if(chartEvolucionInstance) chartEvolucionInstance.destroy();
