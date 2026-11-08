@@ -10,7 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección CSS para pantalla completa limpia sin bordes de Streamlit
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
