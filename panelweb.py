@@ -31,7 +31,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# CONSULTAR PACIENTES DESDE SUPABASE O CARGAR DATOS COMPLETOS
+# CONSULTAR PACIENTES DESDE SUPABASE O CARGAR DATOS COMPLETOS (SINTAXIS CORREGIDA)
 pacientes_db = [
     {
         "dni": "45446678",
@@ -79,7 +79,7 @@ pacientes_db = [
         "esposas": 1,
         "movilidad": "Transporte Público",
         "vivienda": "Alquilada",
-        email: "juan.perez@gmail.com",
+        "email": "juan.perez@gmail.com",
         "tlf": "987123456",
         "tutor": "María Pérez (Esposa)",
         "tutor_tlf": "999888777",
@@ -90,10 +90,10 @@ pacientes_db = [
     {
         "dni": "41920384",
         "nombre": "María Rodríguez",
-        edad: 32,
-        genero": "Femenino",
-        zona": "Tendinitis de Hombro",
-        eva": 5,
+        "edad": 32,
+        "genero": "Femenino",
+        "zona": "Tendinitis de Hombro",
+        "eva": 5,
         "fecha_inicio": "2026-10-18",
         "citas_totales": 12,
         "citas_asistidas": 10,
@@ -144,7 +144,6 @@ def main():
         if os.path.exists(path_js):
             with open(path_js, "r", encoding="utf-8") as f_js:
                 js_content = f_js.read()
-                # Inyectar la data sincronizada con Supabase directamente en JavaScript
                 injection_script = f"<script>window.pacientesSupabaseData = {json.dumps(pacientes_db)};</script>\n<script>{js_content}</script>"
                 html_content = html_content.replace(
                     '<script src="app.js"></script>',
