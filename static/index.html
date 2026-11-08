@@ -88,7 +88,10 @@
                     <i class="fa-solid fa-hospital-user"></i> Expedientes y Asistencia
                 </button>
                 <button class="nav-tab-btn" onclick="switchTab('admin-dashboard')" id="tab-btn-admin-dashboard">
-                    <i class="fa-solid fa-chart-pie"></i> Dashboard Dinámico (Gold)
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard Clínico (Gold)
+                </button>
+                <button class="nav-tab-btn" onclick="switchTab('admin-consulta-dni')" id="tab-btn-admin-consulta-dni">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> Consulta Progreso por DNI
                 </button>
                 <button class="nav-tab-btn" onclick="switchTab('admin-notif')" id="tab-btn-admin-notif">
                     <i class="fa-solid fa-paper-plane"></i> Notificaciones (Gmail/SMS)
@@ -96,7 +99,7 @@
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL CON FONDO DEGRADADO ALEGRE Y VIBRANTE -->
+        <!-- ÁREA PRINCIPAL -->
         <main class="main-wrapper">
             <header class="top-bar">
                 <div class="user-info-bar">
@@ -199,7 +202,7 @@
                                 <input type="number" id="adm_edad" min="1" max="120" value="38" required>
                             </div>
                             <div class="input-group">
-                                <label>Género (Para Análisis Estadístico)</label>
+                                <label>Género (Estadística de Recurrencia)</label>
                                 <select id="adm_genero">
                                     <option value="Masculino">Masculino</option>
                                     <option value="Femenino">Femenino</option>
@@ -257,13 +260,13 @@
                             </div>
 
                             <div class="input-group">
-                                <label>Dolencia / Diagnóstico</label>
+                                <label>Dolencia / Diagnóstico Principal</label>
                                 <select id="adm_zona">
-                                    <option value="Lumbar">Lumbalgia / Zona Lumbar</option>
-                                    <option value="Cervical">Cervicalgia / Cuello</option>
-                                    <option value="Hombro">Tendinitis de Hombro</option>
-                                    <option value="Rodilla">Lesión de Rodilla</option>
-                                    <option value="Tobillo">Esguince de Tobillo</option>
+                                    <option value="Lumbalgia / Zona Lumbar">Lumbalgia / Zona Lumbar</option>
+                                    <option value="Cervicalgia / Cuello">Cervicalgia / Cuello</option>
+                                    <option value="Tendinitis de Hombro">Tendinitis de Hombro</option>
+                                    <option value="Lesión de Rodilla">Lesión de Rodilla</option>
+                                    <option value="Esguince de Tobillo">Esguince de Tobillo</option>
                                 </select>
                             </div>
                             <div class="input-group">
@@ -328,7 +331,7 @@
                     </div>
                 </section>
 
-                <!-- DASHBOARD PROPORCIONADO Y COMPACTO EN TIEMPO REAL -->
+                <!-- ================= DASHBOARD CLÍNICO CON TODOS LOS GRÁFICOS SOLICITADOS ================= -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -346,31 +349,77 @@
 
                     <div class="kpi-compact-grid">
                         <div class="kpi-compact-card border-glow-blue">
-                            <span class="kpi-title">Total Pacientes Activos</span>
+                            <span class="kpi-title">Total Pacientes Tratados</span>
                             <h3 class="kpi-value text-primary" id="dash-tot">0</h3>
                         </div>
-                        <div class="kpi-compact-card border-glow-amber">
-                            <span class="kpi-title">Evolución de Dolencias (EVA)</span>
-                            <h3 class="kpi-value text-amber" id="dash-eva">Prom. EVA: --</h3>
-                        </div>
                         <div class="kpi-compact-card border-glow-green">
-                            <span class="kpi-title">Tasa de Asistencia Global</span>
-                            <h3 class="kpi-value text-green" id="dash-asist">--%</h3>
+                            <span class="kpi-title">Pacientes en Mejoría</span>
+                            <h3 class="kpi-value text-green" id="dash-mejora">0</h3>
+                        </div>
+                        <div class="kpi-compact-card border-glow-amber">
+                            <span class="kpi-title">En Tratamiento Prolongado</span>
+                            <h3 class="kpi-value text-amber" id="dash-prolongado">0</h3>
                         </div>
                         <div class="kpi-compact-card border-glow-purple">
-                            <span class="kpi-title">Proyección Continuidad ML</span>
-                            <h3 class="kpi-value text-purple" id="dash-cont">Favorable</h3>
+                            <span class="kpi-title">Tasa de Éxito General</span>
+                            <h3 class="kpi-value text-purple" id="dash-asist">--%</h3>
                         </div>
                     </div>
 
+                    <!-- GRILLA DE GRÁFICOS REQUERIDOS (Dolencias, Género, Progreso Clínica y Progreso Individual) -->
                     <div class="charts-compact-grid margin-top">
+                        <!-- 1. Dolencias / Daños Frecuentes -->
                         <div class="card-panel chart-box border-glow-blue">
-                            <h4>Evolución de Terapias y Dolencias (Gráfico Combinado)</h4>
+                            <h4>Tipos de Dolencias y Daños Más Recurrentes</h4>
+                            <canvas id="chartDolencias"></canvas>
+                        </div>
+                        <!-- 2. Género Recurrente a Terapias y Dolencias -->
+                        <div class="card-panel chart-box border-glow-green">
+                            <h4>Recurrencia de Género por Tipo de Terapia</h4>
+                            <canvas id="chartGeneroTerapia"></canvas>
+                        </div>
+                        <!-- 3. Progreso de la Clínica (Mejoría vs Tratamiento Prolongado) -->
+                        <div class="card-panel chart-box border-glow-amber">
+                            <h4>Progreso General de la Clínica (Estado Terapéutico)</h4>
+                            <canvas id="chartProgresoClinica"></canvas>
+                        </div>
+                        <!-- 4. Evolución de Terapias Combinado -->
+                        <div class="card-panel chart-box border-glow-purple">
+                            <h4>Evolución Global del Nivel de Dolor (EVA)</h4>
                             <canvas id="chartEvolucion"></canvas>
                         </div>
-                        <div class="card-panel chart-box border-glow-green">
-                            <h4>Recurrencia de Pacientes por Género (Varones vs Mujeres)</h4>
-                            <canvas id="chartGenero"></canvas>
+                    </div>
+                </section>
+
+                <!-- ================= MÓDULO: CONSULTA DE PROGRESO POR DNI ================= -->
+                <section id="tab-admin-consulta-dni" class="tab-content">
+                    <div class="card-panel">
+                        <h3><i class="fa-solid fa-magnifying-glass-chart text-primary"></i> Consulta de Progreso Individual por DNI del Paciente</h3>
+                        <p class="subtitle-text">Ingrese o busque el DNI del paciente para visualizar su evolución, citas asistidas y gráfico de progreso individual.</p>
+                        
+                        <div class="controls-section margin-bottom flex-between">
+                            <input type="text" id="input-consulta-dni" placeholder="Ingrese DNI exacto (Ej: 72849102)..." style="flex: 1; margin-right: 10px;">
+                            <button class="btn-primary" onclick="consultarProgresoPorDni()"><i class="fa-solid fa-search"></i> Consultar Progreso</button>
+                        </div>
+
+                        <div id="resultado-consulta-dni" class="hidden margin-top">
+                            <div class="info-grid-2 margin-bottom">
+                                <div class="info-card">
+                                    <p><strong>Paciente:</strong> <span id="res-nombre" class="highlight-text">--</span></p>
+                                    <p><strong>Diagnóstico:</strong> <span id="res-dolencia">--</span></p>
+                                    <p><strong>Género / Edad:</strong> <span id="res-genero-edad">--</span></p>
+                                    <p><strong>Condición Socioeconómica:</strong> <span id="res-socio">--</span></p>
+                                </div>
+                                <div class="info-card">
+                                    <p><strong>Citas Totales / Asistidas:</strong> <span id="res-citas" class="text-primary font-bold">--</span></p>
+                                    <p><strong>Predicción de Continuidad:</strong> <span id="res-cont" class="text-green font-bold">--</span></p>
+                                    <p><strong>Estado del Tratamiento:</strong> <span id="res-estado" class="status-pill good">En Progreso</span></p>
+                                </div>
+                            </div>
+                            <div class="card-panel chart-box border-glow-blue">
+                                <h4>Gráfico de Progreso Individual (Reducción de Dolor EVA por Sesión)</h4>
+                                <canvas id="chartProgresoIndividual" style="max-height: 220px !important;"></canvas>
+                            </div>
                         </div>
                     </div>
                 </section>
