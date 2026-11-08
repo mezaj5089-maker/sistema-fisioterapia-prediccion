@@ -10,7 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección CSS estricta para eliminar padding y barra de desplazamiento del contenedor iframe
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
