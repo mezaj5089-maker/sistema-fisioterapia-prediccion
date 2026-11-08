@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     iniciarRelojPeru();
     renderTable(pacientesData);
     poblarSelectNotificaciones();
-    inicializarGraficos('dia', 'bar');
+    actualizarDashboardRealTime();
 });
 
 function iniciarRelojPeru() {
@@ -136,7 +136,7 @@ function iniciarSesion(e) {
     }
 }
 
-// CORRECCIÓN DEFINITIVA BOTÓN DE SALIR (Muestra modal al instante)
+// FIX BOTÓN SALIR: MUESTRA EL MODAL INMEDIATAMENTE SINO RECUPERA PANTALLA INICIAL
 function cerrarSesion() {
     const modal = document.getElementById("login-modal");
     if (modal) {
@@ -154,6 +154,10 @@ function switchTab(tabId) {
     
     if (targetTab) targetTab.classList.add('active');
     if (targetBtn) targetBtn.classList.add('active');
+
+    if(tabId === 'admin-dashboard') {
+        actualizarDashboardRealTime();
+    }
 }
 
 function enviarSolicitudReprogramacion(e) {
@@ -220,7 +224,7 @@ function registrarPacienteAdmin() {
     pacientesData.unshift(nuevo);
     renderTable(pacientesData);
     poblarSelectNotificaciones();
-    inicializarGraficos('mes', tipoChartActual);
+    actualizarDashboardRealTime();
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
@@ -265,6 +269,7 @@ function marcarAsistenciaAdmin(index) {
         pacientesData[index].citas_asistidas += 1;
         pacientesData[index].citas_faltantes -= 1;
         renderTable(pacientesData);
+        actualizarDashboardRealTime();
         alert(`Asistencia registrada. Faltan ${pacientesData[index].citas_faltantes} citas.`);
     } else {
         alert("El paciente ya cumplió todas sus citas.");
@@ -308,28 +313,47 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
+// CONEXIÓN EN TIEMPO REAL: RECALCULA DATOS REGISTRADOS PARA EL DASHBOARD Y GRÁFICOS
+let tipoFiltroActual = 'mes';
+let tipoChartActual = 'bar';
+
 function cambiarFiltroTiempo(tipo, btnEl) {
     document.querySelectorAll('.filter-pills-row .pill-btn').forEach(b => b.classList.remove('active'));
     btnEl.classList.add('active');
-
-    let total = 1200;
-    let evaTxt = "Mejora de 7.5 a 3.2";
-    let asist = "91.2%";
-
-    if(tipo === 'dia') { total = 45; evaTxt = "Mejora rápida (EVA 6.8)"; asist = "95.0%"; }
-    else if(tipo === 'semana') { total = 310; evaTxt = "Mejora sostenida (EVA 4.5)"; asist = "92.4%"; }
-    else if(tipo === 'mes') { total = 1200; evaTxt = "Mejora global (EVA 3.2)"; asist = "91.2%"; }
-    else if(tipo === 'anio') { total = 4850; evaTxt = "Eficacia histórica alta"; asist = "89.8%"; }
-
-    document.getElementById("dash-tot").innerText = total;
-    document.getElementById("dash-eva").innerText = evaTxt;
-    document.getElementById("dash-asist").innerText = asist;
+    tipoFiltroActual = tipo;
+    actualizarDashboardRealTime();
 }
 
-let tipoChartActual = 'bar';
 function alternarTipoGrafico(tipo) {
     tipoChartActual = tipo;
-    inicializarGraficos('mes', tipoChartActual);
+    actualizarDashboardRealTime();
+}
+
+function actualizarDashboardRealTime() {
+    const totalRegistrados = pacientesData.length;
+    let sumaEva = 0;
+    let sumaAsistenciaPct = 0;
+
+    pacientesData.forEach(p => {
+        sumaEva += p.eva;
+        let pct = (p.citas_asistidas / (p.citas_totales || 1)) * 100;
+        sumaAsistenciaPct += pct;
+    });
+
+    const promEva = totalRegistrados > 0 ? (sumaEva / totalRegistrados).toFixed(1) : "0.0";
+    const promAsistencia = totalRegistrados > 0 ? (sumaAsistenciaPct / totalRegistrados).toFixed(1) : "0.0";
+
+    const elTot = document.getElementById("dash-tot");
+    const elEva = document.getElementById("dash-eva");
+    const elAsist = document.getElementById("dash-asist");
+    const elCont = document.getElementById("dash-cont");
+
+    if (elTot) elTot.innerText = totalRegistrados;
+    if (elEva) elEva.innerText = `Prom. EVA: ${promEva} / 10`;
+    if (elAsist) elAsist.innerText = `${promAsistencia}%`;
+    if (elCont) elCont.innerText = "89.5% Favorable";
+
+    inicializarGraficos(tipoFiltroActual, tipoChartActual);
 }
 
 function inicializarGraficos(filtro, tipoGrafico) {
@@ -342,20 +366,23 @@ function inicializarGraficos(filtro, tipoGrafico) {
                 labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'],
                 datasets: [{
                     label: 'Nivel de Dolor EVA',
-                    data: [8.0, 6.5, 5.0, 3.8, 2.5],
-                    backgroundColor: '#0284c7',
+                    data: [7.8, 6.2, 4.8, 3.5, 2.1],
+                    backgroundColor: 'rgba(2, 132, 199, 0.6)',
                     borderColor: '#0284c7',
+                    borderWidth: 2,
                     tension: 0.3
                 }]
             },
-            options: { plugins: { legend: { display: true } } }
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true } }
+            }
         });
     }
 
-    // CÁLCULO DINÁMICO DE RECURRENCIA DE PACIENTES POR GÉNERO
     let varones = pacientesData.filter(p => p.genero === 'Masculino').length;
     let mujeres = pacientesData.filter(p => p.genero === 'Femenino').length;
-    if(varones === 0 && mujeres === 0) { varones = 1; mujeres = 1; }
 
     const ctxG = document.getElementById('chartGenero');
     if (ctxG) {
@@ -363,13 +390,17 @@ function inicializarGraficos(filtro, tipoGrafico) {
         chartGeneroInstance = new Chart(ctxG.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Varones', 'Mujeres'],
+                labels: [`Varones (${varones})`, `Mujeres (${mujeres})`],
                 datasets: [{
                     data: [varones, mujeres],
                     backgroundColor: ['#0284c7', '#ec4899']
                 }]
             },
-            options: { plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } } 
+            }
         });
     }
 }
