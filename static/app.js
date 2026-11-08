@@ -1,41 +1,13 @@
 let currentRol = 'paciente';
-let currentDni = '45446678';
+let currentDni = '76563443';
 let chartDolenciasInstance = null;
 let chartGeneroTerapiaInstance = null;
 let chartProgresoClinicaInstance = null;
 let chartEvolucionInstance = null;
 let chartProgresoIndividualInstance = null;
 
-// CARGAR PACIENTES DESDE LA DATA INYECTADA DE SUPABASE O USAR RESPALDO LOCAL
-let pacientesData = window.pacientesSupabaseData || [
-    {
-        dni: "45446678",
-        nombre: "Roberto Mamani Quispe",
-        edad: 26,
-        genero: "Masculino",
-        zona: "Lumbalgia / Zona Lumbar",
-        eva: 7,
-        fecha_inicio: "2026-10-15",
-        citas_totales: 10,
-        citas_asistidas: 6,
-        citas_faltantes: 4,
-        citas_reprogramadas: 0,
-        reprog_estado: "Aceptada",
-        ocupacion: "Independiente",
-        sueldo: 2500,
-        hijos: 1,
-        esposas: 1,
-        movilidad: "Propia (Carro/Moto)",
-        vivienda: "Propia",
-        email: "roberto.mamani@gmail.com",
-        tlf: "987654321",
-        tutor: "Ana Quispe (Madre)",
-        tutor_tlf: "912345678",
-        horario: "09:00 AM - 10:00 AM",
-        prediccion_continuidad: "Alta (94.2% - Favorable)",
-        historial_eva: [8, 7, 6, 5, 4]
-    }
-];
+// CARGAR PACIENTES DESDE LA DATA INYECTADA DE SUPABASE
+let pacientesData = window.pacientesSupabaseData || [];
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarRelojPeru();
@@ -217,7 +189,6 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     data.forEach((p, index) => {
-        // Asegurar formato por defecto si faltan propiedades de historial
         if(!p.historial_eva) p.historial_eva = [8, 7, p.eva || 6];
 
         tbody.innerHTML += `
