@@ -1,5 +1,7 @@
 let currentRol = 'paciente';
 let currentDni = '72849102';
+let chartEvolucionInstance = null;
+let chartLesionesInstance = null;
 
 let pacientesData = [
     {
@@ -9,39 +11,33 @@ let pacientesData = [
         zona: "Lumbar",
         eva: 7,
         fecha_inicio: "2026-10-15",
-        sesiones_totales: 10,
-        sesiones_restantes: 8,
+        citas_totales: 10,
+        citas_asistidas: 2,
+        citas_faltantes: 8,
+        citas_reprogramadas: 1,
+        reprog_estado: "Aceptada",
+        ocupacion: "Independiente",
+        sueldo: 2800,
+        hijos: 2,
+        esposas: 1,
+        movilidad: "Propia (Carro/Moto)",
+        vivienda: "Propia",
         email: "juan.perez@gmail.com",
         tlf: "987654321",
         tutor: "María Pérez (Esposa)",
         tutor_tlf: "912345678",
-        horario: "09:00 AM - 10:00 AM"
-    },
-    {
-        dni: "41920384",
-        nombre: "Carlos Mendoza",
-        edad: 32,
-        zona: "Cervical",
-        eva: 5,
-        fecha_inicio: "2026-10-18",
-        sesiones_totales: 12,
-        sesiones_restantes: 2,
-        email: "carlos.mendoza@gmail.com",
-        tlf: "998877665",
-        tutor: "Jorge Mendoza (Padre)",
-        tutor_tlf: "955443322",
-        horario: "11:00 AM - 12:00 PM"
+        horario: "09:00 AM - 10:00 AM",
+        prediccion_continuidad: "Alta (92.4% - Favorable)"
     }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarRelojPeru();
     renderTable(pacientesData);
-    poblardeSelectNotificaciones();
-    inicializarGraficos();
+    poblarSelectNotificaciones();
+    inicializarGraficos('dia', 'bar');
 });
 
-// Reloj Digital Perú UTC-5
 function iniciarRelojPeru() {
     setInterval(() => {
         const ahora = new Date();
@@ -84,13 +80,22 @@ function iniciarSesion(e) {
         document.getElementById("p-nombre-val").innerText = paciente.nombre;
         document.getElementById("p-dolencia-val").innerText = `${paciente.zona} (EVA: ${paciente.eva}/10)`;
         document.getElementById("p-fecha-inicio").innerText = paciente.fecha_inicio;
-        document.getElementById("p-tutor-val").innerText = `${paciente.tutor} (${paciente.tutor_tlf})`;
+        document.getElementById("p-horario-val").innerText = paciente.horario;
         
-        document.getElementById("p-sesiones-restantes").innerText = paciente.sesiones_restantes;
-        document.getElementById("p-sesiones-totales").innerText = paciente.sesiones_totales;
+        document.getElementById("cnt-totales").innerText = paciente.citas_totales;
+        document.getElementById("cnt-asistidas").innerText = paciente.citas_asistidas;
+        document.getElementById("cnt-faltantes").innerText = paciente.citas_faltantes;
+        document.getElementById("cnt-reprogs").innerText = paciente.citas_reprogramadas;
+
+        const estadoReprog = document.getElementById("estado-reprog-container");
+        if(paciente.reprog_estado === "Aceptada") {
+            estadoReprog.innerHTML = `<i class="fa-solid fa-circle-check text-green"></i> Su última reprogramación fue <strong>Aceptada</strong> por el administrador.`;
+        } else {
+            estadoReprog.innerHTML = `<i class="fa-solid fa-clock text-amber"></i> Su reprogramación está <strong>Pendiente de aprobación</strong>.`;
+        }
 
         const alertBox = document.getElementById("alert-mantenimiento");
-        if (paciente.sesiones_restantes <= 2) {
+        if (paciente.citas_faltantes <= 2) {
             alertBox.classList.remove("hidden");
         } else {
             alertBox.classList.add("hidden");
@@ -105,7 +110,7 @@ function iniciarSesion(e) {
 }
 
 function cerrarSesion() {
-    document.getElementById("login-modal").classList.remove("hidden");
+    document.getElementById("login-modal").classList.add("hidden");
 }
 
 function switchTab(tabId) {
@@ -119,22 +124,27 @@ function switchTab(tabId) {
     if (targetBtn) targetBtn.classList.add('active');
 }
 
-// Reprogramación de Paciente
 function enviarSolicitudReprogramacion(e) {
     e.preventDefault();
     const fecha = document.getElementById("rep-fecha").value;
     const hora = document.getElementById("rep-hora").value;
 
+    const paciente = pacientesData.find(p => String(p.dni).trim() === currentDni);
+    if(paciente) {
+        paciente.citas_reprogramadas += 1;
+        paciente.reprog_estado = "Pendiente";
+    }
+
     const statusBox = document.getElementById("status-reprogramacion");
     statusBox.innerHTML = `
         <div class="result-box">
-            <i class="fa-solid fa-circle-check text-green"></i> <strong>Solicitud recibida.</strong><br>
-            Su propuesta para el <strong>${fecha} a las ${hora}</strong> está en revisión médica. Se notificará a su correo y al teléfono de su tutor.
+            <i class="fa-solid fa-circle-check text-green"></i> <strong>Solicitud enviada.</strong><br>
+            Fecha y horario propuesto (${fecha} - ${hora}) registrado. Pendiente de aprobación administrativa.
         </div>
     `;
 }
 
-// Registro Completo en Admin
+// Registro Admin con Variables Socioeconómicas y Predicción de Continuidad
 function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value;
@@ -143,76 +153,90 @@ function registrarPacienteAdmin() {
     const tlf = document.getElementById("adm_tlf").value;
     const tutor = document.getElementById("adm_tutor").value;
     const tutor_tlf = document.getElementById("adm_tutor_tlf").value;
+    const ocupacion = document.getElementById("adm_ocupacion").value;
+    const sueldo = parseFloat(document.getElementById("adm_sueldo").value) || 0;
+    const hijos = parseInt(document.getElementById("adm_hijos").value) || 0;
+    const esposas = parseInt(document.getElementById("adm_esposas").value) || 0;
+    const movilidad = document.getElementById("adm_movilidad").value;
+    const vivienda = document.getElementById("adm_vivienda").value;
     const zona = document.getElementById("adm_zona").value;
     const eva = parseInt(document.getElementById("adm_eva").value);
     const fecha_inicio = document.getElementById("adm_fecha_inicio").value;
     const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value);
     const horario = document.getElementById("adm_horario").value;
 
+    // Lógica de predicción de continuidad basada en sueldo, movilidad y carga familiar (ML Simulation)
+    let scoreContinuidad = 70;
+    if(sueldo > 1500) scoreContinuidad += 15;
+    if(movilidad.includes("Propia")) scoreContinuidad += 10;
+    if(vivienda === "Propia") scoreContinuidad += 5;
+    if(hijos > 4) scoreContinuidad -= 10;
+    
+    let txtPrediccion = scoreContinuidad >= 80 ? "Alta probabilidad de Continuidad (Favorable)" : "Riesgo de Deserción / Requiere Seguimiento";
+
     const nuevo = {
         dni, nombre, edad, zona, eva,
         fecha_inicio: fecha_inicio || "2026-10-28",
-        sesiones_totales: sesiones_recetadas,
-        sesiones_restantes: sesiones_recetadas,
-        email, tlf, tutor, tutor_tlf, horario
+        citas_totales: sesiones_recetadas,
+        citas_asistidas: 0,
+        citas_faltantes: sesiones_recetadas,
+        citas_reprogramadas: 0,
+        reprog_estado: "N/A",
+        ocupacion, sueldo, hijos, esposas, movilidad, vivienda,
+        email, tlf, tutor, tutor_tlf, horario,
+        prediccion_continuidad: txtPrediccion
     };
 
     pacientesData.unshift(nuevo);
     renderTable(pacientesData);
-    poblardeSelectNotificaciones();
+    poblarSelectNotificaciones();
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `Paciente <strong>${nombre}</strong> y Tutor <strong>${tutor}</strong> registrados con éxito.<br>Inferencia de IA: Proyección de cumplimiento óptimo del 89.2% en ${sesiones_recetadas} sesiones.`;
+    txt.innerHTML = `Paciente <strong>${nombre}</strong> registrado.<br><strong>Análisis Socioeconómico & ML:</strong> Ingreso S/.${sueldo}, Vivienda: ${vivienda}, Movilidad: ${movilidad}.<br>Resultado Predictivo: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
     box.classList.remove("hidden");
 }
 
-// Renderizado de Tabla Silver + Botón Descontar Sesión
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     data.forEach((p, index) => {
-        const esAlerta = p.sesiones_restantes <= 2;
-        const estadoPill = esAlerta 
-            ? `<span class="status-pill warn"><i class="fa-solid fa-triangle-exclamation"></i> Mantenimiento / Extensión</span>`
-            : `<span class="status-pill good">En Tratamiento Normal</span>`;
-
         tbody.innerHTML += `
             <tr>
-                <td><strong>${p.dni}</strong></td>
+                <td><strong>${p.dni}</strong><br>${p.nombre}</td>
                 <td>
-                    <strong>${p.nombre}</strong><br>
-                    <small class="text-muted">Tutor: ${p.tutor} (${p.tutor_tlf})</small>
+                    <small>Ocup: ${p.ocupacion}<br>Sueldo: S/.${p.sueldo} | Hijos: ${p.hijos}<br>Mov: ${p.movilidad} | Casa: ${p.vivienda}</small>
                 </td>
-                <td><strong class="text-primary">${p.zona}</strong> (EVA: ${p.eva}/10)</td>
-                <td>${p.fecha_inicio}</td>
-                <td><strong class="highlight-text">${p.sesiones_restantes}</strong> / ${p.sesiones_totales} ses.</td>
-                <td>${estadoPill}</td>
+                <td><strong class="text-primary">${p.zona}</strong><br>Horario: ${p.horario}</td>
                 <td>
-                    <button class="btn-action-small" onclick="marcarAsistencia(${index})">
-                        <i class="fa-solid fa-check"></i> Asistió (-1 Sesión)
-                    </button>
+                    Tot: ${p.citas_totales} | Asist: ${p.citas_asistidas}<br>Falta: ${p.citas_faltantes} | Reprog: ${p.citas_reprogramadas} (${p.reprog_estado})
+                </td>
+                <td><span class="status-pill good">${p.prediccion_continuidad}</span></td>
+                <td>
+                    <button class="btn-success-small margin-bottom" onclick="aceptarReprogramacion(${index})">Aceptar Reprog.</button><br>
+                    <button class="btn-action-small" onclick="marcarAsistenciaAdmin(${index})">Marcar Asistencia</button>
                 </td>
             </tr>
         `;
     });
 }
 
-// Marcar Asistencia y Descontar Contador
-function marcarAsistencia(index) {
-    if (pacientesData[index].sesiones_restantes > 0) {
-        pacientesData[index].sesiones_restantes -= 1;
-        renderTable(pacientesData);
+function aceptarReprogramacion(index) {
+    pacientesData[index].reprog_estado = "Aceptada";
+    renderTable(pacientesData);
+    alert(`✅ Reprogramación aceptada para el paciente ${pacientesData[index].nombre}.`);
+}
 
-        if (pacientesData[index].sesiones_restantes <= 2) {
-            alert(`⚠️ Alerta Médica: Al paciente ${pacientesData[index].nombre} le quedan ${pacientesData[index].sesiones_restantes} sesiones. Se sugiere evaluar adición de más sesiones o terapia de relajación/mantenimiento.`);
-        } else {
-            alert(`✅ Asistencia registrada correctamente. Le quedan ${pacientesData[index].sesiones_restantes} sesiones.`);
-        }
+function marcarAsistenciaAdmin(index) {
+    if (pacientesData[index].citas_faltantes > 0) {
+        pacientesData[index].citas_asistidas += 1;
+        pacientesData[index].citas_faltantes -= 1;
+        renderTable(pacientesData);
+        alert(`Asistencia registrada. Faltan ${pacientesData[index].citas_faltantes} citas.`);
     } else {
-        alert(`ℹ️ El paciente ya culminó las sesiones asignadas.`);
+        alert("El paciente ya cumplió todas sus citas.");
     }
 }
 
@@ -225,7 +249,7 @@ function filterPatients() {
     renderTable(filtrados);
 }
 
-function poblardeSelectNotificaciones() {
+function poblarSelectNotificaciones() {
     const select = document.getElementById("notif-paciente-select");
     if (!select) return;
     select.innerHTML = '';
@@ -241,7 +265,7 @@ function enviarNotificacionPaciente(e) {
     box.innerHTML = `
         <div class="result-box">
             <i class="fa-solid fa-paper-plane text-primary"></i> <strong>Notificación emitida por ${canal}.</strong><br>
-            Se ha enviado el aviso tanto al paciente como a su tutor/familiar registrado.
+            Se envió el recordatorio al paciente y su tutor/familiar.
         </div>
     `;
 }
@@ -253,26 +277,59 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-function inicializarGraficos() {
-    const ctxL = document.getElementById('chartLesiones');
-    if (ctxL) {
-        new Chart(ctxL.getContext('2d'), {
-            type: 'bar',
+// Dashboard Interactivo con filtros de tiempo y tipos de gráfico
+function cambiarFiltroTiempo(tipo, btnEl) {
+    document.querySelectorAll('.filter-pills-row .pill-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+
+    let total = 1200;
+    let evaTxt = "Mejora de 7.5 a 3.2";
+    let asist = "91.2%";
+
+    if(tipo === 'dia') { total = 45; evaTxt = "Mejora rápida (EVA 6.8)"; asist = "95.0%"; }
+    else if(tipo === 'semana') { total = 310; evaTxt = "Mejora sostenida (EVA 4.5)"; asist = "92.4%"; }
+    else if(tipo === 'mes') { total = 1200; evaTxt = "Mejora global (EVA 3.2)"; asist = "91.2%"; }
+    else if(tipo === 'anio') { total = 4850; evaTxt = "Eficacia histórica alta"; asist = "89.8%"; }
+
+    document.getElementById("dash-tot").innerText = total;
+    document.getElementById("dash-eva").innerText = evaTxt;
+    document.getElementById("dash-asist").innerText = asist;
+}
+
+let tipoChartActual = 'bar';
+function alternarTipoGrafico(tipo) {
+    tipoChartActual = tipo;
+    inicializarGraficos('mes', tipoChartActual);
+}
+
+function inicializarGraficos(filtro, tipoGrafico) {
+    const ctxE = document.getElementById('chartEvolucion');
+    if (ctxE) {
+        if(chartEvolucionInstance) chartEvolucionInstance.destroy();
+        chartEvolucionInstance = new Chart(ctxE.getContext('2d'), {
+            type: tipoGrafico,
             data: {
-                labels: ['Lumbar', 'Cervical', 'Hombro', 'Rodilla', 'Tobillo'],
-                datasets: [{ data: [420, 290, 210, 150, 110], backgroundColor: '#0284c7' }]
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'],
+                datasets: [{
+                    label: 'Nivel de Dolor EVA',
+                    data: [8.0, 6.5, 5.0, 3.8, 2.5],
+                    backgroundColor: '#0284c7',
+                    borderColor: '#0284c7',
+                    tension: 0.3
+                }]
             },
             options: { plugins: { legend: { display: false } } }
         });
     }
 
-    const ctxA = document.getElementById('chartAdherencia');
-    if (ctxA) {
-        new Chart(ctxA.getContext('2d'), {
+    const ctxL = document.getElementById('chartLesiones');
+    if (ctxL) {
+        if(chartLesionesInstance) chartLesionesInstance.destroy();
+        chartLesionesInstance = new Chart(ctxL.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Recuperación Completa', 'En Mantenimiento', 'Pendientes'],
-                datasets: [{ data: [80, 15, 5], backgroundColor: ['#10b981', '#0284c7', '#f59e0b'] }]
+                labels: ['Lumbar', 'Cervical', 'Hombro', 'Rodilla', 'Tobillo'],
+                datasets: [{ data: [42, 25, 18, 10, 5], backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'] }]
             },
             options: { plugins: { legend: { position: 'bottom' } } }
         });
