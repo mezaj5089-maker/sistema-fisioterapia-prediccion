@@ -96,7 +96,7 @@
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL -->
+        <!-- ÁREA PRINCIPAL CON FONDO DEGRADADO ALEGRE Y VIBRANTE -->
         <main class="main-wrapper">
             <header class="top-bar">
                 <div class="user-info-bar">
@@ -199,7 +199,7 @@
                                 <input type="number" id="adm_edad" min="1" max="120" value="38" required>
                             </div>
                             <div class="input-group">
-                                <label>Género (Recurrencia)</label>
+                                <label>Género (Para Análisis Estadístico)</label>
                                 <select id="adm_genero">
                                     <option value="Masculino">Masculino</option>
                                     <option value="Femenino">Femenino</option>
@@ -328,7 +328,7 @@
                     </div>
                 </section>
 
-                <!-- DASHBOARD DINÁMICO CON SELECTOR DE TIEMPO Y ESTILO MODERNO COLORIDO -->
+                <!-- DASHBOARD PROPORCIONADO Y COMPACTO EN TIEMPO REAL -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -347,30 +347,30 @@
                     <div class="kpi-compact-grid">
                         <div class="kpi-compact-card border-glow-blue">
                             <span class="kpi-title">Total Pacientes Activos</span>
-                            <h3 class="kpi-value text-primary" id="dash-tot">1,200</h3>
+                            <h3 class="kpi-value text-primary" id="dash-tot">0</h3>
                         </div>
                         <div class="kpi-compact-card border-glow-amber">
                             <span class="kpi-title">Evolución de Dolencias (EVA)</span>
-                            <h3 class="kpi-value text-amber" id="dash-eva">Mejora de 7.5 a 3.2</h3>
+                            <h3 class="kpi-value text-amber" id="dash-eva">Prom. EVA: --</h3>
                         </div>
                         <div class="kpi-compact-card border-glow-green">
                             <span class="kpi-title">Tasa de Asistencia Global</span>
-                            <h3 class="kpi-value text-green" id="dash-asist">91.2%</h3>
+                            <h3 class="kpi-value text-green" id="dash-asist">--%</h3>
                         </div>
                         <div class="kpi-compact-card border-glow-purple">
                             <span class="kpi-title">Proyección Continuidad ML</span>
-                            <h3 class="kpi-value text-purple" id="dash-cont">89.5% Favorable</h3>
+                            <h3 class="kpi-value text-purple" id="dash-cont">Favorable</h3>
                         </div>
                     </div>
 
                     <div class="charts-compact-grid margin-top">
                         <div class="card-panel chart-box border-glow-blue">
                             <h4>Evolución de Terapias y Dolencias (Gráfico Combinado)</h4>
-                            <canvas id="chartEvolucion" height="130"></canvas>
+                            <canvas id="chartEvolucion"></canvas>
                         </div>
                         <div class="card-panel chart-box border-glow-green">
                             <h4>Recurrencia de Pacientes por Género (Varones vs Mujeres)</h4>
-                            <canvas id="chartGenero" height="130"></canvas>
+                            <canvas id="chartGenero"></canvas>
                         </div>
                     </div>
                 </section>
