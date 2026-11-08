@@ -198,7 +198,6 @@ html, body {
 }
 .pill-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 
-/* CONTROL DE TAMAÑO COMPACTO PARA EL DASHBOARD Y GRÁFICOS */
 .kpi-compact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .kpi-compact-card { background: #ffffff; padding: 14px; border-radius: 12px; }
 .border-glow-blue { border-left: 4px solid #0284c7; }
@@ -212,9 +211,8 @@ html, body {
 .charts-compact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
 .chart-box { padding: 14px !important; margin-bottom: 0 !important; }
 
-/* RESTRICCIÓN DE ALTURA DE GRÁFICOS PARA EVITAR DASHBOARD GIGANTE */
 .chart-box canvas {
-    max-height: 200px !important;
+    max-height: 190px !important;
     width: 100% !important;
 }
 
