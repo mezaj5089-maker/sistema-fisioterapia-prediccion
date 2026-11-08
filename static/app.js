@@ -1,7 +1,10 @@
 let currentRol = 'paciente';
 let currentDni = '72849102';
+let chartDolenciasInstance = null;
+let chartGeneroTerapiaInstance = null;
+let chartProgresoClinicaInstance = null;
 let chartEvolucionInstance = null;
-let chartGeneroInstance = null;
+let chartProgresoIndividualInstance = null;
 
 let pacientesData = [
     {
@@ -9,12 +12,12 @@ let pacientesData = [
         nombre: "Juan Pérez",
         edad: 45,
         genero: "Masculino",
-        zona: "Lumbar",
+        zona: "Lumbalgia / Zona Lumbar",
         eva: 7,
         fecha_inicio: "2026-10-15",
         citas_totales: 10,
-        citas_asistidas: 2,
-        citas_faltantes: 8,
+        citas_asistidas: 7,
+        citas_faltantes: 3,
         citas_reprogramadas: 1,
         reprog_estado: "Aceptada",
         ocupacion: "Independiente",
@@ -28,14 +31,15 @@ let pacientesData = [
         tutor: "María Pérez (Esposa)",
         tutor_tlf: "912345678",
         horario: "09:00 AM - 10:00 AM",
-        prediccion_continuidad: "Alta (92.4% - Favorable)"
+        prediccion_continuidad: "Alta (92.4% - Favorable)",
+        historial_eva: [8, 7, 5, 4, 3]
     },
     {
         dni: "41920384",
         nombre: "María Rodríguez",
         edad: 32,
         genero: "Femenino",
-        zona: "Cervical",
+        zona: "Cervicalgia / Cuello",
         eva: 5,
         fecha_inicio: "2026-10-18",
         citas_totales: 12,
@@ -54,7 +58,8 @@ let pacientesData = [
         tutor: "Jorge Rodríguez (Padre)",
         tutor_tlf: "955443322",
         horario: "11:00 AM - 12:00 PM",
-        prediccion_continuidad: "Muy Alta (95.1% - Favorable)"
+        prediccion_continuidad: "Muy Alta (95.1% - Favorable)",
+        historial_eva: [7, 5, 4, 3, 2]
     }
 ];
 
@@ -136,7 +141,6 @@ function iniciarSesion(e) {
     }
 }
 
-// FIX BOTÓN SALIR: MUESTRA EL MODAL INMEDIATAMENTE SINO RECUPERA PANTALLA INICIAL
 function cerrarSesion() {
     const modal = document.getElementById("login-modal");
     if (modal) {
@@ -212,13 +216,14 @@ function registrarPacienteAdmin() {
         dni, nombre, edad, genero, zona, eva,
         fecha_inicio: fecha_inicio || "2026-10-28",
         citas_totales: sesiones_recetadas,
-        citas_asistidas: 0,
-        citas_faltantes: sesiones_recetadas,
+        citas_asistidas: 1,
+        citas_faltantes: sesiones_recetadas - 1,
         citas_reprogramadas: 0,
         reprog_estado: "N/A",
         ocupacion, sueldo, hijos, esposas, movilidad, vivienda,
         email, tlf, tutor, tutor_tlf, horario,
-        prediccion_continuidad: txtPrediccion
+        prediccion_continuidad: txtPrediccion,
+        historial_eva: [eva, eva - 1, Math.max(0, eva - 2)]
     };
 
     pacientesData.unshift(nuevo);
@@ -228,7 +233,7 @@ function registrarPacienteAdmin() {
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `Paciente <strong>${nombre} (${genero})</strong> registrado.<br>Ingreso S/.${sueldo}, Movilidad: ${movilidad}.<br>Predicción ML: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
+    txt.innerHTML = `Paciente <strong>${nombre} (${genero})</strong> registrado con éxito.<br>Dolencia: ${zona}.<br>Predicción ML: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
     box.classList.remove("hidden");
 }
 
@@ -268,6 +273,13 @@ function marcarAsistenciaAdmin(index) {
     if (pacientesData[index].citas_faltantes > 0) {
         pacientesData[index].citas_asistidas += 1;
         pacientesData[index].citas_faltantes -= 1;
+        
+        // Simular mejora en historial EVA
+        if(pacientesData[index].historial_eva.length > 0) {
+            let ultimoEva = pacientesData[index].historial_eva[pacientesData[index].historial_eva.length - 1];
+            pacientesData[index].historial_eva.push(Math.max(0, ultimoEva - 1));
+        }
+
         renderTable(pacientesData);
         actualizarDashboardRealTime();
         alert(`Asistencia registrada. Faltan ${pacientesData[index].citas_faltantes} citas.`);
@@ -313,7 +325,52 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-// CONEXIÓN EN TIEMPO REAL: RECALCULA DATOS REGISTRADOS PARA EL DASHBOARD Y GRÁFICOS
+// ================= CONSULTA DE PROGRESO INDIVIDUAL POR DNI =================
+function consultarProgresoPorDni() {
+    const dniBuscado = document.getElementById("input-consulta-dni").value.trim();
+    const paciente = pacientesData.find(p => String(p.dni).trim() === dniBuscado);
+    
+    const contenedorRes = document.getElementById("resultado-consulta-dni");
+    if(!paciente) {
+        alert("No se encontró ningún paciente registrado con ese DNI.");
+        contenedorRes.classList.add("hidden");
+        return;
+    }
+
+    contenedorRes.classList.remove("hidden");
+    document.getElementById("res-nombre").innerText = paciente.nombre;
+    document.getElementById("res-dolencia").innerText = paciente.zona;
+    document.getElementById("res-genero-edad").innerText = `${paciente.genero} / ${paciente.edad} años`;
+    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo} | Mov: ${paciente.movilidad}`;
+    document.getElementById("res-citas").innerText = `${paciente.citas_asistidas} asistidas de ${paciente.citas_totales} totales`;
+    document.getElementById("res-cont").innerText = paciente.prediccion_continuidad;
+    
+    let estadoTxt = paciente.citas_faltantes === 0 ? "Tratamiento Culminado" : "En Tratamiento Activo";
+    document.getElementById("res-estado").innerText = estadoTxt;
+
+    // Gráfico Individual EVA
+    const ctxInd = document.getElementById('chartProgresoIndividual');
+    if(ctxInd) {
+        if(chartProgresoIndividualInstance) chartProgresoIndividualInstance.destroy();
+        chartProgresoIndividualInstance = new Chart(ctxInd.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: paciente.historial_eva.map((_, i) => `Sesión ${i+1}`),
+                datasets: [{
+                    label: 'Nivel de Dolor (Escala EVA)',
+                    data: paciente.historial_eva,
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2,132,199,0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+        });
+    }
+}
+
+// ================= DASHBOARD CONECTADO Y EN TIEMPO REAL =================
 let tipoFiltroActual = 'mes';
 let tipoChartActual = 'bar';
 
@@ -331,63 +388,68 @@ function alternarTipoGrafico(tipo) {
 
 function actualizarDashboardRealTime() {
     const totalRegistrados = pacientesData.length;
-    let sumaEva = 0;
+    let enMejoria = 0;
+    let enProlongado = 0;
     let sumaAsistenciaPct = 0;
 
     pacientesData.forEach(p => {
-        sumaEva += p.eva;
-        let pct = (p.citas_asistidas / (p.citas_totales || 1)) * 100;
-        sumaAsistenciaPct += pct;
+        let pctAsist = (p.citas_asistidas / (p.citas_totales || 1)) * 100;
+        sumaAsistenciaPct += pctAsist;
+
+        // Criterio de mejoría: si EVA bajó o faltan pocas citas
+        let evaInicial = p.historial_eva[0] || 5;
+        let evaActual = p.historial_eva[p.historial_eva.length - 1] || evaInicial;
+        
+        if (evaActual < evaInicial || p.citas_faltantes <= 2) {
+            enMejoria += 1;
+        } else {
+            enProlongado += 1;
+        }
     });
 
-    const promEva = totalRegistrados > 0 ? (sumaEva / totalRegistrados).toFixed(1) : "0.0";
     const promAsistencia = totalRegistrados > 0 ? (sumaAsistenciaPct / totalRegistrados).toFixed(1) : "0.0";
 
-    const elTot = document.getElementById("dash-tot");
-    const elEva = document.getElementById("dash-eva");
-    const elAsist = document.getElementById("dash-asist");
-    const elCont = document.getElementById("dash-cont");
-
-    if (elTot) elTot.innerText = totalRegistrados;
-    if (elEva) elEva.innerText = `Prom. EVA: ${promEva} / 10`;
-    if (elAsist) elAsist.innerText = `${promAsistencia}%`;
-    if (elCont) elCont.innerText = "89.5% Favorable";
+    document.getElementById("dash-tot").innerText = totalRegistrados;
+    document.getElementById("dash-mejora").innerText = enMejoria;
+    document.getElementById("dash-prolongado").innerText = enProlongado;
+    document.getElementById("dash-asist").innerText = `${promAsistencia}%`;
 
     inicializarGraficos(tipoFiltroActual, tipoChartActual);
 }
 
 function inicializarGraficos(filtro, tipoGrafico) {
-    const ctxE = document.getElementById('chartEvolucion');
-    if (ctxE) {
-        if(chartEvolucionInstance) chartEvolucionInstance.destroy();
-        chartEvolucionInstance = new Chart(ctxE.getContext('2d'), {
+    // 1. Gráfico de Dolencias Recurrentes
+    let conteoDolencias = { "Lumbalgia / Zona Lumbar": 0, "Cervicalgia / Cuello": 0, "Tendinitis de Hombro": 0, "Lesión de Rodilla": 0, "Esguince de Tobillo": 0 };
+    pacientesData.forEach(p => {
+        if(conteoDolencias[p.zona] !== undefined) conteoDolencias[p.zona] += 1;
+        else conteoDolencias[p.zona] = 1;
+    });
+
+    const ctxDol = document.getElementById('chartDolencias');
+    if (ctxDol) {
+        if(chartDolenciasInstance) chartDolenciasInstance.destroy();
+        chartDolenciasInstance = new Chart(ctxDol.getContext('2d'), {
             type: tipoGrafico,
             data: {
-                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'],
+                labels: Object.keys(conteoDolencias),
                 datasets: [{
-                    label: 'Nivel de Dolor EVA',
-                    data: [7.8, 6.2, 4.8, 3.5, 2.1],
-                    backgroundColor: 'rgba(2, 132, 199, 0.6)',
-                    borderColor: '#0284c7',
-                    borderWidth: 2,
-                    tension: 0.3
+                    label: 'Cantidad de Pacientes',
+                    data: Object.values(conteoDolencias),
+                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
                 }]
             },
-            options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: true } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
 
+    // 2. Gráfico de Recurrencia por Género
     let varones = pacientesData.filter(p => p.genero === 'Masculino').length;
     let mujeres = pacientesData.filter(p => p.genero === 'Femenino').length;
 
-    const ctxG = document.getElementById('chartGenero');
-    if (ctxG) {
-        if(chartGeneroInstance) chartGeneroInstance.destroy();
-        chartGeneroInstance = new Chart(ctxG.getContext('2d'), {
+    const ctxGen = document.getElementById('chartGeneroTerapia');
+    if (ctxGen) {
+        if(chartGeneroTerapiaInstance) chartGeneroTerapiaInstance.destroy();
+        chartGeneroTerapiaInstance = new Chart(ctxGen.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: [`Varones (${varones})`, `Mujeres (${mujeres})`],
@@ -396,11 +458,49 @@ function inicializarGraficos(filtro, tipoGrafico) {
                     backgroundColor: ['#0284c7', '#ec4899']
                 }]
             },
-            options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // 3. Gráfico Progreso General de la Clínica (Mejoría vs Tratamiento prolongado)
+    let enMejoria = parseInt(document.getElementById("dash-mejora").innerText) || 1;
+    let enProlongado = parseInt(document.getElementById("dash-prolongado").innerText) || 0;
+
+    const ctxProg = document.getElementById('chartProgresoClinica');
+    if (ctxProg) {
+        if(chartProgresoClinicaInstance) chartProgresoClinicaInstance.destroy();
+        chartProgresoClinicaInstance = new Chart(ctxProg.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['En Mejoría', 'En Tratamiento Prolongado'],
+                datasets: [{
+                    label: 'Pacientes',
+                    data: [enMejoria, enProlongado],
+                    backgroundColor: ['#10b981', '#f59e0b']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
+    // 4. Gráfico Evolución Global EVA
+    const ctxE = document.getElementById('chartEvolucion');
+    if (ctxE) {
+        if(chartEvolucionInstance) chartEvolucionInstance.destroy();
+        chartEvolucionInstance = new Chart(ctxE.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Inicio', 'Sem 2', 'Sem 3', 'Sem 4', 'Actual'],
+                datasets: [{
+                    label: 'Promedio Nivel de Dolor (EVA)',
+                    data: [7.5, 6.0, 4.8, 3.5, 2.8],
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                    borderColor: '#8b5cf6',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
         });
     }
 }
