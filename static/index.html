@@ -15,7 +15,7 @@
     <div id="login-modal" class="modal-overlay">
         <div class="login-card">
             <div class="login-header">
-                <i class="fa-solid fa-hospital login-icon"></i>
+                <i class="fa-solid fa-hospital-user login-icon"></i>
                 <h2>KineData Analytics</h2>
                 <p>Centro Clínico de Fisioterapia e Inteligencia Artificial</p>
             </div>
@@ -51,7 +51,7 @@
         <!-- SIDEBAR LATERAL -->
         <aside class="anatomy-sidebar">
             <div class="brand-box">
-                <i class="fa-solid fa-hand-holding-medical logo-icon"></i>
+                <i class="fa-solid fa-heart-pulse logo-icon"></i>
                 <div>
                     <h2>KineData IA</h2>
                     <p class="subtitle-text">Clínica de Rehabilitación</p>
@@ -88,7 +88,7 @@
                     <i class="fa-solid fa-hospital-user"></i> Expedientes y Asistencia
                 </button>
                 <button class="nav-tab-btn" onclick="switchTab('admin-dashboard')" id="tab-btn-admin-dashboard">
-                    <i class="fa-solid fa-chart-pie"></i> Dashboard Interactivo (Gold)
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard Dinámico (Gold)
                 </button>
                 <button class="nav-tab-btn" onclick="switchTab('admin-notif')" id="tab-btn-admin-notif">
                     <i class="fa-solid fa-paper-plane"></i> Notificaciones (Gmail/SMS)
@@ -112,7 +112,6 @@
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-notes-medical text-primary"></i> Estado General de Tratamiento y Control de Citas</h3>
                         
-                        <!-- BOTONES DE CONTEO DE CITAS -->
                         <div class="citas-counter-row margin-bottom">
                             <div class="counter-pill bg-blue">
                                 <span class="c-title">Citas Totales</span>
@@ -200,6 +199,13 @@
                                 <input type="number" id="adm_edad" min="1" max="120" value="38" required>
                             </div>
                             <div class="input-group">
+                                <label>Género (Recurrencia)</label>
+                                <select id="adm_genero">
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
                                 <label>Gmail del Paciente</label>
                                 <input type="email" id="adm_email" placeholder="paciente@gmail.com" required>
                             </div>
@@ -208,7 +214,6 @@
                                 <input type="text" id="adm_tlf" placeholder="987654321" required>
                             </div>
 
-                            <!-- DATOS FAMILIARES Y TUTOR -->
                             <div class="input-group">
                                 <label>Nombre del Tutor / Familiar</label>
                                 <input type="text" id="adm_tutor" placeholder="Apoderado o familiar" required>
@@ -218,9 +223,8 @@
                                 <input type="text" id="adm_tutor_tlf" placeholder="912345678" required>
                             </div>
 
-                            <!-- NUEVOS CAMPOS SOCIOECONÓMICOS Y LABORALES -->
                             <div class="input-group">
-                                <label>Ocupación / ¿A qué se dedica? / Estudios</label>
+                                <label>Ocupación / ¿A qué se dedica?</label>
                                 <input type="text" id="adm_ocupacion" placeholder="Ej: Independiente / Docente" required>
                             </div>
                             <div class="input-group">
@@ -252,7 +256,6 @@
                                 </select>
                             </div>
 
-                            <!-- DETALLES CLÍNICOS Y HORARIO MODIFICABLE -->
                             <div class="input-group">
                                 <label>Dolencia / Diagnóstico</label>
                                 <select id="adm_zona">
@@ -309,7 +312,7 @@
                             <table class="data-table" id="tabla-pacientes">
                                 <thead>
                                     <tr>
-                                        <th>DNI / Paciente</th>
+                                        <th>DNI / Paciente (Género)</th>
                                         <th>Socioeconómico (Sueldo/Movilidad)</th>
                                         <th>Diagnóstico & Horario</th>
                                         <th>Citas (Tot/Asist/Falt/Reprog)</th>
@@ -325,7 +328,7 @@
                     </div>
                 </section>
 
-                <!-- DASHBOARD INTERACTIVO COMPACTO CON SELECTOR DE FILTRO Y BOTONES DE GRÁFICOS -->
+                <!-- DASHBOARD DINÁMICO CON SELECTOR DE TIEMPO Y ESTILO MODERNO COLORIDO -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -335,38 +338,39 @@
                             <button class="pill-btn" onclick="cambiarFiltroTiempo('anio', this)">Por Año</button>
                         </div>
                         <div>
-                            <button class="btn-action-small" onclick="alternarTipoGrafico('bar')"><i class="fa-solid fa-chart-bar"></i> Barras</button>
-                            <button class="btn-action-small" onclick="alternarTipoGrafico('line')"><i class="fa-solid fa-chart-line"></i> Líneas</button>
+                            <button class="btn-action-small bg-gradient-1" onclick="alternarTipoGrafico('bar')"><i class="fa-solid fa-chart-bar"></i> Barras</button>
+                            <button class="btn-action-small bg-gradient-2" onclick="alternarTipoGrafico('line')"><i class="fa-solid fa-chart-line"></i> Líneas</button>
+                            <button class="btn-action-small bg-gradient-3" onclick="alternarTipoGrafico('doughnut')"><i class="fa-solid fa-chart-pie"></i> Rosquilla</button>
                         </div>
                     </div>
 
                     <div class="kpi-compact-grid">
-                        <div class="kpi-compact-card">
+                        <div class="kpi-compact-card border-glow-blue">
                             <span class="kpi-title">Total Pacientes Activos</span>
                             <h3 class="kpi-value text-primary" id="dash-tot">1,200</h3>
                         </div>
-                        <div class="kpi-compact-card">
+                        <div class="kpi-compact-card border-glow-amber">
                             <span class="kpi-title">Evolución de Dolencias (EVA)</span>
                             <h3 class="kpi-value text-amber" id="dash-eva">Mejora de 7.5 a 3.2</h3>
                         </div>
-                        <div class="kpi-compact-card">
+                        <div class="kpi-compact-card border-glow-green">
                             <span class="kpi-title">Tasa de Asistencia Global</span>
                             <h3 class="kpi-value text-green" id="dash-asist">91.2%</h3>
                         </div>
-                        <div class="kpi-compact-card">
-                            <span class="kpi-title">Proyección de Continuidad ML</span>
-                            <h3 class="kpi-value text-purple" id="dash-cont">89.5% Altamente Favorable</h3>
+                        <div class="kpi-compact-card border-glow-purple">
+                            <span class="kpi-title">Proyección Continuidad ML</span>
+                            <h3 class="kpi-value text-purple" id="dash-cont">89.5% Favorable</h3>
                         </div>
                     </div>
 
                     <div class="charts-compact-grid margin-top">
-                        <div class="card-panel chart-box">
-                            <h4>Evolución de Terapias y Dolencias</h4>
+                        <div class="card-panel chart-box border-glow-blue">
+                            <h4>Evolución de Terapias y Dolencias (Gráfico Combinado)</h4>
                             <canvas id="chartEvolucion" height="130"></canvas>
                         </div>
-                        <div class="card-panel chart-box">
-                            <h4>Distribución de Tipos de Lesión</h4>
-                            <canvas id="chartLesiones" height="130"></canvas>
+                        <div class="card-panel chart-box border-glow-green">
+                            <h4>Recurrencia de Pacientes por Género (Varones vs Mujeres)</h4>
+                            <canvas id="chartGenero" height="130"></canvas>
                         </div>
                     </div>
                 </section>
