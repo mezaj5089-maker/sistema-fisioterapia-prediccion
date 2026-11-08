@@ -32,7 +32,7 @@
             <form id="form-login" onsubmit="iniciarSesion(event)">
                 <div class="input-group">
                     <label><i class="fa-solid fa-id-card"></i> Ingrese DNI del Paciente o Usuario</label>
-                    <input type="text" id="login-dni" placeholder="Ej: 72849102" required>
+                    <input type="text" id="login-dni" placeholder="Ej: 45446678" required>
                 </div>
                 <div class="input-group hidden" id="group-pass">
                     <label><i class="fa-solid fa-lock"></i> Contraseña Médica / Admin</label>
@@ -191,7 +191,7 @@
                         <form id="form-evaluacion" class="form-grid-3" onsubmit="event.preventDefault(); registrarPacienteAdmin();">
                             <div class="input-group">
                                 <label>DNI del Paciente</label>
-                                <input type="text" id="adm_dni" placeholder="Ej: 72849102" required>
+                                <input type="text" id="adm_dni" placeholder="Ej: 45446678" required>
                             </div>
                             <div class="input-group">
                                 <label>Nombre del Paciente</label>
@@ -199,7 +199,7 @@
                             </div>
                             <div class="input-group">
                                 <label>Edad</label>
-                                <input type="number" id="adm_edad" min="1" max="120" value="38" required>
+                                <input type="number" id="adm_edad" min="1" max="120" value="26" required>
                             </div>
                             <div class="input-group">
                                 <label>Género (Estadística de Recurrencia)</label>
@@ -236,7 +236,7 @@
                             </div>
                             <div class="input-group">
                                 <label>Número de Hijos</label>
-                                <input type="number" id="adm_hijos" min="0" value="2" required>
+                                <input type="number" id="adm_hijos" min="0" value="1" required>
                             </div>
                             <div class="input-group">
                                 <label>Número de Esposas / Convivientes</label>
@@ -331,7 +331,7 @@
                     </div>
                 </section>
 
-                <!-- ================= DASHBOARD CLÍNICO CON TODOS LOS GRÁFICOS SOLICITADOS ================= -->
+                <!-- ================= DASHBOARD CLÍNICO ================= -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -366,24 +366,19 @@
                         </div>
                     </div>
 
-                    <!-- GRILLA DE GRÁFICOS REQUERIDOS (Dolencias, Género, Progreso Clínica y Progreso Individual) -->
                     <div class="charts-compact-grid margin-top">
-                        <!-- 1. Dolencias / Daños Frecuentes -->
                         <div class="card-panel chart-box border-glow-blue">
                             <h4>Tipos de Dolencias y Daños Más Recurrentes</h4>
                             <canvas id="chartDolencias"></canvas>
                         </div>
-                        <!-- 2. Género Recurrente a Terapias y Dolencias -->
                         <div class="card-panel chart-box border-glow-green">
                             <h4>Recurrencia de Género por Tipo de Terapia</h4>
                             <canvas id="chartGeneroTerapia"></canvas>
                         </div>
-                        <!-- 3. Progreso de la Clínica (Mejoría vs Tratamiento Prolongado) -->
                         <div class="card-panel chart-box border-glow-amber">
                             <h4>Progreso General de la Clínica (Estado Terapéutico)</h4>
                             <canvas id="chartProgresoClinica"></canvas>
                         </div>
-                        <!-- 4. Evolución de Terapias Combinado -->
                         <div class="card-panel chart-box border-glow-purple">
                             <h4>Evolución Global del Nivel de Dolor (EVA)</h4>
                             <canvas id="chartEvolucion"></canvas>
@@ -391,14 +386,14 @@
                     </div>
                 </section>
 
-                <!-- ================= MÓDULO: CONSULTA DE PROGRESO POR DNI ================= -->
+                <!-- ================= CONSULTA DE PROGRESO POR DNI ================= -->
                 <section id="tab-admin-consulta-dni" class="tab-content">
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-magnifying-glass-chart text-primary"></i> Consulta de Progreso Individual por DNI del Paciente</h3>
-                        <p class="subtitle-text">Ingrese o busque el DNI del paciente para visualizar su evolución, citas asistidas y gráfico de progreso individual.</p>
+                        <p class="subtitle-text">Ingrese o busque el DNI del paciente (Ej: 45446678) para visualizar su evolución y gráfico individual.</p>
                         
                         <div class="controls-section margin-bottom flex-between">
-                            <input type="text" id="input-consulta-dni" placeholder="Ingrese DNI exacto (Ej: 72849102)..." style="flex: 1; margin-right: 10px;">
+                            <input type="text" id="input-consulta-dni" placeholder="Ingrese DNI exacto (Ej: 45446678)..." style="flex: 1; margin-right: 10px;">
                             <button class="btn-primary" onclick="consultarProgresoPorDni()"><i class="fa-solid fa-search"></i> Consultar Progreso</button>
                         </div>
 
@@ -418,7 +413,7 @@
                             </div>
                             <div class="card-panel chart-box border-glow-blue">
                                 <h4>Gráfico de Progreso Individual (Reducción de Dolor EVA por Sesión)</h4>
-                                <canvas id="chartProgresoIndividual" style="max-height: 220px !important;"></canvas>
+                                <canvas id="chartProgresoIndividual" style="max-height: 200px !important;"></canvas>
                             </div>
                         </div>
                     </div>
