@@ -1,13 +1,14 @@
 let currentRol = 'paciente';
 let currentDni = '72849102';
 let chartEvolucionInstance = null;
-let chartLesionesInstance = null;
+let chartGeneroInstance = null;
 
 let pacientesData = [
     {
         dni: "72849102",
         nombre: "Juan Pérez",
         edad: 45,
+        genero: "Masculino",
         zona: "Lumbar",
         eva: 7,
         fecha_inicio: "2026-10-15",
@@ -28,6 +29,32 @@ let pacientesData = [
         tutor_tlf: "912345678",
         horario: "09:00 AM - 10:00 AM",
         prediccion_continuidad: "Alta (92.4% - Favorable)"
+    },
+    {
+        dni: "41920384",
+        nombre: "María Rodríguez",
+        edad: 32,
+        genero: "Femenino",
+        zona: "Cervical",
+        eva: 5,
+        fecha_inicio: "2026-10-18",
+        citas_totales: 12,
+        citas_asistidas: 10,
+        citas_faltantes: 2,
+        citas_reprogramadas: 0,
+        reprog_estado: "N/A",
+        ocupacion: "Docente",
+        sueldo: 3100,
+        hijos: 1,
+        esposas: 0,
+        movilidad: "Transporte Público",
+        vivienda: "Alquilada",
+        email: "maria.rod@gmail.com",
+        tlf: "998877665",
+        tutor: "Jorge Rodríguez (Padre)",
+        tutor_tlf: "955443322",
+        horario: "11:00 AM - 12:00 PM",
+        prediccion_continuidad: "Muy Alta (95.1% - Favorable)"
     }
 ];
 
@@ -109,8 +136,13 @@ function iniciarSesion(e) {
     }
 }
 
+// CORRECCIÓN DEFINITIVA BOTÓN DE SALIR (Muestra modal al instante)
 function cerrarSesion() {
-    document.getElementById("login-modal").classList.add("hidden");
+    const modal = document.getElementById("login-modal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        document.getElementById("login-dni").value = "";
+    }
 }
 
 function switchTab(tabId) {
@@ -144,11 +176,11 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
-// Registro Admin con Variables Socioeconómicas y Predicción de Continuidad
 function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value;
     const edad = parseInt(document.getElementById("adm_edad").value);
+    const genero = document.getElementById("adm_genero").value;
     const email = document.getElementById("adm_email").value;
     const tlf = document.getElementById("adm_tlf").value;
     const tutor = document.getElementById("adm_tutor").value;
@@ -165,17 +197,15 @@ function registrarPacienteAdmin() {
     const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value);
     const horario = document.getElementById("adm_horario").value;
 
-    // Lógica de predicción de continuidad basada en sueldo, movilidad y carga familiar (ML Simulation)
     let scoreContinuidad = 70;
     if(sueldo > 1500) scoreContinuidad += 15;
     if(movilidad.includes("Propia")) scoreContinuidad += 10;
     if(vivienda === "Propia") scoreContinuidad += 5;
-    if(hijos > 4) scoreContinuidad -= 10;
     
-    let txtPrediccion = scoreContinuidad >= 80 ? "Alta probabilidad de Continuidad (Favorable)" : "Riesgo de Deserción / Requiere Seguimiento";
+    let txtPrediccion = scoreContinuidad >= 80 ? "Alta probabilidad (Favorable)" : "Riesgo de Deserción";
 
     const nuevo = {
-        dni, nombre, edad, zona, eva,
+        dni, nombre, edad, genero, zona, eva,
         fecha_inicio: fecha_inicio || "2026-10-28",
         citas_totales: sesiones_recetadas,
         citas_asistidas: 0,
@@ -190,10 +220,11 @@ function registrarPacienteAdmin() {
     pacientesData.unshift(nuevo);
     renderTable(pacientesData);
     poblarSelectNotificaciones();
+    inicializarGraficos('mes', tipoChartActual);
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `Paciente <strong>${nombre}</strong> registrado.<br><strong>Análisis Socioeconómico & ML:</strong> Ingreso S/.${sueldo}, Vivienda: ${vivienda}, Movilidad: ${movilidad}.<br>Resultado Predictivo: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
+    txt.innerHTML = `Paciente <strong>${nombre} (${genero})</strong> registrado.<br>Ingreso S/.${sueldo}, Movilidad: ${movilidad}.<br>Predicción ML: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
     box.classList.remove("hidden");
 }
 
@@ -205,9 +236,9 @@ function renderTable(data) {
     data.forEach((p, index) => {
         tbody.innerHTML += `
             <tr>
-                <td><strong>${p.dni}</strong><br>${p.nombre}</td>
+                <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
                 <td>
-                    <small>Ocup: ${p.ocupacion}<br>Sueldo: S/.${p.sueldo} | Hijos: ${p.hijos}<br>Mov: ${p.movilidad} | Casa: ${p.vivienda}</small>
+                    <small>Ocup: ${p.ocupacion}<br>Sueldo: S/.${p.sueldo} | Hijos: ${p.hijos}<br>Mov: ${p.movilidad}</small>
                 </td>
                 <td><strong class="text-primary">${p.zona}</strong><br>Horario: ${p.horario}</td>
                 <td>
@@ -226,7 +257,7 @@ function renderTable(data) {
 function aceptarReprogramacion(index) {
     pacientesData[index].reprog_estado = "Aceptada";
     renderTable(pacientesData);
-    alert(`✅ Reprogramación aceptada para el paciente ${pacientesData[index].nombre}.`);
+    alert(`✅ Reprogramación aceptada para ${pacientesData[index].nombre}.`);
 }
 
 function marcarAsistenciaAdmin(index) {
@@ -277,7 +308,6 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-// Dashboard Interactivo con filtros de tiempo y tipos de gráfico
 function cambiarFiltroTiempo(tipo, btnEl) {
     document.querySelectorAll('.filter-pills-row .pill-btn').forEach(b => b.classList.remove('active'));
     btnEl.classList.add('active');
@@ -318,18 +348,26 @@ function inicializarGraficos(filtro, tipoGrafico) {
                     tension: 0.3
                 }]
             },
-            options: { plugins: { legend: { display: false } } }
+            options: { plugins: { legend: { display: true } } }
         });
     }
 
-    const ctxL = document.getElementById('chartLesiones');
-    if (ctxL) {
-        if(chartLesionesInstance) chartLesionesInstance.destroy();
-        chartLesionesInstance = new Chart(ctxL.getContext('2d'), {
+    // CÁLCULO DINÁMICO DE RECURRENCIA DE PACIENTES POR GÉNERO
+    let varones = pacientesData.filter(p => p.genero === 'Masculino').length;
+    let mujeres = pacientesData.filter(p => p.genero === 'Femenino').length;
+    if(varones === 0 && mujeres === 0) { varones = 1; mujeres = 1; }
+
+    const ctxG = document.getElementById('chartGenero');
+    if (ctxG) {
+        if(chartGeneroInstance) chartGeneroInstance.destroy();
+        chartGeneroInstance = new Chart(ctxG.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Lumbar', 'Cervical', 'Hombro', 'Rodilla', 'Tobillo'],
-                datasets: [{ data: [42, 25, 18, 10, 5], backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'] }]
+                labels: ['Varones', 'Mujeres'],
+                datasets: [{
+                    data: [varones, mujeres],
+                    backgroundColor: ['#0284c7', '#ec4899']
+                }]
             },
             options: { plugins: { legend: { position: 'bottom' } } }
         });
