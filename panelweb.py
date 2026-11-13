@@ -37,7 +37,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# BASE DE DATOS SINCRONIZADA CON SUPABASE (INCLUYE TODOS TUS PACIENTES REGISTRADOS)
 pacientes_db = [
     {
         "dni": "76563443",
@@ -64,6 +63,7 @@ pacientes_db = [
         "tutor_tlf": "912345678",
         "horario": "09:00 AM - 10:00 AM",
         "prediccion_continuidad": "Alta (94.2% - Favorable)",
+        "motivo_continuidad": "El paciente cuenta con ingresos estables (S/.2500), movilidad propia y vivienda propia, lo que garantiza su asistencia puntual a las 10 sesiones.",
         "historial_eva": [8, 7, 6, 5, 4]
     },
     {
@@ -80,17 +80,18 @@ pacientes_db = [
         "citas_reprogramadas": 0,
         "reprog_estado": "Aceptada",
         "ocupacion": "Independiente",
-        "sueldo": 2500,
-        "hijos": 1,
+        "sueldo": 1200,
+        "hijos": 2,
         "esposas": 1,
-        "movilidad": "Propia (Carro/Moto)",
-        "vivienda": "Propia",
+        "movilidad": "Transporte Público",
+        "vivienda": "Alquilada",
         "email": "roberto.mamani@gmail.com",
         "tlf": "987654321",
         "tutor": "Ana Quispe (Madre)",
         "tutor_tlf": "912345678",
         "horario": "09:00 AM - 10:00 AM",
-        "prediccion_continuidad": "Alta (94.2% - Favorable)",
+        "prediccion_continuidad": "Riesgo de Deserción",
+        "motivo_continuidad": "Alerta: Ingresos ajustados (S/.1200), vivienda alquilada y uso de transporte público. Se recomienda evaluar subsidio o reprogramar en horario flexible.",
         "historial_eva": [8, 7, 6, 5, 4]
     },
     {
@@ -118,6 +119,7 @@ pacientes_db = [
         "tutor_tlf": "999000111",
         "horario": "10:00 AM - 11:00 AM",
         "prediccion_continuidad": "Alta (92.0% - Favorable)",
+        "motivo_continuidad": "Paciente disciplinada con apoyo familiar constante y vivienda propia. Continuidad asegurada.",
         "historial_eva": [7, 6, 5, 4, 3]
     },
     {
@@ -145,6 +147,7 @@ pacientes_db = [
         "tutor_tlf": "988222111",
         "horario": "11:00 AM - 12:00 PM",
         "prediccion_continuidad": "Favorable (89.5%)",
+        "motivo_continuidad": "Estudiante con respaldo familiar en vivienda compartida. Pronóstico favorable.",
         "historial_eva": [6, 5, 5, 4, 3]
     },
     {
@@ -172,6 +175,7 @@ pacientes_db = [
         "tutor_tlf": "977444333",
         "horario": "03:00 PM - 04:00 PM",
         "prediccion_continuidad": "Muy Alta (95.0% - Favorable)",
+        "motivo_continuidad": "Alta motivación deportiva y excelente movilidad propia. Pronóstico de recuperación rápida.",
         "historial_eva": [8, 7, 6, 4, 3]
     },
     {
@@ -199,119 +203,11 @@ pacientes_db = [
         "tutor_tlf": "966333222",
         "horario": "04:00 PM - 05:00 PM",
         "prediccion_continuidad": "Alta (91.0% - Favorable)",
+        "motivo_continuidad": "Sueldo favorable y estabilidad domiciliaria. Continuará su rehabilitación sin inconvenientes.",
         "historial_eva": [7, 6, 5, 4, 4]
-    },
-    {
-        "dni": "49466575",
-        "nombre": "LUCIANO PENDEYBIS COCA",
-        "edad": 34,
-        "genero": "Masculino",
-        "zona": "Lumbalgia / Zona Lumbar",
-        "eva": 8,
-        "fecha_inicio": "2026-10-20",
-        "citas_totales": 14,
-        "citas_asistidas": 9,
-        "citas_faltantes": 5,
-        "citas_reprogramadas": 0,
-        "reprog_estado": "N/A",
-        "ocupacion": "Conductor",
-        "sueldo": 3000,
-        "hijos": 2,
-        "esposas": 1,
-        "movilidad": "Propia (Carro/Moto)",
-        "vivienda": "Propia",
-        "email": "luciano.pendeybis@gmail.com",
-        "tlf": "987999000",
-        "tutor": "Juana Coca (Madre)",
-        "tutor_tlf": "955222111",
-        "horario": "05:00 PM - 06:00 PM",
-        "prediccion_continuidad": "Alta (93.5% - Favorable)",
-        "historial_eva": [9, 8, 7, 5, 4]
-    },
-    {
-        "dni": "50016615",
-        "nombre": "TOLUCIO MAYTA QUISPE",
-        "edad": 65,
-        "genero": "Masculino",
-        "zona": "Cervicalgia / Cuello",
-        "eva": 7,
-        "fecha_inicio": "2026-10-21",
-        "citas_totales": 10,
-        "citas_asistidas": 6,
-        "citas_faltantes": 4,
-        "citas_reprogramadas": 0,
-        "reprog_estado": "N/A",
-        "ocupacion": "Agricultor",
-        "sueldo": 1600,
-        "hijos": 4,
-        "esposas": 1,
-        "movilidad": "Transporte Público",
-        "vivienda": "Propia",
-        "email": "tolucio.mayta@gmail.com",
-        "tlf": "986111333",
-        "tutor": "Mateo Mayta (Hijo)",
-        "tutor_tlf": "954333222",
-        "horario": "08:00 AM - 09:00 AM",
-        "prediccion_continuidad": "Favorable (88.5%)",
-        "historial_eva": [8, 7, 6, 5, 4]
-    },
-    {
-        "dni": "49153344",
-        "nombre": "QUETI SALAZAR ORIGUELA",
-        "edad": 40,
-        "genero": "Femenino",
-        "zona": "Lesión de Rodilla",
-        "eva": 6,
-        "fecha_inicio": "2026-10-22",
-        "citas_totales": 12,
-        "citas_asistidas": 7,
-        "citas_faltantes": 5,
-        "citas_reprogramadas": 0,
-        "reprog_estado": "N/A",
-        "ocupacion": "Enfermera",
-        "sueldo": 3200,
-        "hijos": 2,
-        "esposas": 0,
-        "movilidad": "Transporte Público",
-        "vivienda": "Alquilada",
-        "email": "queti.salazar@gmail.com",
-        "tlf": "985222444",
-        "tutor": "Pedro Salazar (Hermano)",
-        "tutor_tlf": "953444555",
-        "horario": "02:00 PM - 03:00 PM",
-        "prediccion_continuidad": "Muy Alta (96.0% - Favorable)",
-        "historial_eva": [7, 6, 5, 4, 3]
-    },
-    {
-        "dni": "72849102",
-        "nombre": "Juan Pérez",
-        "edad": 45,
-        "genero": "Masculino",
-        "zona": "Lumbalgia / Zona Lumbar",
-        "eva": 7,
-        "fecha_inicio": "2026-10-15",
-        "citas_totales": 10,
-        "citas_asistidas": 7,
-        "citas_faltantes": 3,
-        "citas_reprogramadas": 1,
-        "reprog_estado": "Aceptada",
-        "ocupacion": "Independiente",
-        "sueldo": 2800,
-        "hijos": 2,
-        "esposas": 1,
-        "movilidad": "Propia (Carro/Moto)",
-        "vivienda": "Propia",
-        "email": "juan.perez@gmail.com",
-        "tlf": "987123456",
-        "tutor": "María Pérez (Esposa)",
-        "tutor_tlf": "999888777",
-        "horario": "09:00 AM - 10:00 AM",
-        "prediccion_continuidad": "Alta (92.4% - Favorable)",
-        "historial_eva": [8, 7, 5, 4, 3]
     }
 ]
 
-# Sincronización directa con Supabase si está disponible
 if SUPABASE_AVAILABLE:
     try:
         if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
@@ -345,6 +241,7 @@ if SUPABASE_AVAILABLE:
                         "tutor_tlf": row.get("tutor_tlf", "912345678"),
                         "horario": row.get("horario", "09:00 AM - 10:00 AM"),
                         "prediccion_continuidad": "Alta (94.0% - Favorable)",
+                        "motivo_continuidad": "Paciente sincronizado desde base de datos con estabilidad socioeconómica favorable.",
                         "historial_eva": [8, 7, 6, 5, 4]
                     })
                 if supabase_data:
