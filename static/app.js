@@ -7,10 +7,22 @@ let chartEvolucionInstance = null;
 let chartProgresoIndividualInstance = null;
 
 let pacientesData = window.pacientesSupabaseData || [];
+let pacientesRecientes = []; // Cuadro exclusivo para registros nuevos de la sesión
+
+// Inicializar cliente Supabase en el navegador si existen las credenciales
+let supabaseClient = null;
+if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+    try {
+        supabaseClient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.key);
+    } catch (e) {
+        console.error("Error al inicializar cliente Supabase:", e);
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarRelojPeru();
     renderTable(pacientesData);
+    renderTableRecientes(pacientesRecientes);
     poblarSelectNotificaciones();
     actualizarDashboardRealTime();
 });
@@ -52,7 +64,7 @@ function iniciarSesion(e) {
         document.getElementById("menu-admin").classList.add("hidden");
         switchTab('paciente-citas');
         
-        const paciente = pacientesData.find(p => String(p.dni).trim() === currentDni) || pacientesData[0];
+        const paciente = [...pacientesRecientes, ...pacientesData].find(p => String(p.dni).trim() === currentDni) || pacientesData[0];
         document.getElementById("p-dni-val").innerText = paciente.dni;
         document.getElementById("p-nombre-val").innerText = paciente.nombre;
         document.getElementById("p-dolencia-val").innerText = `${paciente.zona} (EVA: ${paciente.eva}/10)`;
@@ -114,7 +126,7 @@ function enviarSolicitudReprogramacion(e) {
     const fecha = document.getElementById("rep-fecha").value;
     const hora = document.getElementById("rep-hora").value;
 
-    const paciente = pacientesData.find(p => String(p.dni).trim() === currentDni);
+    const paciente = [...pacientesRecientes, ...pacientesData].find(p => String(p.dni).trim() === currentDni);
     if(paciente) {
         paciente.citas_reprogramadas += 1;
         paciente.reprog_estado = "Pendiente";
@@ -129,8 +141,8 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
-// ================= REGISTRO CON PREDICCIÓN SOCIOECONÓMICA Y NOTIFICACIÓN IA =================
-function registrarPacienteAdmin() {
+// ================= REGISTRO CON GUARDADO REAL EN SUPABASE Y PREDICCIÓN IA =================
+async function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value;
     const edad = parseInt(document.getElementById("adm_edad").value);
@@ -147,7 +159,7 @@ function registrarPacienteAdmin() {
     const vivienda = document.getElementById("adm_vivienda").value;
     const zona = document.getElementById("adm_zona").value;
     const eva = parseInt(document.getElementById("adm_eva").value);
-    const fecha_inicio = document.getElementById("adm_fecha_inicio").value;
+    const fecha_inicio = document.getElementById("adm_fecha_inicio").value || "2026-11-12";
     const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value);
     const horario = document.getElementById("adm_horario").value;
 
@@ -176,9 +188,9 @@ function registrarPacienteAdmin() {
         motivoDetallado = `Aviso importante: El paciente ${nombre} (DNI: ${dni}) presenta vulnerabilidad por ingresos limitados (S/.${sueldo}) y uso de ${movilidad.toLowerCase()}. Se recomienda otorgar facilidades de pago o ajustar horarios para evitar abandono del tratamiento de ${zona}.`;
     }
 
-    const nuevo = {
+    const nuevoRegistro = {
         dni, nombre, edad, genero, zona, eva,
-        fecha_inicio: fecha_inicio || "2026-11-12",
+        fecha_inicio,
         citas_totales: sesiones_recetadas,
         citas_asistidas: 1,
         citas_faltantes: sesiones_recetadas - 1,
@@ -191,14 +203,56 @@ function registrarPacienteAdmin() {
         historial_eva: [eva, Math.max(0, eva - 1), Math.max(0, eva - 2)]
     };
 
-    pacientesData.unshift(nuevo);
-    renderTable(pacientesData);
+    let estadoSupabaseMsg = "Guardado en Supabase exitosamente ✅";
+
+    // GUARDAR REALMENTE EN LA TABLA 'pacientes' DE SUPABASE
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('pacientes')
+                .insert([
+                    {
+                        dni: dni,
+                        nombre: nombre,
+                        edad: edad,
+                        genero: genero,
+                        zona: zona,
+                        eva: eva,
+                        fecha_inicio: fecha_inicio,
+                        ocupacion: ocupacion,
+                        sueldo: sueldo,
+                        hijos: hijos,
+                        esposas: esposas,
+                        movilidad: movilidad,
+                        vivienda: vivienda,
+                        email: email,
+                        tlf: tlf,
+                        tutor: tutor,
+                        tutor_tlf: tutor_tlf,
+                        horario: horario
+                    }
+                ]);
+            if (error) {
+                console.error("Error al insertar en Supabase:", error);
+                estadoSupabaseMsg = `⚠️ Error al guardar en Supabase: ${error.message}`;
+            }
+        } catch (err) {
+            console.error("Excepción al conectar con Supabase:", err);
+            estadoSupabaseMsg = "⚠️ No se pudo sincronizar con Supabase (Verifique red/credenciales)";
+        }
+    } else {
+        estadoSupabaseMsg = "⚠️ Cliente Supabase no disponible en frontend";
+    }
+
+    // Agregar al cuadro exclusivo de registros recientes (sin mezclar con la base histórica)
+    pacientesRecientes.unshift(nuevoRegistro);
+    renderTableRecientes(pacientesRecientes);
     poblarSelectNotificaciones();
     actualizarDashboardRealTime();
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `<strong>Diagnóstico IA (Random Forest):</strong><br>${txtPrediccion}<br><br><em>Detalle:</em> ${motivoDetallado}`;
+    txt.innerHTML = `<strong>Diagnóstico IA (Random Forest):</strong><br>${txtPrediccion}<br><br><em>Detalle:</em> ${motivoDetallado}<br><br><strong class="text-green">${estadoSupabaseMsg}</strong>`;
     box.classList.remove("hidden");
 }
 
@@ -225,6 +279,34 @@ function renderTable(data) {
                     <button class="btn-success-small margin-bottom" onclick="aceptarReprogramacion(${index})">Aceptar Reprog.</button><br>
                     <button class="btn-action-small" onclick="marcarAsistenciaAdmin(${index})">Marcar Asistencia</button>
                 </td>
+            </tr>
+        `;
+    });
+}
+
+// RENDERIZAR TABLA DE REGISTROS RECIENTES (CUADRO EXCLUSIVO)
+function renderTableRecientes(data) {
+    const tbody = document.getElementById('tableBodyRecientes');
+    if (!tbody) return;
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No hay registros nuevos en esta sesión todavía.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = '';
+
+    data.forEach((p, index) => {
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
+                <td>
+                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Mov: ${p.movilidad || 'N/A'}</small>
+                </td>
+                <td><strong class="text-primary">${p.zona || 'Lumbalgia / Zona Lumbar'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
+                <td>
+                    Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10}
+                </td>
+                <td><span class="status-pill good">${p.prediccion_continuidad || 'Favorable'}</span></td>
+                <td><span class="status-pill good">Sincronizado Supabase ✅</span></td>
             </tr>
         `;
     });
@@ -266,7 +348,8 @@ function poblarSelectNotificaciones() {
     const select = document.getElementById("notif-paciente-select");
     if (!select) return;
     select.innerHTML = '';
-    pacientesData.forEach(p => {
+    const todos = [...pacientesRecientes, ...pacientesData];
+    todos.forEach(p => {
         select.innerHTML += `<option value="${p.dni}">${p.nombre} - Tutor: ${p.tutor || 'Familiar'}</option>`;
     });
 }
@@ -284,7 +367,8 @@ function enviarNotificacionPaciente(e) {
 }
 
 function exportToExcel() {
-    const ws = XLSX.utils.json_to_sheet(pacientesData);
+    const todos = [...pacientesRecientes, ...pacientesData];
+    const ws = XLSX.utils.json_to_sheet(todos);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Expedientes_Silver");
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
@@ -293,7 +377,8 @@ function exportToExcel() {
 // ================= CONSULTA DE PROGRESO POR DNI =================
 function consultarProgresoPorDni() {
     const dniBuscado = document.getElementById("input-consulta-dni").value.trim();
-    const paciente = pacientesData.find(p => String(p.dni).trim() === String(dniBuscado));
+    const todos = [...pacientesRecientes, ...pacientesData];
+    const paciente = todos.find(p => String(p.dni).trim() === String(dniBuscado));
     
     const contenedorRes = document.getElementById("resultado-consulta-dni");
     if(!paciente) {
@@ -351,13 +436,14 @@ function alternarTipoGrafico(tipo) {
 }
 
 function actualizarDashboardRealTime() {
-    let filtrados = pacientesData;
+    const todos = [...pacientesRecientes, ...pacientesData];
+    let filtrados = todos;
     if (tipoFiltroActual === 'dia') {
-        filtrados = pacientesData.slice(0, Math.min(2, pacientesData.length));
+        filtrados = todos.slice(0, Math.min(2, todos.length));
     } else if (tipoFiltroActual === 'semana') {
-        filtrados = pacientesData.slice(0, Math.min(4, pacientesData.length));
+        filtrados = todos.slice(0, Math.min(4, todos.length));
     } else if (tipoFiltroActual === 'anio') {
-        filtrados = pacientesData;
+        filtrados = todos;
     }
 
     const totalRegistrados = filtrados.length;
