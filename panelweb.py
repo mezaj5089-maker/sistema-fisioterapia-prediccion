@@ -208,6 +208,7 @@ pacientes_db = [
     }
 ]
 
+# Sincronización robusta con Supabase
 if SUPABASE_AVAILABLE:
     try:
         if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
@@ -277,7 +278,21 @@ def main():
         if os.path.exists(path_js):
             with open(path_js, "r", encoding="utf-8") as f_js:
                 js_content = f_js.read()
-                injection_script = f"<script>window.pacientesSupabaseData = {json.dumps(pacientes_db)};</script>\n<script>{js_content}</script>"
+                
+                # INYECCIÓN DE CREDENCIALES DE SUPABASE AL FRONTEND PARA PERMITIR INSERT DIRECTO
+                supabase_url = st.secrets.get("SUPABASE_URL", "") if SUPABASE_AVAILABLE and "SUPABASE_URL" in st.secrets else ""
+                supabase_key = st.secrets.get("SUPABASE_KEY", "") if SUPABASE_AVAILABLE and "SUPABASE_KEY" in st.secrets else ""
+                
+                config_script = f"""
+                <script>
+                    window.pacientesSupabaseData = {json.dumps(pacientes_db)};
+                    window.SUPABASE_CONFIG = {{
+                        url: "{supabase_url}",
+                        key: "{supabase_key}"
+                    }};
+                </script>
+                """
+                injection_script = config_script + f"\n<script>{js_content}</script>"
                 html_content = html_content.replace(
                     '<script src="app.js"></script>',
                     injection_script
