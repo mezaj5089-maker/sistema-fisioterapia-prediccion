@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- SDK de Supabase para navegador -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -287,13 +289,13 @@
 
                             <div class="full-width margin-top">
                                 <button type="submit" class="btn-primary">
-                                    <i class="fa-solid fa-floppy-disk"></i> Registrar y Predecir Continuidad (Random Forest IA)
+                                    <i class="fa-solid fa-floppy-disk"></i> Registrar y Guardar en Supabase (Random Forest IA)
                                 </button>
                             </div>
                         </form>
 
                         <div id="result-ia-panel" class="result-box hidden margin-top">
-                            <h4><i class="fa-solid fa-brain text-primary"></i> Resultado de Predicción de Continuidad (Random Forest + Socioeconómico)</h4>
+                            <h4><i class="fa-solid fa-brain text-primary"></i> Resultado de Predicción y Registro Supabase</h4>
                             <p id="result-text" class="margin-top"></p>
                         </div>
                     </div>
@@ -302,13 +304,13 @@
                 <section id="tab-admin-silver" class="tab-content">
                     <div class="card-panel">
                         <div class="flex-between margin-bottom">
-                            <h3><i class="fa-solid fa-database text-primary"></i> Expedientes Clínicos & Gestión de Citas y Asistencia</h3>
+                            <h3><i class="fa-solid fa-database text-primary"></i> Expedientes Sincronizados de Supabase</h3>
                             <button class="btn-excel" onclick="exportToExcel()">
                                 <i class="fa-solid fa-file-excel"></i> Exportar Excel (.xlsx)
                             </button>
                         </div>
                         <div class="controls-section margin-bottom">
-                            <input type="text" id="searchDni" placeholder="Buscar paciente por DNI o Nombre..." onkeyup="filterPatients()">
+                            <input type="text" id="searchDni" placeholder="Buscar paciente en Supabase..." onkeyup="filterPatients()">
                         </div>
                         <div class="table-responsive">
                             <table class="data-table" id="tabla-pacientes">
@@ -319,10 +321,35 @@
                                         <th>Diagnóstico & Horario</th>
                                         <th>Citas (Tot/Asist/Falt/Reprog)</th>
                                         <th>Predicción Continuidad (IA)</th>
-                                        <th>Acciones / Aceptar Reprog.</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- CUADRO EXCLUSIVO PARA REGISTROS RECIENTES DE LA SESIÓN ACTUAL (SIN MEZCLAR) -->
+                    <div class="card-panel margin-top" style="border: 2px dashed var(--primary-color);">
+                        <div class="flex-between margin-bottom">
+                            <h3><i class="fa-solid fa-user-plus text-primary"></i> Cuadro Exclusivo: Registros Nuevos de la Sesión Actual</h3>
+                            <span class="status-pill info">Almacenados y Guardados en Supabase</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="tabla-pacientes-recientes">
+                                <thead>
+                                    <tr>
+                                        <th>DNI / Paciente (Género)</th>
+                                        <th>Socioeconómico (Sueldo/Movilidad)</th>
+                                        <th>Diagnóstico & Horario</th>
+                                        <th>Citas / Sesiones</th>
+                                        <th>Predicción Continuidad (IA)</th>
+                                        <th>Estado Supabase</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBodyRecientes">
+                                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No hay registros nuevos en esta sesión todavía.</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
