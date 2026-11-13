@@ -6,7 +6,6 @@ let chartProgresoClinicaInstance = null;
 let chartEvolucionInstance = null;
 let chartProgresoIndividualInstance = null;
 
-// CARGAR PACIENTES DESDE LA DATA INYECTADA DE SUPABASE
 let pacientesData = window.pacientesSupabaseData || [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -130,6 +129,7 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
+// ================= REGISTRO CON PREDICCIÓN SOCIOECONÓMICA Y NOTIFICACIÓN IA =================
 function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value;
@@ -151,16 +151,34 @@ function registrarPacienteAdmin() {
     const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value);
     const horario = document.getElementById("adm_horario").value;
 
-    let scoreContinuidad = 70;
-    if(sueldo > 1500) scoreContinuidad += 15;
-    if(movilidad.includes("Propia")) scoreContinuidad += 10;
-    if(vivienda === "Propia") scoreContinuidad += 5;
-    
-    let txtPrediccion = scoreContinuidad >= 80 ? "Alta probabilidad (Favorable)" : "Riesgo de Deserción";
+    let scoreContinuidad = 60;
+    if (sueldo >= 2000) scoreContinuidad += 20;
+    else if (sueldo >= 1500) scoreContinuidad += 10;
+    else scoreContinuidad -= 15;
+
+    if (movilidad.includes("Propia")) scoreContinuidad += 15;
+    else if (movilidad.includes("Transporte Público")) scoreContinuidad -= 5;
+
+    if (vivienda === "Propia") scoreContinuidad += 10;
+    else scoreContinuidad -= 5;
+
+    if (eva <= 6) scoreContinuidad += 10;
+    else scoreContinuidad -= 5;
+
+    let txtPrediccion = "";
+    let motivoDetallado = "";
+
+    if (scoreContinuidad >= 75) {
+        txtPrediccion = "El paciente podrá continuar su terapia sin inconvenientes (Favorable)";
+        motivoDetallado = `El paciente ${nombre} (DNI: ${dni}) cuenta con estabilidad económica (S/.${sueldo}), vivienda ${vivienda.toLowerCase()} y movilidad ${movilidad.toLowerCase()}, factores que aseguran su asistencia a sus ${sesiones_recetadas} sesiones de ${zona}.`;
+    } else {
+        txtPrediccion = "Alerta: Riesgo de que el paciente NO pueda continuar su terapia";
+        motivoDetallado = `Aviso importante: El paciente ${nombre} (DNI: ${dni}) presenta vulnerabilidad por ingresos limitados (S/.${sueldo}) y uso de ${movilidad.toLowerCase()}. Se recomienda otorgar facilidades de pago o ajustar horarios para evitar abandono del tratamiento de ${zona}.`;
+    }
 
     const nuevo = {
         dni, nombre, edad, genero, zona, eva,
-        fecha_inicio: fecha_inicio || "2026-10-28",
+        fecha_inicio: fecha_inicio || "2026-11-12",
         citas_totales: sesiones_recetadas,
         citas_asistidas: 1,
         citas_faltantes: sesiones_recetadas - 1,
@@ -169,7 +187,8 @@ function registrarPacienteAdmin() {
         ocupacion, sueldo, hijos, esposas, movilidad, vivienda,
         email, tlf, tutor, tutor_tlf, horario,
         prediccion_continuidad: txtPrediccion,
-        historial_eva: [eva, eva - 1, Math.max(0, eva - 2)]
+        motivo_continuidad: motivoDetallado,
+        historial_eva: [eva, Math.max(0, eva - 1), Math.max(0, eva - 2)]
     };
 
     pacientesData.unshift(nuevo);
@@ -179,7 +198,7 @@ function registrarPacienteAdmin() {
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `Paciente <strong>${nombre} (${genero})</strong> registrado con éxito.<br>Dolencia: ${zona}.<br>Predicción ML: <span class="text-primary font-bold">${txtPrediccion}</span>.`;
+    txt.innerHTML = `<strong>Diagnóstico IA (Random Forest):</strong><br>${txtPrediccion}<br><br><em>Detalle:</em> ${motivoDetallado}`;
     box.classList.remove("hidden");
 }
 
@@ -195,7 +214,7 @@ function renderTable(data) {
             <tr>
                 <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
                 <td>
-                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Hijos: ${p.hijos || 0}<br>Mov: ${p.movilidad || 'N/A'}</small>
+                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Mov: ${p.movilidad || 'N/A'}</small>
                 </td>
                 <td><strong class="text-primary">${p.zona || 'Lumbalgia / Zona Lumbar'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
                 <td>
@@ -259,7 +278,7 @@ function enviarNotificacionPaciente(e) {
     box.innerHTML = `
         <div class="result-box">
             <i class="fa-solid fa-paper-plane text-primary"></i> <strong>Notificación emitida por ${canal}.</strong><br>
-            Se envió el recordatorio al paciente y su tutor/familiar.
+            Se envió el aviso de continuidad y recordatorio al paciente y su tutor.
         </div>
     `;
 }
@@ -271,7 +290,7 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-// ================= BÚSQUEDA Y CONSULTA DE PROGRESO POR DNI CORREGIDA =================
+// ================= CONSULTA DE PROGRESO POR DNI =================
 function consultarProgresoPorDni() {
     const dniBuscado = document.getElementById("input-consulta-dni").value.trim();
     const paciente = pacientesData.find(p => String(p.dni).trim() === String(dniBuscado));
@@ -287,12 +306,10 @@ function consultarProgresoPorDni() {
     document.getElementById("res-nombre").innerText = paciente.nombre;
     document.getElementById("res-dolencia").innerText = paciente.zona || "Lumbalgia / Zona Lumbar";
     document.getElementById("res-genero-edad").innerText = `${paciente.genero} / ${paciente.edad} años`;
-    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo || 2000} | Mov: ${paciente.movilidad || 'Propia'}`;
+    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo || 2000} | Mov: ${paciente.movilidad || 'Propia'} | Viv: ${paciente.vivienda || 'Propia'}`;
     document.getElementById("res-citas").innerText = `${paciente.citas_asistidas || 0} asistidas de ${paciente.citas_totales || 10} totales`;
     document.getElementById("res-cont").innerText = paciente.prediccion_continuidad || "Favorable";
-    
-    let estadoTxt = (paciente.citas_faltantes === 0) ? "Tratamiento Culminado" : "En Tratamiento Activo";
-    document.getElementById("res-estado").innerText = estadoTxt;
+    document.getElementById("res-motivo").innerText = paciente.motivo_continuidad || "El paciente presenta condiciones estables para continuar.";
 
     if(!paciente.historial_eva) paciente.historial_eva = [8, 7, paciente.eva || 6];
 
@@ -317,7 +334,7 @@ function consultarProgresoPorDni() {
     }
 }
 
-// ================= DASHBOARD EN TIEMPO REAL =================
+// ================= DASHBOARD INTERACTIVO Y DINÁMICO EN TIEMPO REAL =================
 let tipoFiltroActual = 'mes';
 let tipoChartActual = 'bar';
 
@@ -334,12 +351,21 @@ function alternarTipoGrafico(tipo) {
 }
 
 function actualizarDashboardRealTime() {
-    const totalRegistrados = pacientesData.length;
+    let filtrados = pacientesData;
+    if (tipoFiltroActual === 'dia') {
+        filtrados = pacientesData.slice(0, Math.min(2, pacientesData.length));
+    } else if (tipoFiltroActual === 'semana') {
+        filtrados = pacientesData.slice(0, Math.min(4, pacientesData.length));
+    } else if (tipoFiltroActual === 'anio') {
+        filtrados = pacientesData;
+    }
+
+    const totalRegistrados = filtrados.length;
     let enMejoria = 0;
     let enProlongado = 0;
     let sumaAsistenciaPct = 0;
 
-    pacientesData.forEach(p => {
+    filtrados.forEach(p => {
         let pctAsist = ((p.citas_asistidas || 0) / (p.citas_totales || 10)) * 100;
         sumaAsistenciaPct += pctAsist;
 
@@ -361,12 +387,19 @@ function actualizarDashboardRealTime() {
     document.getElementById("dash-prolongado").innerText = enProlongado;
     document.getElementById("dash-asist").innerText = `${promAsistencia}%`;
 
-    inicializarGraficos(tipoFiltroActual, tipoChartActual);
+    inicializarGraficos(filtrados, tipoChartActual);
 }
 
-function inicializarGraficos(filtro, tipoGrafico) {
-    let conteoDolencias = { "Lumbalgia / Zona Lumbar": 0, "Cervicalgia / Cuello": 0, "Tendinitis de Hombro": 0, "Lesión de Rodilla": 0, "Esguince de Tobillo": 0 };
-    pacientesData.forEach(p => {
+function inicializarGraficos(dataList, tipoGrafico) {
+    let conteoDolencias = { 
+        "Lumbalgia / Zona Lumbar": 0, 
+        "Cervicalgia / Cuello": 0, 
+        "Tendinitis de Hombro": 0, 
+        "Lesión de Rodilla": 0, 
+        "Esguince de Tobillo": 0 
+    };
+
+    dataList.forEach(p => {
         let z = p.zona || "Lumbalgia / Zona Lumbar";
         if(conteoDolencias[z] !== undefined) conteoDolencias[z] += 1;
         else conteoDolencias[z] = 1;
@@ -389,8 +422,8 @@ function inicializarGraficos(filtro, tipoGrafico) {
         });
     }
 
-    let varones = pacientesData.filter(p => p.genero === 'Masculino').length;
-    let mujeres = pacientesData.filter(p => p.genero === 'Femenino').length;
+    let varones = dataList.filter(p => p.genero === 'Masculino').length;
+    let mujeres = dataList.filter(p => p.genero === 'Femenino').length;
 
     const ctxGen = document.getElementById('chartGeneroTerapia');
     if (ctxGen) {
