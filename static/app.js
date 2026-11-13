@@ -7,9 +7,8 @@ let chartEvolucionInstance = null;
 let chartProgresoIndividualInstance = null;
 
 let pacientesData = window.pacientesSupabaseData || [];
-let pacientesRecientes = []; // Cuadro exclusivo para registros nuevos de la sesión
+let pacientesRecientes = [];
 
-// Inicializar cliente Supabase en el navegador si existen las credenciales
 let supabaseClient = null;
 if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
     try {
@@ -141,7 +140,6 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
-// ================= REGISTRO CON GUARDADO REAL EN SUPABASE Y PREDICCIÓN IA =================
 async function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value;
@@ -205,7 +203,6 @@ async function registrarPacienteAdmin() {
 
     let estadoSupabaseMsg = "Guardado en Supabase exitosamente ✅";
 
-    // GUARDAR REALMENTE EN LA TABLA 'pacientes' DE SUPABASE
     if (supabaseClient) {
         try {
             const { data, error } = await supabaseClient
@@ -238,13 +235,12 @@ async function registrarPacienteAdmin() {
             }
         } catch (err) {
             console.error("Excepción al conectar con Supabase:", err);
-            estadoSupabaseMsg = "⚠️ No se pudo sincronizar con Supabase (Verifique red/credenciales)";
+            estadoSupabaseMsg = "⚠️ No se pudo sincronizar con Supabase";
         }
     } else {
-        estadoSupabaseMsg = "⚠️ Cliente Supabase no disponible en frontend";
+        estadoSupabaseMsg = "⚠️ Cliente Supabase no disponible";
     }
 
-    // Agregar al cuadro exclusivo de registros recientes (sin mezclar con la base histórica)
     pacientesRecientes.unshift(nuevoRegistro);
     renderTableRecientes(pacientesRecientes);
     poblarSelectNotificaciones();
@@ -284,7 +280,6 @@ function renderTable(data) {
     });
 }
 
-// RENDERIZAR TABLA DE REGISTROS RECIENTES (CUADRO EXCLUSIVO)
 function renderTableRecientes(data) {
     const tbody = document.getElementById('tableBodyRecientes');
     if (!tbody) return;
@@ -374,7 +369,6 @@ function exportToExcel() {
     XLSX.writeFile(wb, "Reporte_Clinico_Fisioterapia.xlsx");
 }
 
-// ================= CONSULTA DE PROGRESO POR DNI =================
 function consultarProgresoPorDni() {
     const dniBuscado = document.getElementById("input-consulta-dni").value.trim();
     const todos = [...pacientesRecientes, ...pacientesData];
@@ -419,7 +413,6 @@ function consultarProgresoPorDni() {
     }
 }
 
-// ================= DASHBOARD INTERACTIVO Y DINÁMICO EN TIEMPO REAL =================
 let tipoFiltroActual = 'mes';
 let tipoChartActual = 'bar';
 
