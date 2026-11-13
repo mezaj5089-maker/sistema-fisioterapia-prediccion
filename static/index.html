@@ -183,7 +183,6 @@
                     </div>
                 </section>
 
-
                 <!-- ================= VISTAS DE ADMINISTRADOR ================= -->
                 <section id="tab-admin-registro" class="tab-content">
                     <div class="card-panel">
@@ -288,14 +287,14 @@
 
                             <div class="full-width margin-top">
                                 <button type="submit" class="btn-primary">
-                                    <i class="fa-solid fa-floppy-disk"></i> Registrar y Predecir Continuidad de Tratamiento
+                                    <i class="fa-solid fa-floppy-disk"></i> Registrar y Predecir Continuidad (Random Forest IA)
                                 </button>
                             </div>
                         </form>
 
                         <div id="result-ia-panel" class="result-box hidden margin-top">
-                            <h4><i class="fa-solid fa-brain text-primary"></i> Predicción de Continuidad (Machine Learning)</h4>
-                            <p id="result-text"></p>
+                            <h4><i class="fa-solid fa-brain text-primary"></i> Resultado de Predicción de Continuidad (Random Forest + Socioeconómico)</h4>
+                            <p id="result-text" class="margin-top"></p>
                         </div>
                     </div>
                 </section>
@@ -319,19 +318,17 @@
                                         <th>Socioeconómico (Sueldo/Movilidad)</th>
                                         <th>Diagnóstico & Horario</th>
                                         <th>Citas (Tot/Asist/Falt/Reprog)</th>
-                                        <th>Predicción Continuidad</th>
+                                        <th>Predicción Continuidad (IA)</th>
                                         <th>Acciones / Aceptar Reprog.</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tableBody">
-                                    <!-- Dinámico por JS -->
-                                </tbody>
+                                <tbody id="tableBody"></tbody>
                             </table>
                         </div>
                     </div>
                 </section>
 
-                <!-- ================= DASHBOARD CLÍNICO ================= -->
+                <!-- ================= DASHBOARD CLÍNICO INTERACTIVO ================= -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -390,7 +387,7 @@
                 <section id="tab-admin-consulta-dni" class="tab-content">
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-magnifying-glass-chart text-primary"></i> Consulta de Progreso Individual por DNI del Paciente</h3>
-                        <p class="subtitle-text">Ingrese o busque el DNI del paciente (Ej: 76563443, 45446678, etc.) para visualizar su evolución y gráfico individual.</p>
+                        <p class="subtitle-text">Ingrese o busque el DNI del paciente para visualizar su diagnóstico, análisis socioeconómico IA y gráfico individual.</p>
                         
                         <div class="controls-section margin-bottom flex-between">
                             <input type="text" id="input-consulta-dni" placeholder="Ingrese DNI exacto..." style="flex: 1; margin-right: 10px;">
@@ -407,8 +404,8 @@
                                 </div>
                                 <div class="info-card">
                                     <p><strong>Citas Totales / Asistidas:</strong> <span id="res-citas" class="text-primary font-bold">--</span></p>
-                                    <p><strong>Predicción de Continuidad:</strong> <span id="res-cont" class="text-green font-bold">--</span></p>
-                                    <p><strong>Estado del Tratamiento:</strong> <span id="res-estado" class="status-pill good">En Progreso</span></p>
+                                    <p><strong>Predicción de Continuidad (IA):</strong> <span id="res-cont" class="text-green font-bold">--</span></p>
+                                    <p><strong>Aviso / Motivo Clínico:</strong> <span id="res-motivo" class="text-dark font-bold">--</span></p>
                                 </div>
                             </div>
                             <div class="card-panel chart-box border-glow-blue">
@@ -427,9 +424,7 @@
                         <form onsubmit="enviarNotificacionPaciente(event)" class="form-grid-3">
                             <div class="input-group">
                                 <label>Seleccionar Paciente</label>
-                                <select id="notif-paciente-select">
-                                    <!-- Inyectado por JS -->
-                                </select>
+                                <select id="notif-paciente-select"></select>
                             </div>
                             <div class="input-group">
                                 <label>Canal de Notificación</label>
