@@ -8,12 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- SDK de Supabase para navegador -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <!-- MODAL DE ACCESO / LOGIN -->
     <div id="login-modal" class="modal-overlay">
         <div class="login-card">
             <div class="login-header">
@@ -47,10 +45,8 @@
         </div>
     </div>
 
-    <!-- ESTRUCTURA PRINCIPAL CLÍNICA -->
     <div class="app-layout">
         
-        <!-- SIDEBAR LATERAL -->
         <aside class="anatomy-sidebar">
             <div class="brand-box">
                 <i class="fa-solid fa-heart-pulse logo-icon"></i>
@@ -101,7 +97,6 @@
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL -->
         <main class="main-wrapper">
             <header class="top-bar">
                 <div class="user-info-bar">
@@ -112,7 +107,6 @@
 
             <div class="content-area">
                 
-                <!-- ================= VISTAS DE PACIENTE ================= -->
                 <section id="tab-paciente-citas" class="tab-content active">
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-notes-medical text-primary"></i> Estado General de Tratamiento y Control de Citas</h3>
@@ -185,7 +179,6 @@
                     </div>
                 </section>
 
-                <!-- ================= VISTAS DE ADMINISTRADOR ================= -->
                 <section id="tab-admin-registro" class="tab-content">
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-file-signature text-primary"></i> Registro Clínico, Familiar y Socioeconómico (Predicción ML)</h3>
@@ -329,7 +322,6 @@
                         </div>
                     </div>
 
-                    <!-- CUADRO EXCLUSIVO PARA REGISTROS RECIENTES DE LA SESIÓN ACTUAL (SIN MEZCLAR) -->
                     <div class="card-panel margin-top" style="border: 2px dashed var(--primary-color);">
                         <div class="flex-between margin-bottom">
                             <h3><i class="fa-solid fa-user-plus text-primary"></i> Cuadro Exclusivo: Registros Nuevos de la Sesión Actual</h3>
@@ -355,7 +347,6 @@
                     </div>
                 </section>
 
-                <!-- ================= DASHBOARD CLÍNICO INTERACTIVO ================= -->
                 <section id="tab-admin-dashboard" class="tab-content">
                     <div class="flex-between margin-bottom">
                         <div class="filter-pills-row">
@@ -410,7 +401,6 @@
                     </div>
                 </section>
 
-                <!-- ================= CONSULTA DE PROGRESO POR DNI ================= -->
                 <section id="tab-admin-consulta-dni" class="tab-content">
                     <div class="card-panel">
                         <h3><i class="fa-solid fa-magnifying-glass-chart text-primary"></i> Consulta de Progreso Individual por DNI del Paciente</h3>
