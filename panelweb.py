@@ -208,39 +208,39 @@ pacientes_db = [
     }
 ]
 
-# Sincronización robusta con Supabase
+# Sincronización robusta con Supabase manejando valores nulos (None) de forma segura
 if SUPABASE_AVAILABLE:
     try:
         if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
             supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-            response = supabase.table("pacientes").select("*").execute()
+            response = supabase.table("pacientes").select("*").order("id", desc=False).execute()
             if response.data:
                 supabase_data = []
                 for row in response.data:
                     supabase_data.append({
-                        "dni": str(row.get("dni", "")),
-                        "nombre": row.get("nombre", "Paciente Supabase"),
-                        "edad": int(row.get("edad", 30)),
-                        "genero": row.get("genero", "Masculino"),
-                        "zona": row.get("zona", "Lumbalgia / Zona Lumbar"),
-                        "eva": int(row.get("eva", 6)),
-                        "fecha_inicio": row.get("fecha_inicio", "2026-10-15"),
+                        "dni": str(row.get("dni") or ""),
+                        "nombre": row.get("nombre") or "Paciente Supabase",
+                        "edad": int(row.get("edad") or 30),
+                        "genero": row.get("genero") or "Masculino",
+                        "zona": row.get("zona") or "Lumbalgia / Zona Lumbar",
+                        "eva": int(row.get("eva") or 6),
+                        "fecha_inicio": str(row.get("fecha_inicio") or "2026-10-15"),
                         "citas_totales": 10,
                         "citas_asistidas": 6,
                         "citas_faltantes": 4,
                         "citas_reprogramadas": 0,
                         "reprog_estado": "Aceptada",
-                        "ocupacion": row.get("ocupacion", "Independiente"),
-                        "sueldo": float(row.get("sueldo", 2500)),
-                        "hijos": int(row.get("hijos", 1)),
-                        "esposas": int(row.get("esposas", 1)),
-                        "movilidad": row.get("movilidad", "Propia (Carro/Moto)"),
-                        "vivienda": row.get("vivienda", "Propia"),
-                        "email": row.get("email", "paciente@gmail.com"),
-                        "tlf": row.get("tlf", "987654321"),
-                        "tutor": row.get("tutor", "Familiar"),
-                        "tutor_tlf": row.get("tutor_tlf", "912345678"),
-                        "horario": row.get("horario", "09:00 AM - 10:00 AM"),
+                        "ocupacion": row.get("ocupacion") or "Independiente",
+                        "sueldo": float(row.get("sueldo") or 2500),
+                        "hijos": int(row.get("hijos") or 1),
+                        "esposas": int(row.get("esposas") or 1),
+                        "movilidad": row.get("movilidad") or "Propia (Carro/Moto)",
+                        "vivienda": row.get("vivienda") or "Propia",
+                        "email": row.get("email") or "paciente@gmail.com",
+                        "tlf": row.get("tlf") or "987654321",
+                        "tutor": row.get("tutor") or "Familiar",
+                        "tutor_tlf": row.get("tutor_tlf") or "912345678",
+                        "horario": row.get("horario") or "09:00 AM - 10:00 AM",
                         "prediccion_continuidad": "Alta (94.0% - Favorable)",
                         "motivo_continuidad": "Paciente sincronizado desde base de datos con estabilidad socioeconómica favorable.",
                         "historial_eva": [8, 7, 6, 5, 4]
@@ -279,7 +279,6 @@ def main():
             with open(path_js, "r", encoding="utf-8") as f_js:
                 js_content = f_js.read()
                 
-                # INYECCIÓN DE CREDENCIALES DE SUPABASE AL FRONTEND PARA PERMITIR INSERT DIRECTO
                 supabase_url = st.secrets.get("SUPABASE_URL", "") if SUPABASE_AVAILABLE and "SUPABASE_URL" in st.secrets else ""
                 supabase_key = st.secrets.get("SUPABASE_KEY", "") if SUPABASE_AVAILABLE and "SUPABASE_KEY" in st.secrets else ""
                 
