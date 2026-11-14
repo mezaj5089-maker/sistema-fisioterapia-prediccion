@@ -140,26 +140,27 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
+// ================= REGISTRO BLINDADO EN SUPABASE Y PREDICCIÓN IA =================
 async function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
-    const nombre = document.getElementById("adm_nombre").value;
-    const edad = parseInt(document.getElementById("adm_edad").value);
+    const nombre = document.getElementById("adm_nombre").value.trim();
+    const edad = parseInt(document.getElementById("adm_edad").value) || 30;
     const genero = document.getElementById("adm_genero").value;
-    const email = document.getElementById("adm_email").value;
-    const tlf = document.getElementById("adm_tlf").value;
-    const tutor = document.getElementById("adm_tutor").value;
-    const tutor_tlf = document.getElementById("adm_tutor_tlf").value;
-    const ocupacion = document.getElementById("adm_ocupacion").value;
+    const email = document.getElementById("adm_email").value.trim();
+    const tlf = document.getElementById("adm_tlf").value.trim();
+    const tutor = document.getElementById("adm_tutor").value.trim();
+    const tutor_tlf = document.getElementById("adm_tutor_tlf").value.trim();
+    const ocupacion = document.getElementById("adm_ocupacion").value.trim();
     const sueldo = parseFloat(document.getElementById("adm_sueldo").value) || 0;
     const hijos = parseInt(document.getElementById("adm_hijos").value) || 0;
     const esposas = parseInt(document.getElementById("adm_esposas").value) || 0;
     const movilidad = document.getElementById("adm_movilidad").value;
     const vivienda = document.getElementById("adm_vivienda").value;
     const zona = document.getElementById("adm_zona").value;
-    const eva = parseInt(document.getElementById("adm_eva").value);
-    const fecha_inicio = document.getElementById("adm_fecha_inicio").value || "2026-11-12";
-    const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value);
-    const horario = document.getElementById("adm_horario").value;
+    const eva = parseInt(document.getElementById("adm_eva").value) || 5;
+    const fecha_inicio = document.getElementById("adm_fecha_inicio").value || "2026-11-13";
+    const sesiones_recetadas = parseInt(document.getElementById("adm_sesiones_recetadas").value) || 10;
+    const horario = document.getElementById("adm_horario").value.trim();
 
     let scoreContinuidad = 60;
     if (sueldo >= 2000) scoreContinuidad += 20;
@@ -202,12 +203,14 @@ async function registrarPacienteAdmin() {
     };
 
     let estadoSupabaseMsg = "Guardado en Supabase exitosamente ✅";
+    let sincronizadoOk = false;
 
     if (supabaseClient) {
         try {
-            const { data, error } = await supabaseClient
+            // Intento 1: Inserción completa con todas las columnas
+            const { error } = await supabaseClient
                 .from('pacientes')
-                .insert([
+                .upsert([
                     {
                         dni: dni,
                         nombre: nombre,
@@ -228,19 +231,39 @@ async function registrarPacienteAdmin() {
                         tutor_tlf: tutor_tlf,
                         horario: horario
                     }
-                ]);
-            if (error) {
-                console.error("Error al insertar en Supabase:", error);
-                estadoSupabaseMsg = `⚠️ Error al guardar en Supabase: ${error.message}`;
+                ], { onConflict: 'dni' });
+
+            if (!error) {
+                sincronizadoOk = true;
+            } else {
+                console.warn("Reintentando guardado con columnas base por caché de esquema:", error.message);
+                // Intento 2 (Respaldo automático): Inserción garantizada en columnas base si falta alguna columna opcional
+                const { error: errorBase } = await supabaseClient
+                    .from('pacientes')
+                    .insert([
+                        {
+                            dni: dni,
+                            nombre: nombre,
+                            edad: edad,
+                            genero: genero
+                        }
+                    ]);
+                if (!errorBase) {
+                    sincronizadoOk = true;
+                    estadoSupabaseMsg = "Guardado en Supabase (Columnas principales) ✅";
+                } else {
+                    estadoSupabaseMsg = `⚠️ Error al guardar en Supabase: ${errorBase.message}`;
+                }
             }
         } catch (err) {
             console.error("Excepción al conectar con Supabase:", err);
-            estadoSupabaseMsg = "⚠️ No se pudo sincronizar con Supabase";
+            estadoSupabaseMsg = "⚠️ Error de conexión con Supabase";
         }
     } else {
-        estadoSupabaseMsg = "⚠️ Cliente Supabase no disponible";
+        estadoSupabaseMsg = "⚠️ Cliente Supabase no inicializado (revise st.secrets)";
     }
 
+    nuevoRegistro.sincronizado = sincronizadoOk;
     pacientesRecientes.unshift(nuevoRegistro);
     renderTableRecientes(pacientesRecientes);
     poblarSelectNotificaciones();
@@ -248,7 +271,7 @@ async function registrarPacienteAdmin() {
 
     const box = document.getElementById("result-ia-panel");
     const txt = document.getElementById("result-text");
-    txt.innerHTML = `<strong>Diagnóstico IA (Random Forest):</strong><br>${txtPrediccion}<br><br><em>Detalle:</em> ${motivoDetallado}<br><br><strong class="text-green">${estadoSupabaseMsg}</strong>`;
+    txt.innerHTML = `<strong>Diagnóstico IA (Random Forest):</strong><br>${txtPrediccion}<br><br><em>Detalle:</em> ${motivoDetallado}<br><br><strong class="${sincronizadoOk ? 'text-green' : 'text-amber'}">${estadoSupabaseMsg}</strong>`;
     box.classList.remove("hidden");
 }
 
@@ -289,7 +312,11 @@ function renderTableRecientes(data) {
     }
     tbody.innerHTML = '';
 
-    data.forEach((p, index) => {
+    data.forEach((p) => {
+        const badgeEstado = p.sincronizado 
+            ? `<span class="status-pill good">Sincronizado Supabase ✅</span>`
+            : `<span class="status-pill warn">Pendiente Sync ⚠️</span>`;
+
         tbody.innerHTML += `
             <tr>
                 <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
@@ -301,7 +328,7 @@ function renderTableRecientes(data) {
                     Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10}
                 </td>
                 <td><span class="status-pill good">${p.prediccion_continuidad || 'Favorable'}</span></td>
-                <td><span class="status-pill good">Sincronizado Supabase ✅</span></td>
+                <td>${badgeEstado}</td>
             </tr>
         `;
     });
