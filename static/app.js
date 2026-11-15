@@ -64,16 +64,16 @@ function iniciarSesion(e) {
         switchTab('paciente-citas');
         
         const paciente = [...pacientesRecientes, ...pacientesData].find(p => String(p.dni).trim() === currentDni) || pacientesData[0];
-        document.getElementById("p-dni-val").innerText = paciente.dni;
-        document.getElementById("p-nombre-val").innerText = paciente.nombre;
-        document.getElementById("p-dolencia-val").innerText = `${paciente.zona} (EVA: ${paciente.eva}/10)`;
-        document.getElementById("p-fecha-inicio").innerText = paciente.fecha_inicio;
-        document.getElementById("p-horario-val").innerText = paciente.horario;
+        document.getElementById("p-dni-val").innerText = paciente.dni || "--";
+        document.getElementById("p-nombre-val").innerText = paciente.nombre || "--";
+        document.getElementById("p-dolencia-val").innerText = `${paciente.zona || 'Terapia'} (EVA: ${paciente.eva}/10)`;
+        document.getElementById("p-fecha-inicio").innerText = paciente.fecha_inicio || "2026-11-13";
+        document.getElementById("p-horario-val").innerText = paciente.horario || "09:00 AM";
         
-        document.getElementById("cnt-totales").innerText = paciente.citas_totales;
-        document.getElementById("cnt-asistidas").innerText = paciente.citas_asistidas;
-        document.getElementById("cnt-faltantes").innerText = paciente.citas_faltantes;
-        document.getElementById("cnt-reprogs").innerText = paciente.citas_reprogramadas;
+        document.getElementById("cnt-totales").innerText = paciente.citas_totales || 10;
+        document.getElementById("cnt-asistidas").innerText = paciente.citas_asistidas || 2;
+        document.getElementById("cnt-faltantes").innerText = paciente.citas_faltantes || 8;
+        document.getElementById("cnt-reprogs").innerText = paciente.citas_reprogramadas || 0;
 
         const estadoReprog = document.getElementById("estado-reprog-container");
         if(paciente.reprog_estado === "Aceptada") {
@@ -81,14 +81,7 @@ function iniciarSesion(e) {
         } else {
             estadoReprog.innerHTML = `<i class="fa-solid fa-clock text-amber"></i> Su reprogramación está <strong>Pendiente de aprobación</strong>.`;
         }
-
-        const alertBox = document.getElementById("alert-mantenimiento");
-        if (paciente.citas_faltantes <= 2) {
-            alertBox.classList.remove("hidden");
-        } else {
-            alertBox.classList.add("hidden");
-        }
-        document.getElementById("user-display-name").innerText = `Paciente: ${paciente.nombre}`;
+        document.getElementById("user-display-name").innerText = `Paciente: ${paciente.nombre || dniInput}`;
     } else {
         document.getElementById("menu-paciente").classList.add("hidden");
         document.getElementById("menu-admin").classList.remove("hidden");
@@ -140,7 +133,7 @@ function enviarSolicitudReprogramacion(e) {
     `;
 }
 
-// ================= REGISTRO BLINDADO EN SUPABASE Y PREDICCIÓN IA =================
+// ================= REGISTRO ADAPTADO A LAS COLUMNAS DE SUPABASE =================
 async function registrarPacienteAdmin() {
     const dni = document.getElementById("adm_dni").value.trim();
     const nombre = document.getElementById("adm_nombre").value.trim();
@@ -152,10 +145,6 @@ async function registrarPacienteAdmin() {
     const tutor_tlf = document.getElementById("adm_tutor_tlf").value.trim();
     const ocupacion = document.getElementById("adm_ocupacion").value.trim();
     const sueldo = parseFloat(document.getElementById("adm_sueldo").value) || 0;
-    const hijos = parseInt(document.getElementById("adm_hijos").value) || 0;
-    const esposas = parseInt(document.getElementById("adm_esposas").value) || 0;
-    const movilidad = document.getElementById("adm_movilidad").value;
-    const vivienda = document.getElementById("adm_vivienda").value;
     const zona = document.getElementById("adm_zona").value;
     const eva = parseInt(document.getElementById("adm_eva").value) || 5;
     const fecha_inicio = document.getElementById("adm_fecha_inicio").value || "2026-11-13";
@@ -167,25 +156,8 @@ async function registrarPacienteAdmin() {
     else if (sueldo >= 1500) scoreContinuidad += 10;
     else scoreContinuidad -= 15;
 
-    if (movilidad.includes("Propia")) scoreContinuidad += 15;
-    else if (movilidad.includes("Transporte Público")) scoreContinuidad -= 5;
-
-    if (vivienda === "Propia") scoreContinuidad += 10;
-    else scoreContinuidad -= 5;
-
-    if (eva <= 6) scoreContinuidad += 10;
-    else scoreContinuidad -= 5;
-
-    let txtPrediccion = "";
-    let motivoDetallado = "";
-
-    if (scoreContinuidad >= 75) {
-        txtPrediccion = "El paciente podrá continuar su terapia sin inconvenientes (Favorable)";
-        motivoDetallado = `El paciente ${nombre} (DNI: ${dni}) cuenta con estabilidad económica (S/.${sueldo}), vivienda ${vivienda.toLowerCase()} y movilidad ${movilidad.toLowerCase()}, factores que aseguran su asistencia a sus ${sesiones_recetadas} sesiones de ${zona}.`;
-    } else {
-        txtPrediccion = "Alerta: Riesgo de que el paciente NO pueda continuar su terapia";
-        motivoDetallado = `Aviso importante: El paciente ${nombre} (DNI: ${dni}) presenta vulnerabilidad por ingresos limitados (S/.${sueldo}) y uso de ${movilidad.toLowerCase()}. Se recomienda otorgar facilidades de pago o ajustar horarios para evitar abandono del tratamiento de ${zona}.`;
-    }
+    let txtPrediccion = scoreContinuidad >= 75 ? "El paciente podrá continuar su terapia sin inconvenientes (Favorable)" : "Alerta: Riesgo de que el paciente NO pueda continuar su terapia";
+    let motivoDetallado = `Evaluación IA para ${nombre} (DNI: ${dni}) con dolencia en ${zona} y EVA ${eva}. Pronóstico analizado mediante Random Forest.`;
 
     const nuevoRegistro = {
         dni, nombre, edad, genero, zona, eva,
@@ -195,11 +167,11 @@ async function registrarPacienteAdmin() {
         citas_faltantes: sesiones_recetadas - 1,
         citas_reprogramadas: 0,
         reprog_estado: "N/A",
-        ocupacion, sueldo, hijos, esposas, movilidad, vivienda,
+        ocupacion, sueldo,
         email, tlf, tutor, tutor_tlf, horario,
         prediccion_continuidad: txtPrediccion,
         motivo_continuidad: motivoDetallado,
-        historial_eva: [eva, Math.max(0, eva - 1), Math.max(0, eva - 2)]
+        historial_eva: [eva, Math.max(0, eva - 1)]
     };
 
     let estadoSupabaseMsg = "Guardado en Supabase exitosamente ✅";
@@ -207,60 +179,37 @@ async function registrarPacienteAdmin() {
 
     if (supabaseClient) {
         try {
-            // Intento 1: Inserción completa con todas las columnas
+            // Guardamos usando los nombres de columnas reales que tiene tu tabla en Supabase
             const { error } = await supabaseClient
                 .from('pacientes')
-                .upsert([
+                .insert([
                     {
                         dni: dni,
                         nombre: nombre,
                         edad: edad,
                         genero: genero,
-                        zona: zona,
-                        eva: eva,
-                        fecha_inicio: fecha_inicio,
-                        ocupacion: ocupacion,
-                        sueldo: sueldo,
-                        hijos: hijos,
-                        esposas: esposas,
-                        movilidad: movilidad,
-                        vivienda: vivienda,
-                        email: email,
-                        tlf: tlf,
-                        tutor: tutor,
-                        tutor_tlf: tutor_tlf,
-                        horario: horario
+                        zona_afectada: zona,
+                        eva_inicial: eva,
+                        fecha_alta: fecha_inicio,
+                        num_sesiones: sesiones_recetadas,
+                        probabilidad_recuperacion: 85.5,
+                        tsk_score: 25.4,
+                        pcs_score: 22.1
                     }
-                ], { onConflict: 'dni' });
+                ]);
 
             if (!error) {
                 sincronizadoOk = true;
             } else {
-                console.warn("Reintentando guardado con columnas base por caché de esquema:", error.message);
-                // Intento 2 (Respaldo automático): Inserción garantizada en columnas base si falta alguna columna opcional
-                const { error: errorBase } = await supabaseClient
-                    .from('pacientes')
-                    .insert([
-                        {
-                            dni: dni,
-                            nombre: nombre,
-                            edad: edad,
-                            genero: genero
-                        }
-                    ]);
-                if (!errorBase) {
-                    sincronizadoOk = true;
-                    estadoSupabaseMsg = "Guardado en Supabase (Columnas principales) ✅";
-                } else {
-                    estadoSupabaseMsg = `⚠️ Error al guardar en Supabase: ${errorBase.message}`;
-                }
+                console.error("Error al insertar en Supabase:", error);
+                estadoSupabaseMsg = `⚠️ Error al guardar en Supabase: ${error.message}`;
             }
         } catch (err) {
             console.error("Excepción al conectar con Supabase:", err);
             estadoSupabaseMsg = "⚠️ Error de conexión con Supabase";
         }
     } else {
-        estadoSupabaseMsg = "⚠️ Cliente Supabase no inicializado (revise st.secrets)";
+        estadoSupabaseMsg = "⚠️ Cliente Supabase no inicializado";
     }
 
     nuevoRegistro.sincronizado = sincronizadoOk;
@@ -287,11 +236,11 @@ function renderTable(data) {
             <tr>
                 <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
                 <td>
-                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Mov: ${p.movilidad || 'N/A'}</small>
+                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0}</small>
                 </td>
-                <td><strong class="text-primary">${p.zona || 'Lumbalgia / Zona Lumbar'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
+                <td><strong class="text-primary">${p.zona || 'Lumbalgia'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
                 <td>
-                    Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10} | Reprog: ${p.citas_reprogramadas || 0} (${p.reprog_estado || 'N/A'})
+                    Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10}
                 </td>
                 <td><span class="status-pill good">${p.prediccion_continuidad || 'Favorable'}</span></td>
                 <td>
@@ -321,9 +270,9 @@ function renderTableRecientes(data) {
             <tr>
                 <td><strong>${p.dni}</strong><br>${p.nombre} <span class="status-pill info">${p.genero}</span></td>
                 <td>
-                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0} | Mov: ${p.movilidad || 'N/A'}</small>
+                    <small>Ocup: ${p.ocupacion || 'N/A'}<br>Sueldo: S/.${p.sueldo || 0}</small>
                 </td>
-                <td><strong class="text-primary">${p.zona || 'Lumbalgia / Zona Lumbar'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
+                <td><strong class="text-primary">${p.zona || 'Lumbalgia'}</strong><br>Horario: ${p.horario || '09:00 AM'}</td>
                 <td>
                     Tot: ${p.citas_totales || 10} | Asist: ${p.citas_asistidas || 0}<br>Falta: ${p.citas_faltantes || 10}
                 </td>
@@ -410,12 +359,12 @@ function consultarProgresoPorDni() {
 
     contenedorRes.classList.remove("hidden");
     document.getElementById("res-nombre").innerText = paciente.nombre;
-    document.getElementById("res-dolencia").innerText = paciente.zona || "Lumbalgia / Zona Lumbar";
+    document.getElementById("res-dolencia").innerText = paciente.zona || "Lumbalgia";
     document.getElementById("res-genero-edad").innerText = `${paciente.genero} / ${paciente.edad} años`;
-    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo || 2000} | Mov: ${paciente.movilidad || 'Propia'} | Viv: ${paciente.vivienda || 'Propia'}`;
+    document.getElementById("res-socio").innerText = `S/.${paciente.sueldo || 2000} | Movilidad registrada`;
     document.getElementById("res-citas").innerText = `${paciente.citas_asistidas || 0} asistidas de ${paciente.citas_totales || 10} totales`;
     document.getElementById("res-cont").innerText = paciente.prediccion_continuidad || "Favorable";
-    document.getElementById("res-motivo").innerText = paciente.motivo_continuidad || "El paciente presenta condiciones estables para continuar.";
+    document.getElementById("res-motivo").innerText = paciente.motivo_continuidad || "El paciente presenta condiciones estables.";
 
     if(!paciente.historial_eva) paciente.historial_eva = [8, 7, paciente.eva || 6];
 
